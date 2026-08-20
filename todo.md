@@ -96,3 +96,11 @@
 - [x] Produce the exact A/B authorization, storage, Android location, permission, manual override, and offline/reconnect procedures
 - [x] Confirm no development seed data is created before validation prerequisites are met
 - [x] Save the validation-preparation checkpoint and deliver the handoff report
+
+## Approved spatial_ref_sys remediation
+
+- [ ] Apply least-privilege restrictions to public.spatial_ref_sys without changing application tables or PostGIS internals (FAILED: Supabase migration role is not owner; direct ACL remained unchanged)
+- [x] Verify anonymous and ordinary-authenticated write access is blocked with exact responses; anonymous write blocking NOT achieved, authenticated HTTP test unavailable
+- [x] Verify PostGIS, spatial indexes, nearby RPCs, radius queries, business/post proximity, Local Radar, and application RLS remain working
+- [x] Document exact remediation and preserve no-seed status
+- [x] Save the remediation checkpoint
