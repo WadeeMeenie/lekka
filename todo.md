@@ -1,0 +1,23 @@
+# Project TODO
+
+- [x] Initialize the Expo Android project for Local Radar SA
+- [x] Write the mobile interface design plan
+- [x] Establish the MVP scope and domain model for local posts, alerts, radar items, communities, and settings
+- [x] Implement the five-destination bottom navigation
+- [x] Implement the Home local feed with For You, Nearby, Trending, and Following states
+- [x] Implement Local Radar list view with radius and category filters
+- [x] Implement Local Radar map-ready state with privacy-safe area markers
+- [x] Implement Create flows for posts and local alerts
+- [x] Implement local feed and settings persistence with AsyncStorage
+- [x] Implement Social communities/following/messages entry points
+- [x] Implement Local directory categories for businesses, deals, events, marketplace, jobs, and services
+- [ ] Implement post and radar item detail screens
+- [ ] Implement profile, search, notifications, and privacy settings screens
+- [x] Add accessibility labels, pressed states, loading states, empty states, and error states
+- [x] Create and install the custom Local Radar SA app icon assets
+- [x] Update app.config.ts branding fields without changing appSlug
+- [x] Add deterministic unit tests for ranking, persistence, and create flows
+- [x] Run type-checking and test suite; lint remains a follow-up check
+- [ ] Validate the app preview at desktop and mobile-sized viewports
+- [x] Prepare the Android APK build path and document limitations
+- [ ] Save the final project checkpoint
