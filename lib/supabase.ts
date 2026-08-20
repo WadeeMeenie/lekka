@@ -4,12 +4,18 @@ import { createClient, type Session, type SupabaseClient } from "@supabase/supab
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
+const safeStorage = {
+  getItem: async (key: string) => (typeof window === "undefined" ? null : AsyncStorage.getItem(key)),
+  setItem: async (key: string, value: string) => { if (typeof window !== "undefined") await AsyncStorage.setItem(key, value); },
+  removeItem: async (key: string) => { if (typeof window !== "undefined") await AsyncStorage.removeItem(key); },
+};
+
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(supabaseUrl as string, supabaseKey as string, {
       auth: {
-        storage: AsyncStorage,
+        storage: safeStorage,
         autoRefreshToken: true,
         persistSession: true,
         detectSessionInUrl: false,

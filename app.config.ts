@@ -28,7 +28,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "Local Radar SA",
+  appName: "Lekka",
   appSlug: "local-radar-sa",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
@@ -86,7 +86,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
-    ["expo-location", { locationWhenInUsePermission: "Allow Local Radar SA to use your approximate location to show what is happening nearby." }],
+    ["expo-location", { locationWhenInUsePermission: "Allow Lekka to use your approximate location to show what is happening nearby." }],
     [
       "expo-audio",
       {

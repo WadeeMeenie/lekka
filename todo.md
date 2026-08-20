@@ -35,3 +35,10 @@
 - [x] Add realtime subscription boundaries for feed, alerts, comments, and notifications
 - [x] Add retryable loading/success/error states for backend operations
 - [ ] Validate backend milestone and save a new checkpoint
+
+## Lekka branding and APK milestone
+
+- [x] Replace all user-facing Local Radar SA app-name references with Lekka
+- [x] Verify package/application ID and Android build configuration remain unchanged unless required
+- [x] Validate the existing app tests and offline-safe paths after branding
+- [x] Prepare the final Lekka checkpoint for managed APK generation
