@@ -104,3 +104,11 @@
 - [x] Verify PostGIS, spatial indexes, nearby RPCs, radius queries, business/post proximity, Local Radar, and application RLS remain working
 - [x] Document exact remediation and preserve no-seed status
 - [x] Save the remediation checkpoint
+
+## Real application validation handoff
+
+- [x] Stop further spatial_ref_sys migration attempts and document it as extension-owned by supabase_admin
+- [x] Provide exact temporary confirmed Supabase Auth account setup steps
+- [x] Provide exact A/B authorization, storage, physical location, permission fallback, manual override, and offline/reconnect procedures
+- [x] Preserve no-seed and no-rebuild status unless a code fix is required
+- [x] Save the application-validation handoff checkpoint
