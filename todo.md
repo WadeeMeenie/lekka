@@ -87,3 +87,12 @@
 - [x] Validate offline/cache/reconnect behavior with deterministic project tests
 - [x] Build and verify the latest Lekka release APK
 - [x] Save a strict evidence-based validation checkpoint and report all untestable device/account cases as NOT TESTED
+
+## Final pre-seed validation setup
+
+- [ ] Determine whether two controlled Supabase Auth test accounts can be created without exposing credentials (NOT AVAILABLE: email confirmation is required and no confirmed test inboxes were supplied)
+- [x] If account creation is unavailable, document exact minimal Supabase Auth setup steps and temporary credential handling
+- [x] Perform read-only spatial_ref_sys column, exposure, write-capability, and PostGIS-functionality analysis
+- [x] Produce the exact A/B authorization, storage, Android location, permission, manual override, and offline/reconnect procedures
+- [x] Confirm no development seed data is created before validation prerequisites are met
+- [x] Save the validation-preparation checkpoint and deliver the handoff report
