@@ -112,3 +112,10 @@
 - [x] Provide exact A/B authorization, storage, physical location, permission fallback, manual override, and offline/reconnect procedures
 - [x] Preserve no-seed and no-rebuild status unless a code fix is required
 - [x] Save the application-validation handoff checkpoint
+
+## APK artifact delivery
+
+- [x] Locate and verify the existing Lekka release APK before rebuilding
+- [x] Rebuild only if the existing APK is absent or invalid; existing APK was valid, so no rebuild was needed
+- [x] Copy the verified APK into the project output/artifact area
+- [x] Attach the actual APK artifact with verified package, app label, version, and size
