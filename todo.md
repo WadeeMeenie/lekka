@@ -21,3 +21,17 @@
 - [ ] Validate the app preview at desktop and mobile-sized viewports
 - [x] Prepare the Android APK build path and document limitations
 - [ ] Save the final project checkpoint
+
+## Production backend milestone
+
+- [x] Configure Supabase-compatible client access without exposing service-role credentials
+- [x] Add production database migration for profiles, interests, follows, communities, posts, media, comments, reactions, saves, businesses, events, deals, alerts, listings, reports, and notifications
+- [x] Add Row Level Security policies and security-policy tests
+- [x] Add email/password authentication, session restoration, logout, and password-reset architecture
+- [x] Replace feed and Local Radar seed reads with backend-first queries plus cached fallback
+- [x] Add real profile, business, follow, community, post, alert, and listing data operations
+- [x] Add Android location permission handling with manual-area fallback and privacy-safe location model
+- [x] Add Supabase Storage media-upload and thumbnail architecture without fake production video claims
+- [x] Add realtime subscription boundaries for feed, alerts, comments, and notifications
+- [x] Add retryable loading/success/error states for backend operations
+- [ ] Validate backend milestone and save a new checkpoint

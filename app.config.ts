@@ -86,6 +86,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    ["expo-location", { locationWhenInUsePermission: "Allow Local Radar SA to use your approximate location to show what is happening nearby." }],
     [
       "expo-audio",
       {

@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { FeedTab, LocalPost, loadPosts, loadSettings, rankPosts, savePosts } from "@/lib/local-radar";
+import { fetchFeedPosts, subscribeToLocalChanges } from "@/lib/supabase-repository";
 import { useColors } from "@/hooks/use-colors";
 
 const tabs: FeedTab[] = ["For You", "Nearby", "Trending", "Following"];
@@ -15,9 +16,14 @@ export default function HomeScreen() {
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => { Promise.all([loadPosts(), loadSettings()]).then(([loadedPosts, settings]) => { setPosts(loadedPosts); setArea(settings.area); }); }, []);
+  useEffect(() => {
+    let active = true;
+    Promise.all([fetchFeedPosts(), loadSettings()]).then(([loadedPosts, settings]) => { if (!active) return; setPosts(loadedPosts); setArea(settings.area); });
+    const unsubscribe = subscribeToLocalChanges(() => { void fetchFeedPosts().then((next) => { if (active) setPosts(next); }); });
+    return () => { active = false; unsubscribe(); };
+  }, []);
   const visiblePosts = useMemo(() => rankPosts(posts, activeTab).filter((post) => `${post.title ?? ""} ${post.body} ${post.author}`.toLowerCase().includes(query.toLowerCase())), [posts, activeTab, query]);
-  const refresh = async () => { setRefreshing(true); setPosts(await loadPosts()); setRefreshing(false); };
+  const refresh = async () => { setRefreshing(true); setPosts(await fetchFeedPosts()); setRefreshing(false); };
 
   return (
     <ScreenContainer containerClassName="bg-background">
