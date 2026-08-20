@@ -49,3 +49,12 @@
 - [ ] Capture and diagnose any real build failure, then retry if project-level
 - [ ] Verify APK existence, size, package ID, app name, version, and installability
 - [ ] Deliver the actual APK artifact if the managed workflow produces one
+
+## Local Android build investigation
+
+- [x] Inspect Expo workflow, prebuild support, Android SDK/NDK, Java, Gradle, and native project state
+- [x] Generate the native Android project only if the environment supports a safe prebuild
+- [x] Attempt a release APK build with the generated Gradle project
+- [x] Diagnose and retry any project-level Gradle failure
+- [x] Verify APK metadata, size, package ID, app name, version, and installability
+- [x] Deliver the APK artifact or document the exact external environment blocker
