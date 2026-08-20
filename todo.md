@@ -77,3 +77,13 @@
 - [x] Connect nearby posts, businesses, alerts, events, deals, and feed ranking to backend current-location queries
 - [ ] Run authenticated CRUD and cross-account security validation (blocked: no test accounts/device session available)
 - [x] Save and deliver the production foundation checkpoint
+
+## Security validation, real location, and development seed milestone
+
+- [x] Inspect remote RLS/storage findings, test-account availability, and attached-device availability
+- [x] Run bounded remote RLS, storage, PostGIS, RPC, privacy, and performance checks
+- [ ] Run controlled A/B CRUD authorization checks if test accounts can be created safely (NOT TESTED: Auth requires confirmed email and no device/session was available)
+- [ ] Create clearly labelled multi-city development seed data only after security validation and secure ownership prerequisites (NOT CREATED: no authenticated seed owner was available)
+- [x] Validate offline/cache/reconnect behavior with deterministic project tests
+- [x] Build and verify the latest Lekka release APK
+- [x] Save a strict evidence-based validation checkpoint and report all untestable device/account cases as NOT TESTED
