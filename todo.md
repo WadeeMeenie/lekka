@@ -58,3 +58,10 @@
 - [x] Diagnose and retry any project-level Gradle failure
 - [x] Verify APK metadata, size, package ID, app name, version, and installability
 - [x] Deliver the APK artifact or document the exact external environment blocker
+
+## Supabase connection verification
+
+- [x] Inspect configured Supabase URL, publishable-key state, and connector availability without exposing secrets
+- [x] Verify the remote Supabase Auth endpoint with the publishable key
+- [x] Verify database REST/schema access and distinguish missing schema from invalid credentials; remote public schema currently has 0 tables and 0 migrations
+- [x] Report the connection status and save a checkpoint if project state changes
