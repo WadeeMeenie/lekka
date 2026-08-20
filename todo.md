@@ -119,3 +119,11 @@
 - [x] Rebuild only if the existing APK is absent or invalid; existing APK was valid, so no rebuild was needed
 - [x] Copy the verified APK into the project output/artifact area
 - [x] Attach the actual APK artifact with verified package, app label, version, and size
+
+## Loading UX improvement
+
+- [x] Add branded skeleton loading animation for the Home feed’s initial fetch
+- [x] Add branded skeleton loading animation for Nearby discovery’s initial fetch
+- [x] Preserve cached content and keep interactions responsive during background refreshes
+- [x] Add deterministic tests for loading-state transitions and refresh behavior
+- [x] Run type-checks, tests, and visual verification for the loading states
