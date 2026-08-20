@@ -3,6 +3,7 @@ import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Tex
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { FeedTab, LocalPost, loadPosts, loadSettings, rankPosts, savePosts } from "@/lib/local-radar";
+import { DeviceLocation, getLastKnownOrCurrentLocation } from "@/lib/location";
 import { fetchFeedPosts, subscribeToLocalChanges } from "@/lib/supabase-repository";
 import { useColors } from "@/hooks/use-colors";
 
@@ -13,17 +14,26 @@ export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState<FeedTab>("For You");
   const [posts, setPosts] = useState<LocalPost[]>([]);
   const [area, setArea] = useState("Bellville");
+  const [deviceLocation, setDeviceLocation] = useState<DeviceLocation | null>(null);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     let active = true;
-    Promise.all([fetchFeedPosts(), loadSettings()]).then(([loadedPosts, settings]) => { if (!active) return; setPosts(loadedPosts); setArea(settings.area); });
-    const unsubscribe = subscribeToLocalChanges(() => { void fetchFeedPosts().then((next) => { if (active) setPosts(next); }); });
+    void (async () => {
+      const settings = await loadSettings();
+      const location = await getLastKnownOrCurrentLocation(settings.area);
+      if (!active) return;
+      const liveLocation = location.status === "granted" ? location.location : undefined;
+      if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); }
+      else setArea(settings.area);
+      setPosts(await fetchFeedPosts(liveLocation));
+    })();
+    const unsubscribe = subscribeToLocalChanges(() => { void fetchFeedPosts(deviceLocation ?? undefined).then((next) => { if (active) setPosts(next); }); });
     return () => { active = false; unsubscribe(); };
   }, []);
   const visiblePosts = useMemo(() => rankPosts(posts, activeTab).filter((post) => `${post.title ?? ""} ${post.body} ${post.author}`.toLowerCase().includes(query.toLowerCase())), [posts, activeTab, query]);
-  const refresh = async () => { setRefreshing(true); setPosts(await fetchFeedPosts()); setRefreshing(false); };
+  const refresh = async () => { setRefreshing(true); const settings = await loadSettings(); const location = await getLastKnownOrCurrentLocation(settings.area); const liveLocation = location.status === "granted" ? location.location : undefined; if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); } setPosts(await fetchFeedPosts(liveLocation)); setRefreshing(false); };
 
   return (
     <ScreenContainer containerClassName="bg-background">

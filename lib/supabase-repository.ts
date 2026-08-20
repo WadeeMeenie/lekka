@@ -1,5 +1,6 @@
 import { File } from "expo-file-system/next";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
+import { DeviceLocation } from "@/lib/location";
 import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";
 
 function toLocalPost(row: any): LocalPost {
@@ -7,8 +8,8 @@ function toLocalPost(row: any): LocalPost {
     id: row.id,
     kind: row.kind === "alert" ? "alert" : "post",
     category: row.category ?? undefined,
-    author: row.profiles?.display_name || "Local neighbour",
-    initials: (row.profiles?.display_name || "LN").slice(0, 2).toUpperCase(),
+    author: row.author_name || row.profiles?.display_name || "Local neighbour",
+    initials: (row.author_name || row.profiles?.display_name || "LN").slice(0, 2).toUpperCase(),
     area: row.area,
     distance: row.distance_label || "Nearby",
     time: formatRelativeTime(row.created_at),
@@ -28,31 +29,52 @@ function formatRelativeTime(value: string) {
   return `${hours} hr`;
 }
 
-export async function fetchFeedPosts(): Promise<LocalPost[]> {
+export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPost[]> {
   const cached = await loadPosts();
   if (!isSupabaseConfigured || !supabase) return cached;
-  const { data, error } = await supabase
-    .from("posts")
-    .select("id, kind, category, title, body, area, trust_score, created_at, profiles(display_name)")
-    .order("created_at", { ascending: false })
-    .limit(50);
+  const result = location
+    ? await supabase.rpc("nearby_feed_posts", {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        radius_meters: 5000,
+      })
+    : await supabase
+        .from("posts")
+        .select("id, kind, category, title, body, area, trust_score, created_at, profiles(display_name)")
+        .order("created_at", { ascending: false })
+        .limit(50);
+  const { data, error } = result;
   if (error || !data) return cached;
   const posts = data.map(toLocalPost);
   await savePosts(posts);
   return posts;
 }
 
-export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public" }) {
+export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation }) {
   if (!isSupabaseConfigured || !supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Please sign in to publish to the community") };
-  return supabase.from("posts").insert({ author_id: user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, area: input.area, visibility: input.visibility ?? "nearby" }).select().single();
+  return supabase.from("posts").insert({
+    author_id: user.id,
+    kind: input.kind,
+    category: input.category,
+    title: input.title,
+    body: input.body,
+    area: input.area,
+    visibility: input.visibility ?? "nearby",
+    approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null,
+  }).select().single();
 }
 
-export async function fetchNearbyItems(settings?: LocalSettings): Promise<RadarItem[]> {
+export async function fetchNearbyItems(location?: DeviceLocation, settings?: LocalSettings, category?: RadarCategory | "All"): Promise<RadarItem[]> {
   const activeSettings = settings ?? await loadSettings();
-  if (!isSupabaseConfigured || !supabase) return [];
-  const { data, error } = await supabase.rpc("nearby_radar", { radius_meters: radiusToMeters(activeSettings.radius), area_name: activeSettings.area });
+  if (!isSupabaseConfigured || !supabase || !location) return [];
+  const { data, error } = await supabase.rpc("nearby_radar", {
+    latitude: location.latitude,
+    longitude: location.longitude,
+    radius_meters: radiusToMeters(activeSettings.radius),
+    category_filter: category && category !== "All" ? category : null,
+  });
   if (error || !data) return [];
   return data as RadarItem[];
 }

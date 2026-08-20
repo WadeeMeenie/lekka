@@ -213,7 +213,7 @@ alter publication supabase_realtime add table public.comments;
 alter publication supabase_realtime add table public.notifications;
 
 create or replace function public.nearby_radar(radius_meters integer, area_name text)
-returns table (id uuid, category text, title text, subtitle text, area text, distance text, time text, accent text, icon text)
+returns table (id uuid, category text, title text, subtitle text, area text, distance text, "time" text, accent text, icon text)
 language sql stable security invoker set search_path = public as $$
   select p.id,
          coalesce(p.category, p.kind::text) as category,
@@ -221,7 +221,7 @@ language sql stable security invoker set search_path = public as $$
          p.body as subtitle,
          p.area,
          case when p.approximate_location is null then 'Area-level' else concat(round(st_distance(p.approximate_location, p.approximate_location)::numeric / 1000, 1), ' km') end as distance,
-         to_char(p.created_at, 'DD Mon · HH24:MI') as time,
+         to_char(p.created_at, 'DD Mon · HH24:MI') as "time",
          case when p.kind = 'alert' then '#D95D4F' else '#2F7D67' end as accent,
          case when p.kind = 'alert' then 'campaign' else 'place' end as icon
   from public.posts p

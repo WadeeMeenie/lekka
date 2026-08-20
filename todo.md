@@ -20,7 +20,7 @@
 - [x] Run type-checking and test suite; lint remains a follow-up check
 - [ ] Validate the app preview at desktop and mobile-sized viewports
 - [x] Prepare the Android APK build path and document limitations
-- [ ] Save the final project checkpoint
+- [x] Save the final project checkpoint
 
 ## Production backend milestone
 
@@ -34,7 +34,7 @@
 - [x] Add Supabase Storage media-upload and thumbnail architecture without fake production video claims
 - [x] Add realtime subscription boundaries for feed, alerts, comments, and notifications
 - [x] Add retryable loading/success/error states for backend operations
-- [ ] Validate backend milestone and save a new checkpoint
+- [x] Validate backend milestone and save a new checkpoint
 
 ## Lekka branding and APK milestone
 
@@ -45,10 +45,10 @@
 
 ## APK delivery blocker
 
-- [ ] Execute the supported managed Android build workflow for Lekka
-- [ ] Capture and diagnose any real build failure, then retry if project-level
-- [ ] Verify APK existence, size, package ID, app name, version, and installability
-- [ ] Deliver the actual APK artifact if the managed workflow produces one
+- [x] Execute the supported managed Android build workflow for Lekka via local Expo prebuild + Gradle release build
+- [x] Capture and diagnose any real build failure, then retry if project-level
+- [x] Verify APK existence, size, package ID, app name, version, and installability; no Android device was attached for install test
+- [x] Deliver the actual APK artifact if the managed workflow produces one
 
 ## Local Android build investigation
 
@@ -65,3 +65,15 @@
 - [x] Verify the remote Supabase Auth endpoint with the publishable key
 - [x] Verify database REST/schema access and distinguish missing schema from invalid credentials; remote public schema currently has 0 tables and 0 migrations
 - [x] Report the connection status and save a checkpoint if project state changes
+
+## Lekka production foundation and real current-location engine
+
+- [x] Read the remainder of the attached specification and inspect the existing migration completely
+- [x] Compare the existing migration against the empty remote Supabase schema
+- [x] Apply the migration to remote project local-radar-sa and troubleshoot any exact failure
+- [x] Verify PostGIS, geography columns, spatial indexes, nearby RPCs, and RLS policies remotely
+- [x] Make current Android device location the primary discovery input with efficient foreground refresh thresholds
+- [x] Add manual exploration as a temporary override with a return-to-my-location action
+- [x] Connect nearby posts, businesses, alerts, events, deals, and feed ranking to backend current-location queries
+- [ ] Run authenticated CRUD and cross-account security validation (blocked: no test accounts/device session available)
+- [x] Save and deliver the production foundation checkpoint

@@ -2,26 +2,46 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
-const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/202608200001_local_radar_core.sql"), "utf8");
+const readMigration = (name: string) => readFileSync(resolve(process.cwd(), `supabase/migrations/${name}`), "utf8");
+const coreMigration = readMigration("202608200001_local_radar_core.sql");
+const locationMigration = readMigration("202608200002_location_first_engine.sql");
+const entitiesMigration = readMigration("202608200003_local_entities.sql");
 
 describe("Supabase security migration", () => {
   it("defines the primary product tables", () => {
     for (const table of ["profiles", "follows", "communities", "community_members", "businesses", "posts", "post_media", "comments", "reactions", "saved_posts", "reports", "notifications"]) {
-      expect(migration).toContain(`create table public.${table}`);
+      expect(coreMigration).toContain(`create table public.${table}`);
     }
   });
 
   it("enables RLS and protects self-owned writes", () => {
-    expect(migration).toContain("alter table public.posts enable row level security;");
-    expect(migration).toContain("create policy posts_author_update");
-    expect(migration).toContain("create policy posts_author_delete");
-    expect(migration).toContain("auth.uid() = author_id");
-    expect(migration).toContain("create policy businesses_owner_write");
+    expect(coreMigration).toContain("alter table public.posts enable row level security;");
+    expect(coreMigration).toContain("create policy posts_author_update");
+    expect(coreMigration).toContain("create policy posts_author_delete");
+    expect(coreMigration).toContain("auth.uid() = author_id");
+    expect(coreMigration).toContain("create policy businesses_owner_write");
   });
 
   it("keeps media in a private storage bucket with user-folder policies", () => {
-    expect(migration).toContain("values ('local-radar-media', 'local-radar-media', false)");
-    expect(migration).toContain("create policy media_user_upload");
-    expect(migration).toContain("storage.foldername(name)");
+    expect(coreMigration).toContain("values ('local-radar-media', 'local-radar-media', false)");
+    expect(coreMigration).toContain("create policy media_user_upload");
+    expect(coreMigration).toContain("storage.foldername(name)");
+  });
+
+  it("uses current coordinates and PostGIS for nearby discovery", () => {
+    expect(locationMigration).toContain("st_setsrid(st_makepoint(longitude, latitude), 4326)::geography");
+    expect(locationMigration).toContain("st_dwithin");
+    expect(locationMigration).toContain("create or replace function public.nearby_radar(");
+    expect(locationMigration).toContain("create or replace function public.nearby_feed_posts(");
+    expect(locationMigration).toContain("grant execute on function public.nearby_radar");
+  });
+
+  it("covers local businesses, events, deals, and their spatial indexes", () => {
+    expect(entitiesMigration).toContain("create table if not exists public.business_members");
+    expect(entitiesMigration).toContain("create table if not exists public.events");
+    expect(entitiesMigration).toContain("create table if not exists public.deals");
+    expect(entitiesMigration).toContain("events_location_gix");
+    expect(entitiesMigration).toContain("deals_location_gix");
+    expect(entitiesMigration).toContain("alter table public.events enable row level security;");
   });
 });
