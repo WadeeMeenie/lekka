@@ -42,3 +42,10 @@
 - [x] Verify package/application ID and Android build configuration remain unchanged unless required
 - [x] Validate the existing app tests and offline-safe paths after branding
 - [x] Prepare the final Lekka checkpoint for managed APK generation
+
+## APK delivery blocker
+
+- [ ] Execute the supported managed Android build workflow for Lekka
+- [ ] Capture and diagnose any real build failure, then retry if project-level
+- [ ] Verify APK existence, size, package ID, app name, version, and installability
+- [ ] Deliver the actual APK artifact if the managed workflow produces one
