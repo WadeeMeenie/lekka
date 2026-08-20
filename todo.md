@@ -127,3 +127,15 @@
 - [x] Preserve cached content and keep interactions responsive during background refreshes
 - [x] Add deterministic tests for loading-state transitions and refresh behavior
 - [x] Run type-checks, tests, and visual verification for the loading states
+
+## Lekka UX and onboarding overhaul
+
+- [x] Add first-launch welcome and location-introduction onboarding flow
+- [x] Add guest browsing mode with explicit signed-in state
+- [x] Add polished reusable authentication gates for post, comment, react, save, message, and community actions; follow remains pending because no follow control exists yet
+- [x] Add progressive onboarding interest-selection and profile personalization flow
+- [x] Add persistent Lekka theme personalization with live previews
+- [x] Connect onboarding completion, location preference, interests, and theme to the local experience
+- [x] Replace unauthenticated offline social-action messaging with a join/sign-in prompt
+- [x] Add deterministic tests for onboarding preferences and personalization helpers
+- [x] Run type-checks, tests, and visual verification for the overhaul

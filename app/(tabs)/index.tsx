@@ -8,11 +8,15 @@ import { fetchFeedPosts, subscribeToLocalChanges } from "@/lib/supabase-reposito
 import { useColors } from "@/hooks/use-colors";
 import { FeedSkeletonList } from "@/components/ui/loading-skeleton";
 import { getFetchPresentation } from "@/lib/loading-state";
+import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { AuthGate } from "@/components/auth-gate";
 
 const tabs: FeedTab[] = ["For You", "Nearby", "Trending", "Following"];
 
 export default function HomeScreen() {
   const colors = useColors();
+  const { isAuthenticated } = useSupabaseAuth();
+  const [authGateAction, setAuthGateAction] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FeedTab>("For You");
   const [posts, setPosts] = useState<LocalPost[]>([]);
   const [area, setArea] = useState("Bellville");
@@ -59,6 +63,7 @@ export default function HomeScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-background">
+      {authGateAction && <AuthGate action={authGateAction} onCancel={() => setAuthGateAction(null)} />}
       <FlatList
         data={visiblePosts}
         keyExtractor={(item) => item.id}
@@ -77,19 +82,19 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Fresh from around you</Text><Text style={[styles.sectionMeta, { color: colors.muted }]}>{visiblePosts.length} stories</Text></View>
           {presentation === "content-refreshing" && <View style={[styles.syncPill, { backgroundColor: `${colors.primary}12` }]}><View style={[styles.syncDot, { backgroundColor: colors.primary }]} /><Text style={[styles.syncText, { color: colors.primary }]}>Updating your local feed</Text></View>}
         </>}
-        renderItem={({ item }) => <PostCard post={item} colors={colors} onLike={() => { const next = posts.map((p) => p.id === item.id ? { ...p, likes: p.likes + 1 } : p); setPosts(next); void savePosts(next); }} />}
+        renderItem={({ item }) => <PostCard post={item} colors={colors} onLike={() => { if (!isAuthenticated) { setAuthGateAction("react to posts"); return; } const next = posts.map((p) => p.id === item.id ? { ...p, likes: p.likes + 1 } : p); setPosts(next); void savePosts(next); }} onProtectedAction={(action) => { if (!isAuthenticated) setAuthGateAction(action); }} />}
         ListEmptyComponent={presentation === "skeleton" ? <FeedSkeletonList /> : <View style={styles.empty}><IconSymbol name="location.fill" size={30} color={colors.primary} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nothing matches that search</Text><Text style={[styles.emptyText, { color: colors.muted }]}>Try a different phrase or switch to Nearby.</Text></View>}
       />
     </ScreenContainer>
   );
 }
 
-function PostCard({ post, colors, onLike }: { post: LocalPost; colors: ReturnType<typeof useColors>; onLike: () => void }) {
+function PostCard({ post, colors, onLike, onProtectedAction }: { post: LocalPost; colors: ReturnType<typeof useColors>; onLike: () => void; onProtectedAction: (action: string) => void }) {
   return <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
     <View style={styles.postHeader}><View style={[styles.authorAvatar, { backgroundColor: post.accent }]}><Text style={styles.authorInitials}>{post.initials}</Text></View><View style={styles.authorCopy}><Text style={[styles.author, { color: colors.foreground }]}>{post.author}</Text><View style={styles.metaLine}><Text style={[styles.meta, { color: colors.muted }]}>{post.area} · {post.distance} · {post.time}</Text>{post.trusted && <IconSymbol name="checkmark.seal.fill" size={15} color={colors.primary} />}</View></View><Pressable accessibilityLabel="Post options"><IconSymbol name="chevron.right" size={20} color={colors.muted} /></Pressable></View>
     {post.kind === "alert" && <View style={[styles.alertPill, { backgroundColor: `${post.accent}18` }]}><IconSymbol name="exclamationmark.triangle.fill" size={15} color={post.accent} /><Text style={[styles.alertText, { color: post.accent }]}>LOCAL ALERT · REPORTED</Text></View>}
     {!!post.title && <Text style={[styles.postTitle, { color: colors.foreground }]}>{post.title}</Text>}<Text style={[styles.postBody, { color: colors.foreground }]}>{post.body}</Text>
-    <View style={[styles.postActions, { borderTopColor: colors.border }]}><Pressable onPress={onLike} style={styles.action}><IconSymbol name="heart.fill" size={19} color={colors.muted} /><Text style={[styles.actionText, { color: colors.muted }]}>{post.likes}</Text></Pressable><View style={styles.action}><IconSymbol name="bubble.left.fill" size={19} color={colors.muted} /><Text style={[styles.actionText, { color: colors.muted }]}>{post.comments}</Text></View><View style={styles.action}><IconSymbol name="bookmark.fill" size={19} color={colors.muted} /><Text style={[styles.actionText, { color: colors.muted }]}>Save</Text></View><View style={styles.action}><IconSymbol name="square.and.arrow.up" size={19} color={colors.muted} /></View></View>
+    <View style={[styles.postActions, { borderTopColor: colors.border }]}><Pressable onPress={onLike} style={styles.action}><IconSymbol name="heart.fill" size={19} color={colors.muted} /><Text style={[styles.actionText, { color: colors.muted }]}>{post.likes}</Text></Pressable><Pressable onPress={() => onProtectedAction("comment on posts")} style={styles.action}><IconSymbol name="bubble.left.fill" size={19} color={colors.muted} /><Text style={[styles.actionText, { color: colors.muted }]}>{post.comments}</Text></Pressable><Pressable onPress={() => onProtectedAction("save posts")} style={styles.action}><IconSymbol name="bookmark.fill" size={19} color={colors.muted} /><Text style={[styles.actionText, { color: colors.muted }]}>Save</Text></Pressable><View style={styles.action}><IconSymbol name="square.and.arrow.up" size={19} color={colors.muted} /></View></View>
   </View>;
 }
 

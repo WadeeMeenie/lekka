@@ -7,6 +7,8 @@ export {
   Fonts,
   SchemeColors,
   ThemeColors,
+  ThemePalettes,
   type ColorScheme,
+  type ThemeId,
   type ThemeColorPalette,
 } from "@/lib/_core/theme";
