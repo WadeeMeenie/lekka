@@ -204,3 +204,12 @@
 - [x] Add actionable error handling for post, upload, association, and sync failures
 - [x] Add deterministic tests for error classification and retry state transitions
 - [x] Run TypeScript, lint, and tests; mobile-sized screenshot capture was attempted but unavailable because no preview URL was exposed
+
+## Real device media and offline recovery validation
+
+- [x] Check for an attached Android device and confirmed test-account availability; hardware tooling and a device were unavailable
+- [x] Run real-device media upload, offline, restart, account-isolation, permission, location, and Home sync scenarios if prerequisites exist; blocked and recorded as NOT TESTED
+- [x] Run static regression checks and fix only verified P0-P2 defects; no product defect found
+- [x] Build and verify a fresh release APK with hash and metadata
+- [x] Commit and push any source changes to GitHub without APKs or secrets
+- [x] Record exact PASS, FAIL, BLOCKED, and NOT TESTED evidence
