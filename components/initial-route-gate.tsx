@@ -3,6 +3,7 @@ import { usePathname, useRouter } from "expo-router";
 
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { loadOnboardingState } from "@/lib/onboarding";
+import { isEntryPath, isOnboardingFlowPath } from "@/lib/auth-flow";
 
 export function InitialRouteGate() {
   const router = useRouter();
@@ -14,8 +15,8 @@ export function InitialRouteGate() {
     if (authLoading) return;
     void loadOnboardingState().then((state) => {
       setLoading(false);
-      if (pathname === "/onboarding" || pathname === "/auth" || pathname.startsWith("/oauth")) return;
-      router.replace(state.completed ? "/(tabs)" : "/onboarding");
+      if (isOnboardingFlowPath(pathname)) return;
+      if (isEntryPath(pathname)) router.replace(state.completed ? "/(tabs)" : "/onboarding");
     });
   }, [authLoading, pathname, router]);
 

@@ -269,3 +269,11 @@
 
 — 2026-08-21 build workflow blocker: Expo GitHub build form rejected the current source because /eas.json is absent.
 - [x] Align Expo slug with the existing EAS project slug `lekka` so managed builds can resolve project credentials
+
+## Android authentication and onboarding bugfix
+
+- [x] Fix email sign-in remaining in `Please wait...` after valid credentials
+- [x] Fix onboarding `Let's go` navigation so it reaches the real authenticated experience or a clear guest destination
+- [x] Replace placeholder Google and Microsoft letter badges with proper provider icons
+- [x] Add deterministic regression coverage for auth completion and onboarding navigation
+- [ ] Build and verify an updated internal-test APK
