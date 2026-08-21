@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { type Session } from "@supabase/supabase-js";
 import { requestPasswordReset, signInWithPassword, signUpWithPassword, signOut, supabase } from "@/lib/supabase";
+import { signInWithSupabaseOAuth } from "@/lib/supabase-oauth";
 
 export function useSupabaseAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -21,6 +22,7 @@ export function useSupabaseAuth() {
     isAuthenticated: Boolean(session?.user),
     signIn: signInWithPassword,
     signUp: signUpWithPassword,
+    signInWithProvider: signInWithSupabaseOAuth,
     resetPassword: requestPasswordReset,
     logout: signOut,
   };

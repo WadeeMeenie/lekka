@@ -221,3 +221,24 @@
 - [x] Add a beta feedback form for bug reports and feature requests
 - [x] Add a profile entry point for beta feedback
 - [x] Run migration, TypeScript, lint, tests, visual verification, and push the feedback feature to GitHub; visual route verification remains blocked by first-launch onboarding state
+
+## Smart accounts, business onboarding, and provider authentication
+
+- [x] Audit existing Supabase auth, onboarding, profile, business, and privacy data boundaries
+- [x] Add a privacy-safe personal identity and business-ownership data model with Supabase RLS
+- [x] Add progressive personal and business account-intent onboarding
+- [x] Add Google and Microsoft Supabase OAuth architecture with clear configuration-required states
+- [x] Add personal profile completion for name, date of birth, and optional gender
+- [x] Add dedicated business profile setup with owner-controlled editing and location/service-area fields
+- [x] Add foundation for one user identity with personal and business profile switching
+- [x] Add deterministic tests for validation, account intent, OAuth configuration, privacy, business ownership, and invitations
+- [x] Run database verification, TypeScript, lint, tests, Android bundle export, and truthful route validation
+
+## Managed Android release retry
+
+- [ ] Commit the verified smart-account release candidate and push it to GitHub before managed building
+- [ ] Submit the unchanged commit to a larger managed Android build environment
+- [ ] Verify a fresh arm64-v8a APK for ZIP integrity, package, label, version, ABI, size, and SHA-256
+- [ ] Attach the verified fresh APK as a downloadable artifact
+- [ ] Build, verify, and attach a fresh arm64-v8a Android release APK
+- [ ] Commit and push all source changes to GitHub

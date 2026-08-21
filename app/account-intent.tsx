@@ -1,0 +1,18 @@
+import { router } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+
+import { ScreenContainer } from "@/components/screen-container";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { useColors } from "@/hooks/use-colors";
+import { saveOnboardingState } from "@/lib/onboarding";
+
+export default function AccountIntentScreen() {
+  const colors = useColors();
+  const choose = async (intent: "personal" | "business") => {
+    await saveOnboardingState({ accountIntent: intent, step: "location" });
+    router.replace("/onboarding" as never);
+  };
+  return <ScreenContainer edges={["top", "bottom", "left", "right"]}><View style={styles.content}><Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}><IconSymbol name="chevron.right" size={22} color={colors.foreground} style={styles.backIcon} /><Text style={[styles.backText, { color: colors.foreground }]}>Welcome</Text></Pressable><Text style={[styles.eyebrow, { color: colors.primary }]}>START WITH LEKKA</Text><Text style={[styles.title, { color: colors.foreground }]}>How are you joining?</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Use one secure Lekka identity for your local life and, whenever you need it, your business presence.</Text><Pressable accessibilityRole="button" onPress={() => void choose("personal")} style={({ pressed }) => [styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}><View style={[styles.iconBox, { backgroundColor: colors.primary }]}><IconSymbol name="person.crop.circle.fill" size={25} color="#10211D" /></View><Text style={[styles.cardTitle, { color: colors.foreground }]}>Personal</Text><Text style={[styles.cardBody, { color: colors.muted }]}>Discover what is happening nearby, connect with people, and join local communities.</Text><Text style={[styles.cardAction, { color: colors.primary }]}>Choose personal</Text></Pressable><Pressable accessibilityRole="button" onPress={() => void choose("business")} style={({ pressed }) => [styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}><View style={[styles.iconBox, { backgroundColor: colors.primary }]}><IconSymbol name="briefcase.fill" size={23} color="#10211D" /></View><Text style={[styles.cardTitle, { color: colors.foreground }]}>Business</Text><Text style={[styles.cardBody, { color: colors.muted }]}>Build a local presence, reach nearby customers, and manage your business with the same identity.</Text><Text style={[styles.cardAction, { color: colors.primary }]}>Choose business</Text></Pressable></View></ScreenContainer>;
+}
+
+const styles = StyleSheet.create({ content: { flex: 1, padding: 24 }, back: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 38 }, backIcon: { transform: [{ rotate: "180deg" }] }, backText: { fontSize: 14, fontWeight: "700" }, eyebrow: { fontSize: 11, letterSpacing: 1.2, fontWeight: "900" }, title: { fontSize: 32, lineHeight: 39, fontWeight: "900", marginTop: 9 }, subtitle: { fontSize: 15, lineHeight: 22, marginTop: 9, marginBottom: 22 }, card: { borderWidth: 1, borderRadius: 20, padding: 18, marginBottom: 12 }, iconBox: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center" }, cardTitle: { fontSize: 20, fontWeight: "900", marginTop: 15 }, cardBody: { fontSize: 13, lineHeight: 19, marginTop: 5 }, cardAction: { fontSize: 13, fontWeight: "900", marginTop: 15 }, pressed: { opacity: 0.76, transform: [{ scale: 0.98 }] } });

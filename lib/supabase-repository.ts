@@ -51,7 +51,7 @@ export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPo
   return posts;
 }
 
-export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation }) {
+export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
   if (!isSupabaseConfigured || !supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Please sign in to publish to the community") };
@@ -61,6 +61,7 @@ export async function createPost(input: { kind: LocalPost["kind"]; category?: Ra
     category: input.category,
     title: input.title,
     body: input.body,
+    business_id: input.businessId ?? null,
     area: input.area,
     visibility: input.visibility ?? "nearby",
     approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null,

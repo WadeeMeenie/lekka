@@ -6,6 +6,10 @@ const readMigration = (name: string) => readFileSync(resolve(process.cwd(), `sup
 const coreMigration = readMigration("202608200001_local_radar_core.sql");
 const locationMigration = readMigration("202608200002_location_first_engine.sql");
 const entitiesMigration = readMigration("202608200003_local_entities.sql");
+const smartAccountsMigration = readMigration("202608210006_smart_accounts.sql");
+const businessPostAuthorizationMigration = readMigration("202608210007_business_post_authorization.sql");
+const businessMembershipRolesMigration = readMigration("202608210008_business_membership_roles.sql");
+const businessInvitationsMigration = readMigration("202608210009_business_invitations.sql");
 
 describe("Supabase security migration", () => {
   it("defines the primary product tables", () => {
@@ -43,5 +47,33 @@ describe("Supabase security migration", () => {
     expect(entitiesMigration).toContain("events_location_gix");
     expect(entitiesMigration).toContain("deals_location_gix");
     expect(entitiesMigration).toContain("alter table public.events enable row level security;");
+  });
+
+  it("keeps personal identity private and creates business ownership atomically", () => {
+    expect(smartAccountsMigration).toContain("create table if not exists public.personal_identities");
+    expect(smartAccountsMigration).toContain("alter table public.personal_identities enable row level security;");
+    expect(smartAccountsMigration).toContain("personal_identities_self_read");
+    expect(smartAccountsMigration).toContain("auth.uid() = user_id");
+    expect(smartAccountsMigration).toContain("create or replace function public.create_business_profile");
+    expect(smartAccountsMigration).toContain("values (created_business.id, auth.uid(), 'owner')");
+  });
+
+  it("allows a business identity on a post only for an owner or manager", () => {
+    expect(businessPostAuthorizationMigration).toContain("drop policy if exists posts_author_write");
+    expect(businessPostAuthorizationMigration).toContain("bm.role in ('owner', 'manager')");
+    expect(businessPostAuthorizationMigration).toContain("business_id is null or exists");
+  });
+
+  it("supports the future owner, admin, and staff access vocabulary without breaking legacy memberships", () => {
+    expect(businessMembershipRolesMigration).toContain("'owner', 'admin', 'staff', 'manager', 'member'");
+    expect(businessMembershipRolesMigration).toContain("bm.role in ('owner', 'admin', 'manager')");
+  });
+
+  it("binds business invitations to the recipient email and secure acceptance RPC", () => {
+    expect(businessInvitationsMigration).toContain("create table if not exists public.business_invitations");
+    expect(businessInvitationsMigration).toContain("alter table public.business_invitations enable row level security;");
+    expect(businessInvitationsMigration).toContain("lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))");
+    expect(businessInvitationsMigration).toContain("create or replace function public.accept_business_invitation");
+    expect(businessInvitationsMigration).toContain("current_email <> lower(invitation.email)");
   });
 });

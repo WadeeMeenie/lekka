@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import type { DeviceLocation } from "@/lib/location";
 import type { ThemeId } from "@/lib/_core/theme";
+import type { AccountIntent } from "@/lib/account";
 
 export const ONBOARDING_KEY = "lekka/onboarding/v1";
 
@@ -14,6 +15,7 @@ export const LEKKA_INTERESTS = [
 export type OnboardingState = {
   completed: boolean;
   step: "welcome" | "location" | "personalize" | "account";
+  accountIntent: AccountIntent | null;
   interests: string[];
   themeId: ThemeId;
   location: DeviceLocation | null;
@@ -24,6 +26,7 @@ export type OnboardingState = {
 export const defaultOnboardingState: OnboardingState = {
   completed: false,
   step: "welcome",
+  accountIntent: null,
   interests: [],
   themeId: "original",
   location: null,

@@ -86,6 +86,8 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    ["expo-web-browser", { experimentalLauncherActivity: true }],
+    "expo-mail-composer",
     ["expo-location", { locationWhenInUsePermission: "Allow Lekka to use your approximate location to show what is happening nearby." }],
     [
       "expo-audio",

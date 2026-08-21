@@ -13,6 +13,7 @@ export type PendingPostDraft = {
   area: string;
   visibility: "nearby" | "public";
   location?: DeviceLocation;
+  businessId?: string;
   createdAt: number;
   mediaUri?: string;
   mediaType?: string;
