@@ -169,3 +169,13 @@
 - [x] Add deterministic tests for cursors, pagination boundaries, and duplicate-safe page merging; device/media retry remains not device-tested
 - [x] Run available database/security/session validation and record unavailable device and two-account tests honestly
 - [x] Commit and push the validation and hardening changes to GitHub
+
+## Final real-world validation and APK delivery
+
+- [x] Audit current HEAD, working tree, Supabase/Expo/Android configuration, and existing APK artifacts
+- [x] Attempt available two-account, storage, offline, device, location, moderation, and notification validation without fabricating evidence; unavailable sessions/devices are explicitly marked NOT TESTED
+- [x] Run TypeScript, deterministic, pagination, auth-related, and security tests
+- [x] Build a fresh release APK from the current source
+- [x] Verify APK existence, ZIP/APK structure, package, label, version, size, and SHA-256
+- [x] Preserve the actual APK as a downloadable artifact
+- [x] Commit and push all source and validation-report changes to GitHub
