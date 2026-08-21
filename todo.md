@@ -257,10 +257,10 @@
 
 ## Dedicated internal-debug Android variant
 
-- [ ] Audit the current Gradle build types and safe managed-build availability for an internal-test variant
-- [ ] Add a dedicated debug-signed `internalDebug` variant while leaving production release signing unresolved
-- [ ] Validate the Gradle configuration without embedding or committing any keystore or credential
-- [ ] Commit and push the internal-debug configuration change to GitHub
-- [ ] Build and verify a current-commit internal-test APK only in a larger managed environment, or record the exact environment limitation
+- [x] Audit the current Gradle build types and safe managed-build availability for an internal-test variant
+- [x] Add a dedicated debug-signed `internalDebug` variant while leaving production release signing unresolved
+- [x] Validate the Gradle configuration without embedding or committing any keystore or credential
+- [x] Commit and push the internal-debug configuration change to GitHub
+- [x] Build and verify a current-commit internal-test APK only in a larger managed environment, or record the exact environment limitation
 - [ ] Build, verify, and attach a fresh arm64-v8a Android release APK
 - [ ] Commit and push all source changes to GitHub

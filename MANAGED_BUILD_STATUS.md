@@ -28,4 +28,10 @@ The restricted connection has completed: Expo reports `WadeeMeenie/lekka` as con
 
 The managed build form is available for the connected repository. It accepts a Git ref and a production build profile, but reports that no Android signing credentials are stored in EAS and that an Android build would fail until credentials are configured. The form leaves store submission disabled, so any build will produce a distribution artifact only.
 
+## Internal-debug build limitation
+
+The tracked configuration now provides an `internalDebug` Android build type with the launcher label **Lekka Internal Test**. It is intended for debug-signed internal device testing only, while the production `release` type deliberately has no signing fallback.
+
+The current larger managed build environment cannot build this variant under the approved credential constraints: it does not possess the local debug keystore and the keystore must not be uploaded. A managed environment also cannot create or use a production credential because no genuine production/upload keystore exists and credential generation is not approved. Consequently, **MANAGED BUILD ENVIRONMENT UNAVAILABLE** for an internal-test APK until an approved managed signing approach or a larger private build worker is supplied.
+
 The confirmed Expo-managed Android credential wizard is open. It has been given the existing application identifier `com.app.localradarsa`; no package identity, source code, user experience, or store-submission setting has been changed.
