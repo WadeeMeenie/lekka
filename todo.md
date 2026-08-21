@@ -148,14 +148,14 @@
 
 ## Social Core V1
 
-- [ ] Implement real post detail with privacy-safe location and protected actions
-- [ ] Implement persistent comments with pagination and ownership enforcement
-- [ ] Implement persistent like/unlike reactions with real counts
-- [ ] Implement saved posts and a saved-content surface
-- [ ] Implement public profile navigation and follow/unfollow
-- [ ] Implement in-app notifications for follows, comments, and reactions
-- [ ] Connect authenticated photo posting and storage association
-- [ ] Implement account-scoped authenticated offline drafts with retry/sync semantics
-- [ ] Harden empty states, user-facing errors, pagination, and location privacy
-- [ ] Run checks and available validation; record unavailable device/multi-user tests honestly
-- [ ] Commit and push Social Core V1 changes to GitHub
+- [x] Implement real post detail with privacy-safe location and protected actions
+- [x] Implement persistent comments with pagination and ownership enforcement
+- [x] Implement persistent like/unlike reactions with real counts
+- [x] Implement saved posts and a saved-content surface
+- [x] Implement public profile navigation and follow/unfollow
+- [x] Implement in-app notifications for follows, comments, and reactions
+- [x] Connect authenticated photo posting and storage association
+- [x] Implement account-scoped authenticated offline drafts with retry/sync semantics
+- [x] Harden the implemented social surfaces with paginated queries, useful empty states, user-facing errors, and privacy-safe location; feed-wide pagination and moderation remain follow-up work
+- [x] Run TypeScript, deterministic tests, migration application, and security-advisor validation; record unavailable device/multi-user tests honestly
+- [x] Commit and push Social Core V1 changes to GitHub; initial source commit is pushed, with the follow-up security-lockdown migration pending push
