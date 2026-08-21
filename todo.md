@@ -237,8 +237,30 @@
 ## Managed Android release retry
 
 - [ ] Commit the verified smart-account release candidate and push it to GitHub before managed building
+- [ ] Inspect permitted workspace locations for an existing production/upload Lekka Android signing keystore without exposing secrets; exclude debug credentials
+- [ ] Reuse an existing production signing credential only; do not generate, rotate, or substitute a debug keystore
 - [ ] Submit the unchanged commit to a larger managed Android build environment
 - [ ] Verify a fresh arm64-v8a APK for ZIP integrity, package, label, version, ABI, size, and SHA-256
 - [ ] Attach the verified fresh APK as a downloadable artifact
+
+## Current-source local release APK
+
+- [ ] Confirm commit `c52e0c0c38cd62978e31ed74c70808fbdfcec87b` is the unchanged local Android build source
+- [ ] Build the current source through the proven constrained local arm64-v8a Gradle release path without signing changes
+- [ ] Verify the fresh APK’s ZIP integrity, metadata, ABI, size, and SHA-256
+- [ ] Attach the verified fresh APK as a downloadable artifact
+
+## Authorized debug-signed internal-test APK
+
+- [ ] Build commit `c52e0c0c38cd62978e31ed74c70808fbdfcec87b` as a debug-signed internal-test APK using the existing local release configuration
+- [ ] Verify and attach the debug-signed internal-test APK without representing it as production-signed or Play Store ready
+
+## Dedicated internal-debug Android variant
+
+- [ ] Audit the current Gradle build types and safe managed-build availability for an internal-test variant
+- [ ] Add a dedicated debug-signed `internalDebug` variant while leaving production release signing unresolved
+- [ ] Validate the Gradle configuration without embedding or committing any keystore or credential
+- [ ] Commit and push the internal-debug configuration change to GitHub
+- [ ] Build and verify a current-commit internal-test APK only in a larger managed environment, or record the exact environment limitation
 - [ ] Build, verify, and attach a fresh arm64-v8a Android release APK
 - [ ] Commit and push all source changes to GitHub
