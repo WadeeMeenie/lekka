@@ -9,7 +9,7 @@ type IconName =
   | "slider.horizontal.3" | "arrow.up.right" | "person.crop.circle.fill" | "gearshape.fill"
   | "photo.fill" | "exclamationmark.triangle.fill" | "calendar" | "tag.fill" | "briefcase.fill"
   | "cart.fill" | "wrench.and.screwdriver.fill" | "message.fill" | "person.3.fill" | "clock.fill"
-  | "shield.fill" | "location" | "plus" | "close" | "arrow.right";
+  | "shield.fill" | "location" | "plus" | "close" | "arrow.right" | "ellipsis" | "trash.fill";
 
 type MaterialName = ComponentProps<typeof MaterialIcons>["name"];
 const MAPPING: Record<IconName, MaterialName> = {
@@ -19,7 +19,7 @@ const MAPPING: Record<IconName, MaterialName> = {
   "slider.horizontal.3": "tune", "arrow.up.right": "north-east", "person.crop.circle.fill": "account-circle", "gearshape.fill": "settings",
   "photo.fill": "photo-library", "exclamationmark.triangle.fill": "warning-amber", calendar: "event", "tag.fill": "sell", "briefcase.fill": "work-outline",
   "cart.fill": "shopping-bag", "wrench.and.screwdriver.fill": "handyman", "message.fill": "forum", "person.3.fill": "groups", "clock.fill": "schedule",
-  "shield.fill": "shield", location: "location-on", plus: "add", close: "close", "arrow.right": "arrow-forward",
+  "shield.fill": "shield", location: "location-on", plus: "add", close: "close", "arrow.right": "arrow-forward", ellipsis: "more-horiz", "trash.fill": "delete-outline",
 };
 
 export function IconSymbol({ name, size = 24, color, style, weight: _weight }: { name: IconName; size?: number; color: string | OpaqueColorValue; style?: StyleProp<TextStyle>; weight?: string }) {

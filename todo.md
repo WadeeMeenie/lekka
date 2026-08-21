@@ -139,3 +139,23 @@
 - [x] Replace unauthenticated offline social-action messaging with a join/sign-in prompt
 - [x] Add deterministic tests for onboarding preferences and personalization helpers
 - [x] Run type-checks, tests, and visual verification for the overhaul
+
+## Product reality audit
+
+- [x] Complete source-grounded Lekka product and architecture audit from the attached brief
+- [x] Document actual flows, backend connections, offline behavior, security boundaries, placeholders, incomplete features, and device-verification gaps
+- [x] Deliver audit report without modifying code, creating seed data, or building an APK
+
+## Social Core V1
+
+- [ ] Implement real post detail with privacy-safe location and protected actions
+- [ ] Implement persistent comments with pagination and ownership enforcement
+- [ ] Implement persistent like/unlike reactions with real counts
+- [ ] Implement saved posts and a saved-content surface
+- [ ] Implement public profile navigation and follow/unfollow
+- [ ] Implement in-app notifications for follows, comments, and reactions
+- [ ] Connect authenticated photo posting and storage association
+- [ ] Implement account-scoped authenticated offline drafts with retry/sync semantics
+- [ ] Harden empty states, user-facing errors, pagination, and location privacy
+- [ ] Run checks and available validation; record unavailable device/multi-user tests honestly
+- [ ] Commit and push Social Core V1 changes to GitHub
