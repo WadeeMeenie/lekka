@@ -179,3 +179,12 @@
 - [x] Verify APK existence, ZIP/APK structure, package, label, version, size, and SHA-256
 - [x] Preserve the actual APK as a downloadable artifact
 - [x] Commit and push all source and validation-report changes to GitHub
+
+## Release-candidate audit and consistency check
+
+- [x] Audit GitHub HEAD, working tree, branch, release configuration, migrations, RLS, and storage policy consistency
+- [x] Re-verify APK file, manifest, ABI, native libraries, permissions, and expected SHA-256
+- [x] Run secret and GitHub release-hygiene checks without printing sensitive values
+- [x] Audit location privacy, offline account isolation, Social Core, feed, media, UX, South African relevance, and performance risks
+- [x] Reproduce the release build and document byte-for-byte reproducibility honestly
+- [x] Produce conservative scores, release status, blockers, and next actions without changing code or database
