@@ -262,10 +262,10 @@
 - [x] Validate the Gradle configuration without embedding or committing any keystore or credential
 - [x] Commit and push the internal-debug configuration change to GitHub
 - [x] Build and verify a current-commit internal-test APK only in a larger managed environment, or record the exact environment limitation
-- [ ] Build, verify, and attach a fresh arm64-v8a Android release APK
+- [x] Build, verify, and attach a fresh arm64-v8a Android release APK
 - [ ] Commit and push all source changes to GitHub
 - [x] Add minimal EAS preview APK build profile required by the managed GitHub builder
-- [ ] Submit and verify the managed internal-test APK after the EAS project-linkage fix
+- [x] Submit and verify the managed internal-test APK after the EAS project-linkage fix
 
 — 2026-08-21 build workflow blocker: Expo GitHub build form rejected the current source because /eas.json is absent.
 - [x] Align Expo slug with the existing EAS project slug `lekka` so managed builds can resolve project credentials
