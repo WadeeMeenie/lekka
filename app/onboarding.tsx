@@ -45,7 +45,7 @@ export default function OnboardingScreen() {
     setState(next);
   };
 
-  const useLocation = async () => {
+  const requestLocation = async () => {
     setBusy(true);
     try {
       const result = await requestApproximateLocation(state.area);
@@ -71,7 +71,7 @@ export default function OnboardingScreen() {
   }
 
   if (state.step === "location") {
-    return <ScreenContainer edges={["top", "bottom", "left", "right"]}><ScrollView contentContainerStyle={styles.scrollContent}><Progress step={1} colors={colors} /><BrandMark colors={colors} /><Text style={[styles.title, { color: colors.foreground }]}>Your local world follows you.</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Use your location to discover what’s happening around you. We use it to find nearby content, never to publish your exact location.</Text><View style={[styles.privacyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="location.fill" size={22} color={colors.primary} /><Text style={[styles.privacyText, { color: colors.foreground }]}>Lekka uses foreground location only. You can explore manually or change this later.</Text></View><Pressable disabled={busy} onPress={() => void useLocation()} style={({ pressed }) => [styles.primaryButton, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.84 : 1 }]}><Text style={styles.primaryText}>{busy ? "Finding your area…" : "Use my location"}</Text></Pressable><Pressable onPress={() => void goTo("personalize")} style={styles.outlineButton}><Text style={[styles.outlineText, { color: colors.foreground }]}>Not now</Text></Pressable></ScrollView></ScreenContainer>;
+    return <ScreenContainer edges={["top", "bottom", "left", "right"]}><ScrollView contentContainerStyle={styles.scrollContent}><Progress step={1} colors={colors} /><BrandMark colors={colors} /><Text style={[styles.title, { color: colors.foreground }]}>Your local world follows you.</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Use your location to discover what’s happening around you. We use it to find nearby content, never to publish your exact location.</Text><View style={[styles.privacyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="location.fill" size={22} color={colors.primary} /><Text style={[styles.privacyText, { color: colors.foreground }]}>Lekka uses foreground location only. You can explore manually or change this later.</Text></View><Pressable disabled={busy} onPress={() => void requestLocation()} style={({ pressed }) => [styles.primaryButton, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.84 : 1 }]}><Text style={styles.primaryText}>{busy ? "Finding your area…" : "Use my location"}</Text></Pressable><Pressable onPress={() => void goTo("personalize")} style={styles.outlineButton}><Text style={[styles.outlineText, { color: colors.foreground }]}>Not now</Text></Pressable></ScrollView></ScreenContainer>;
   }
 
   if (state.step === "personalize") {

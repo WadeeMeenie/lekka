@@ -188,3 +188,11 @@
 - [x] Audit location privacy, offline account isolation, Social Core, feed, media, UX, South African relevance, and performance risks
 - [x] Reproduce the release build and document byte-for-byte reproducibility honestly
 - [x] Produce conservative scores, release status, blockers, and next actions without changing code or database
+
+## Internal beta real-world validation
+
+- [x] Read the complete internal-beta validation brief and inventory available device/account/session resources
+- [x] Attempt supported physical-device, two-account, storage, offline, location, media, notification, moderation, and private-community checks without fabricating results; unavailable device/accounts are explicitly BLOCKED/NOT TESTED
+- [x] Run automated and static validation and fix only the confirmed onboarding lint defect; remaining lint items are warnings
+- [x] Record exact blockers and explicit NOT TESTED results for unavailable runtime prerequisites
+- [x] Write and save the internal-beta validation record and checkpoint
