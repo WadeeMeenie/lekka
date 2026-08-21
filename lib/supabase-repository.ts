@@ -2,6 +2,7 @@ import { File } from "expo-file-system/next";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DeviceLocation } from "@/lib/location";
 import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";
+import type { SocialPost } from "@/lib/social-repository";
 
 function toLocalPost(row: any): LocalPost {
   return {
@@ -104,4 +105,42 @@ export function subscribeToLocalChanges(onChange: () => void) {
 export async function attachPostMedia(input: { postId: string; storagePath: string; mediaType: "image" | "video"; width?: number; height?: number }) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
   return supabase.from("post_media").insert({ post_id: input.postId, storage_path: input.storagePath, media_type: input.mediaType, width: input.width ?? null, height: input.height ?? null, sort_order: 0 }).select().single();
+}
+
+
+export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean };
+
+export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20): Promise<FeedPage> {
+  const cached = await loadPosts();
+  if (!isSupabaseConfigured || !supabase) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
+  const cursorParts = cursor ? cursor.split("|") : [];
+  const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null;
+  const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null;
+  let result: any;
+  if (location) {
+    result = await supabase.rpc("nearby_feed_posts_page", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000, cursor_created_at: cursorCreatedAt, cursor_id: cursorId, page_size: pageSize });
+  } else {
+    let query = supabase.from("posts").select("id, kind, category, title, body, area, trust_score, created_at, profiles(display_name)").order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
+    if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+    result = await query;
+  }
+  if (result.error || !result.data) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
+  const rows = result.data as Array<{ id: string; created_at: string }>;
+  const posts = rows.map(toLocalPost);
+  const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null;
+  return { posts, nextCursor: next, hasMore: Boolean(next) };
+}
+
+export async function listPublicProfilePosts(profileId: string, cursor: string | null, pageSize = 20) {
+  if (!supabase) return { data: [] as SocialPost[], nextCursor: null as string | null, hasMore: false, error: new Error("Backend is not configured") };
+  const cursorParts = cursor ? cursor.split("|") : [];
+  const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null;
+  const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null;
+  let query = supabase.from("posts").select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, bio, profile_image_path, interests, home_area), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)").eq("author_id", profileId).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
+  if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+  const { data, error } = await query;
+  const rows = (data ?? []) as unknown as SocialPost[];
+  const last = rows[rows.length - 1];
+  const nextCursor = rows.length === pageSize && last ? `${last.created_at}|${last.id}` : null;
+  return { data: rows, nextCursor, hasMore: Boolean(nextCursor), error };
 }

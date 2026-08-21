@@ -5,7 +5,8 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { FeedTab, LocalPost, loadPosts, loadSettings, rankPosts, savePosts } from "@/lib/local-radar";
 import { DeviceLocation, getLastKnownOrCurrentLocation } from "@/lib/location";
-import { fetchFeedPosts, subscribeToLocalChanges } from "@/lib/supabase-repository";
+import { fetchFeedPage, subscribeToLocalChanges } from "@/lib/supabase-repository";
+import { getUnreadNotificationCount } from "@/lib/social-repository";
 import { useColors } from "@/hooks/use-colors";
 import { FeedSkeletonList } from "@/components/ui/loading-skeleton";
 import { getFetchPresentation } from "@/lib/loading-state";
@@ -27,24 +28,29 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     let active = true;
     void (async () => {
-      if (user) await syncPendingPostDrafts(user.id);
+      if (user) { await syncPendingPostDrafts(user.id); const unread = await getUnreadNotificationCount(); if (active) setUnreadCount(unread.data); }
       const settings = await loadSettings();
       const location = await getLastKnownOrCurrentLocation(settings.area);
       if (!active) return;
       const liveLocation = location.status === "granted" ? location.location : undefined;
       if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); }
       else setArea(settings.area);
-      setPosts(await fetchFeedPosts(liveLocation));
+      const firstPage = await fetchFeedPage(liveLocation, null);
+      setPosts(firstPage.posts);
+      setNextCursor(firstPage.nextCursor);
       if (active) setInitialLoading(false);
     })().catch(() => { if (active) setInitialLoading(false); });
     const unsubscribe = subscribeToLocalChanges(() => {
       setBackgroundRefreshing(true);
-      void fetchFeedPosts(deviceLocation ?? undefined)
-        .then((next) => { if (active) setPosts(next); })
+      void fetchFeedPage(deviceLocation ?? undefined, null)
+        .then((next) => { if (active) { setPosts(next.posts); setNextCursor(next.nextCursor); } })
         .finally(() => { if (active) setBackgroundRefreshing(false); });
     });
     return () => { active = false; unsubscribe(); };
@@ -57,10 +63,21 @@ export default function HomeScreen() {
       const location = await getLastKnownOrCurrentLocation(settings.area);
       const liveLocation = location.status === "granted" ? location.location : undefined;
       if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); }
-      setPosts(await fetchFeedPosts(liveLocation));
+      const firstPage = await fetchFeedPage(liveLocation, null);
+      setPosts(firstPage.posts);
+      setNextCursor(firstPage.nextCursor);
     } finally {
       setRefreshing(false);
     }
+  };
+  const loadMore = async () => {
+    if (!nextCursor || loadingMore) return;
+    setLoadingMore(true);
+    try {
+      const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor);
+      setPosts((current) => { const seen = new Set(current.map((post) => post.id)); return [...current, ...page.posts.filter((post) => !seen.has(post.id))]; });
+      setNextCursor(page.nextCursor);
+    } finally { setLoadingMore(false); }
   };
   const presentation = getFetchPresentation({ isInitialLoading: initialLoading, isRefreshing: refreshing || backgroundRefreshing, hasData: posts.length > 0 });
 
@@ -70,6 +87,9 @@ export default function HomeScreen() {
       <FlatList
         data={visiblePosts}
         keyExtractor={(item) => item.id}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.55}
+        ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: 18 }} /> : null}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
         contentContainerStyle={styles.content}
         ListHeaderComponent={<>
@@ -78,7 +98,7 @@ export default function HomeScreen() {
               <View style={styles.locationLine}><IconSymbol name="location.fill" size={16} color={colors.primary} /><Text style={[styles.eyebrow, { color: colors.primary }]}>YOUR LOCAL RADAR</Text></View>
               <Text style={[styles.title, { color: colors.foreground }]}>What’s happening in {area}?</Text>
             </View>
-            <View style={styles.headerActions}><Pressable accessibilityLabel="Notifications" onPress={() => router.push("/notifications" as never)} style={styles.iconButton}><IconSymbol name="bell.fill" size={23} color={colors.foreground} /></Pressable><Pressable accessibilityLabel="Profile" style={styles.avatar}><Text style={styles.avatarText}>LM</Text></Pressable></View>
+            <View style={styles.headerActions}><Pressable accessibilityLabel="Notifications" onPress={() => router.push("/notifications" as never)} style={styles.iconButton}><IconSymbol name="bell.fill" size={23} color={colors.foreground} />{unreadCount > 0 && <View style={[styles.badge, { backgroundColor: colors.error }]}><Text style={styles.badgeText}>{unreadCount > 99 ? "99+" : unreadCount}</Text></View>}</Pressable><Pressable accessibilityLabel="Profile" style={styles.avatar}><Text style={styles.avatarText}>LM</Text></Pressable></View>
           </View>
           <View style={[styles.searchBox, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="magnifyingglass" size={20} color={colors.muted} /><TextInput value={query} onChangeText={setQuery} placeholder="Search your local area" placeholderTextColor={colors.muted} style={[styles.searchInput, { color: colors.foreground }]} /></View>
           <FlatList data={tabs} horizontal showsHorizontalScrollIndicator={false} keyExtractor={(item) => item} contentContainerStyle={styles.tabRow} renderItem={({ item }) => <Pressable onPress={() => setActiveTab(item)} style={[styles.tab, activeTab === item && { backgroundColor: colors.foreground }]}><Text style={[styles.tabText, { color: activeTab === item ? colors.background : colors.muted }]}>{item}</Text></Pressable>} />
@@ -101,5 +121,5 @@ function PostCard({ post, colors, onOpen, onLike, onProtectedAction }: { post: L
   </Pressable>;
 }
 
-const styles = StyleSheet.create({ content: { padding: 20, paddingBottom: 30 }, headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }, locationLine: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }, eyebrow: { fontSize: 11, fontWeight: "800", letterSpacing: 1.2 }, title: { fontSize: 27, lineHeight: 33, fontWeight: "800", maxWidth: 280 }, headerActions: { flexDirection: "row", alignItems: "center", gap: 10 }, iconButton: { padding: 9 }, avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#E9A23B", alignItems: "center", justifyContent: "center" }, avatarText: { color: "#10211D", fontWeight: "800", fontSize: 12 }, searchBox: { height: 48, borderRadius: 16, borderWidth: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, gap: 9 }, searchInput: { flex: 1, fontSize: 15 }, tabRow: { gap: 8, paddingVertical: 18 }, tab: { borderRadius: 20, paddingHorizontal: 15, paddingVertical: 9 }, tabText: { fontSize: 13, fontWeight: "700" }, sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }, sectionTitle: { fontSize: 18, fontWeight: "800" }, sectionMeta: { fontSize: 12 }, card: { borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 12 }, postHeader: { flexDirection: "row", alignItems: "center", gap: 10 }, authorAvatar: { width: 38, height: 38, borderRadius: 13, alignItems: "center", justifyContent: "center" }, authorInitials: { color: "#FFF", fontSize: 12, fontWeight: "800" }, authorCopy: { flex: 1 }, author: { fontWeight: "800", fontSize: 14 }, metaLine: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }, meta: { fontSize: 11 }, alertPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 6, marginTop: 14 }, alertText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.4 }, postTitle: { fontSize: 17, fontWeight: "800", lineHeight: 22, marginTop: 14 }, postBody: { fontSize: 14, lineHeight: 21, marginTop: 7 }, postActions: { flexDirection: "row", alignItems: "center", gap: 18, borderTopWidth: 1, marginTop: 15, paddingTop: 13 }, action: { flexDirection: "row", alignItems: "center", gap: 5 }, actionText: { fontSize: 12, fontWeight: "600" }, empty: { alignItems: "center", paddingVertical: 70, gap: 8 }, emptyTitle: { fontSize: 18, fontWeight: "800" }, emptyText: { fontSize: 14 }, syncPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 12 }, syncDot: { width: 7, height: 7, borderRadius: 4 }, syncText: { fontSize: 11, fontWeight: "700" },
+const styles = StyleSheet.create({ content: { padding: 20, paddingBottom: 30 }, headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 18 }, locationLine: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 }, eyebrow: { fontSize: 11, fontWeight: "800", letterSpacing: 1.2 }, title: { fontSize: 27, lineHeight: 33, fontWeight: "800", maxWidth: 280 }, headerActions: { flexDirection: "row", alignItems: "center", gap: 10 }, iconButton: { padding: 9, position: "relative" }, badge: { position: "absolute", top: 2, right: 0, minWidth: 17, height: 17, borderRadius: 9, alignItems: "center", justifyContent: "center", paddingHorizontal: 3 }, badgeText: { color: "#FFF", fontSize: 9, fontWeight: "900" }, avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: "#E9A23B", alignItems: "center", justifyContent: "center" }, avatarText: { color: "#10211D", fontWeight: "800", fontSize: 12 }, searchBox: { height: 48, borderRadius: 16, borderWidth: 1, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, gap: 9 }, searchInput: { flex: 1, fontSize: 15 }, tabRow: { gap: 8, paddingVertical: 18 }, tab: { borderRadius: 20, paddingHorizontal: 15, paddingVertical: 9 }, tabText: { fontSize: 13, fontWeight: "700" }, sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }, sectionTitle: { fontSize: 18, fontWeight: "800" }, sectionMeta: { fontSize: 12 }, card: { borderRadius: 20, borderWidth: 1, padding: 16, marginBottom: 12 }, postHeader: { flexDirection: "row", alignItems: "center", gap: 10 }, authorAvatar: { width: 38, height: 38, borderRadius: 13, alignItems: "center", justifyContent: "center" }, authorInitials: { color: "#FFF", fontSize: 12, fontWeight: "800" }, authorCopy: { flex: 1 }, author: { fontWeight: "800", fontSize: 14 }, metaLine: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 }, meta: { fontSize: 11 }, alertPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 5, borderRadius: 8, paddingHorizontal: 9, paddingVertical: 6, marginTop: 14 }, alertText: { fontSize: 10, fontWeight: "800", letterSpacing: 0.4 }, postTitle: { fontSize: 17, fontWeight: "800", lineHeight: 22, marginTop: 14 }, postBody: { fontSize: 14, lineHeight: 21, marginTop: 7 }, postActions: { flexDirection: "row", alignItems: "center", gap: 18, borderTopWidth: 1, marginTop: 15, paddingTop: 13 }, action: { flexDirection: "row", alignItems: "center", gap: 5 }, actionText: { fontSize: 12, fontWeight: "600" }, empty: { alignItems: "center", paddingVertical: 70, gap: 8 }, emptyTitle: { fontSize: 18, fontWeight: "800" }, emptyText: { fontSize: 14 }, syncPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 12 }, syncDot: { width: 7, height: 7, borderRadius: 4 }, syncText: { fontSize: 11, fontWeight: "700" },
 });

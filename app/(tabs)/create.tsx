@@ -43,16 +43,21 @@ export default function CreateScreen() {
     const remote = await createPost({ kind, category: type === "Local alert" ? "Alert" : undefined, title: type === "Local alert" ? "Community alert" : undefined, body: text.trim(), area, location: liveLocation ?? undefined, visibility: audience === "Public" ? "public" : "nearby" });
     if (!remote.error) {
       if (selectedImage && remote.data?.id && user) {
-        const storagePath = `${user.id}/${remote.data.id}/${Date.now()}.jpg`;
-        const upload = await uploadMedia(selectedImage.uri, storagePath, selectedImage.mimeType ?? "image/jpeg");
-        if (upload.error) { setPublishing(false); Alert.alert("Couldn’t upload", "Your post was created without the photo. You can retry the photo from the post detail milestone."); return; }
-        const media = await attachPostMedia({ postId: remote.data.id, storagePath, mediaType: "image", width: selectedImage.width, height: selectedImage.height });
-        if (media.error) { setPublishing(false); Alert.alert("Couldn’t attach photo", "The post was created, but the photo association failed."); return; }
+        const storagePath = `${user.id}/${remote.data.id}/primary-media`;
+        try {
+          await uploadMedia(selectedImage.uri, storagePath, selectedImage.mimeType ?? "image/jpeg");
+          const media = await attachPostMedia({ postId: remote.data.id, storagePath, mediaType: "image", width: selectedImage.width, height: selectedImage.height });
+          if (media.error) throw media.error;
+        } catch {
+          setPublishing(false);
+          await enqueuePostDraft({ ownerId: user.id, kind, category: type === "Local alert" ? "Alert" : undefined, title: type === "Local alert" ? "Community alert" : undefined, body: text.trim(), area, visibility: audience === "Public" ? "public" : "nearby", location: liveLocation ?? undefined, mediaUri: selectedImage.uri, mediaType: selectedImage.mimeType ?? "image/jpeg", mediaWidth: selectedImage.width, mediaHeight: selectedImage.height, postId: remote.data.id, storagePath });
+          setText(""); setSelectedImage(null); setPublishing(false); Alert.alert("Saved as draft", "The post is live, and the photo will retry when Lekka reconnects."); return;
+        }
       }
       setText(""); setSelectedImage(null); setPublishing(false); Alert.alert("Published", `Your ${type.toLowerCase()} is now visible to ${audience.toLowerCase()}.`); return;
     }
     if (user) {
-      await enqueuePostDraft({ ownerId: user.id, kind, category: type === "Local alert" ? "Alert" : undefined, title: type === "Local alert" ? "Community alert" : undefined, body: text.trim(), area, visibility: audience === "Public" ? "public" : "nearby", location: liveLocation ?? undefined });
+      await enqueuePostDraft({ ownerId: user.id, kind, category: type === "Local alert" ? "Alert" : undefined, title: type === "Local alert" ? "Community alert" : undefined, body: text.trim(), area, visibility: audience === "Public" ? "public" : "nearby", location: liveLocation ?? undefined, mediaUri: selectedImage?.uri, mediaType: selectedImage?.mimeType ?? undefined, mediaWidth: selectedImage?.width, mediaHeight: selectedImage?.height });
     }
     setText(""); setPublishing(false); Alert.alert("Saved as draft", "Your authenticated draft will retry when Lekka reconnects.");
   };

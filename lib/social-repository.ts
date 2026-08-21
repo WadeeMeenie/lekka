@@ -200,3 +200,34 @@ export async function createSignedMediaUrl(path: string) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
   return supabase.storage.from("local-radar-media").createSignedUrl(path, 60 * 60);
 }
+
+
+export async function getUnreadNotificationCount() {
+  if (!supabase) return { data: 0, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: 0, error: new Error("Please sign in") };
+  const result = await supabase.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", user.id).is("read_at", null);
+  return { data: result.count ?? 0, error: result.error };
+}
+
+export async function reportContent(input: { postId?: string; commentId?: string; profileId?: string; reason: string }) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  return supabase.from("reports").insert({ reporter_id: user.id, post_id: input.postId ?? null, comment_id: input.commentId ?? null, profile_id: input.profileId ?? null, reason: input.reason });
+}
+
+export async function toggleBlock(profileId: string) {
+  if (!supabase) return { blocked: false, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { blocked: false, error: new Error("Please sign in") };
+  if (user.id === profileId) return { blocked: false, error: new Error("You cannot block yourself") };
+  const existing = await supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id).eq("blocked_id", profileId).maybeSingle();
+  if (existing.error) return { blocked: false, error: existing.error };
+  if (existing.data) {
+    const result = await supabase.from("blocks").delete().eq("blocker_id", user.id).eq("blocked_id", profileId);
+    return { blocked: false, error: result.error };
+  }
+  const result = await supabase.from("blocks").insert({ blocker_id: user.id, blocked_id: profileId });
+  return { blocked: true, error: result.error };
+}

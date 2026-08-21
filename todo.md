@@ -159,3 +159,13 @@
 - [x] Harden the implemented social surfaces with paginated queries, useful empty states, user-facing errors, and privacy-safe location; feed-wide pagination and moderation remain follow-up work
 - [x] Run TypeScript, deterministic tests, migration application, and security-advisor validation; record unavailable device/multi-user tests honestly
 - [x] Commit and push Social Core V1 changes to GitHub; initial source commit is pushed, with the follow-up security-lockdown migration pending push
+
+## Social Core V1 production validation and feed hardening
+
+- [x] Complete the validation brief and inventory available two-account, device, storage, and database evidence; two-account and physical-device evidence remain unavailable
+- [x] Implement stable cursor pagination for the location-first Home feed
+- [x] Implement paginated public-profile post lists
+- [x] Harden photo upload failure recovery, retry, draft preservation, and duplicate prevention; orphan cleanup remains limited by available storage API
+- [x] Add deterministic tests for cursors, pagination boundaries, and duplicate-safe page merging; device/media retry remains not device-tested
+- [x] Run available database/security/session validation and record unavailable device and two-account tests honestly
+- [x] Commit and push the validation and hardening changes to GitHub
