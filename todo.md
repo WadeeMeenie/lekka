@@ -196,3 +196,11 @@
 - [x] Run automated and static validation and fix only the confirmed onboarding lint defect; remaining lint items are warnings
 - [x] Record exact blockers and explicit NOT TESTED results for unavailable runtime prerequisites
 - [x] Write and save the internal-beta validation record and checkpoint
+
+## Offline and media-upload UX improvement
+
+- [x] Add animated upload progress and stage feedback to the Create flow
+- [x] Add clearer offline draft and retry states with account-safe messaging
+- [x] Add actionable error handling for post, upload, association, and sync failures
+- [x] Add deterministic tests for error classification and retry state transitions
+- [x] Run TypeScript, lint, and tests; mobile-sized screenshot capture was attempted but unavailable because no preview URL was exposed
