@@ -213,3 +213,11 @@
 - [x] Build and verify a fresh release APK with hash and metadata
 - [x] Commit and push any source changes to GitHub without APKs or secrets
 - [x] Record exact PASS, FAIL, BLOCKED, and NOT TESTED evidence
+
+## In-app beta feedback
+
+- [x] Add a secure Supabase feedback table and authenticated insert policy
+- [x] Add a validated feedback submission repository and deterministic tests
+- [x] Add a beta feedback form for bug reports and feature requests
+- [x] Add a profile entry point for beta feedback
+- [x] Run migration, TypeScript, lint, tests, visual verification, and push the feedback feature to GitHub; visual route verification remains blocked by first-launch onboarding state
