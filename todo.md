@@ -268,3 +268,4 @@
 - [ ] Submit and verify the managed internal-test APK after the EAS project-linkage fix
 
 — 2026-08-21 build workflow blocker: Expo GitHub build form rejected the current source because /eas.json is absent.
+- [x] Align Expo slug with the existing EAS project slug `lekka` so managed builds can resolve project credentials
