@@ -344,3 +344,10 @@
 - [x] Add inline checking, available, unavailable, and unverifiable states to the profile editor
 - [x] Prevent profile save when the username is unavailable or cannot be verified
 - [x] Add deterministic tests for username normalization and availability decisions
+
+## Username improvement follow-up
+
+- [x] Verify and enforce a database-level unique username constraint
+- [x] Add debounced username availability checks
+- [x] Add alternative username suggestions for unavailable handles
+- [x] Add deterministic tests for suggestions and debounce-related decisions
