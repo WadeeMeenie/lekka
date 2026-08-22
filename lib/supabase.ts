@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient, type Session, type SupabaseClient } from "@supabase/supabase-js";
 
+import { shouldRetrySignUp } from "./auth-retry";
+
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
@@ -20,6 +22,10 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
 
 export type AuthState = { session: Session | null; loading: boolean };
 
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
 export async function signInWithPassword(email: string, password: string) {
   if (!supabase) throw new Error("Backend is not configured yet.");
   return supabase.auth.signInWithPassword({ email, password });
@@ -27,7 +33,13 @@ export async function signInWithPassword(email: string, password: string) {
 
 export async function signUpWithPassword(email: string, password: string, displayName: string) {
   if (!supabase) throw new Error("Backend is not configured yet.");
-  return supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
+
+  let result = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
+  if (shouldRetrySignUp(result.error, 0)) {
+    await wait(750);
+    result = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
+  }
+  return result;
 }
 
 export async function requestPasswordReset(email: string, redirectTo?: string) {

@@ -409,3 +409,12 @@
 - [ ] Customize the Supabase confirmation-email wording for Lekka where the configured project integration permits it
 - [x] Add deterministic tests for password visibility state and sign-up error messaging
 - [ ] Push auth UX fixes and prepare a fresh APK build
+- [ ] Configure and verify Lekka-branded Supabase confirmation-email content
+- [ ] Validate the latest auth UX changes and checkpoint the source
+- [ ] Build, verify, and attach a fresh APK from the latest pushed commit
+
+- [x] Diagnose the reported sign-up failure on the current Android APK, including timeout and provider-setup behavior
+- [x] Verify the current Supabase Auth configuration and release-build environment variables without exposing secrets
+- [x] Fix the sign-up flow or backend configuration issue with the smallest safe change
+- [x] Add or update deterministic tests covering the sign-up failure path and user-safe messaging
+- [x] Re-run TypeScript, tests, and lint; document any remaining provider configuration requirement

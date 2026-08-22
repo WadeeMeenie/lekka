@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  getAuthErrorMessage,
+import { shouldRetrySignUp } from "../lib/auth-retry";
+
+import { getAuthErrorMessage,
   getConfirmationEmailBody,
   getConfirmationEmailFooter,
   getConfirmationEmailIntro,
@@ -25,6 +26,13 @@ describe("Lekka authentication messaging", () => {
     expect(getConfirmationEmailIntro()).toContain("local network");
     expect(getConfirmationEmailBody()).toContain("finish creating your Lekka account");
     expect(getConfirmationEmailFooter()).toContain("Lekka");
+  });
+
+  it("retries only the first transient sign-up failure", () => {
+    expect(shouldRetrySignUp({ status: 502, message: "Bad Gateway" }, 0)).toBe(true);
+    expect(shouldRetrySignUp({ status: 502, message: "Bad Gateway" }, 1)).toBe(false);
+    expect(shouldRetrySignUp({ status: 422, message: "Invalid email" }, 0)).toBe(false);
+    expect(shouldRetrySignUp({ message: "Network request failed" }, 0)).toBe(true);
   });
 
   it("keeps the password toggle accessible and deterministic", () => {
