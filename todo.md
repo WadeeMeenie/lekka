@@ -494,3 +494,6 @@
 - [x] Animate show/hide icon transitions
 - [x] Add subtle haptic feedback for visibility toggles and newly met password requirements
 - [x] Validate the password interaction polish
+
+- [x] Clear reset-password and confirmation fields when the screen is revisited
+- [x] Validate revisited reset-screen field-clearing behavior

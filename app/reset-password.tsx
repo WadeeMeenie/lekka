@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, Animated, BackHandler, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Linking from "expo-linking";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
@@ -45,6 +45,15 @@ export default function ResetPasswordScreen() {
     pulseIcon(confirmIconScale);
     setConfirmVisible((current) => !current);
   };
+
+  useFocusEffect(useCallback(() => {
+    setNewPassword("");
+    setConfirmPassword("");
+    setVisible(false);
+    setConfirmVisible(false);
+    setError(null);
+    return undefined;
+  }, []));
 
   const leaveResetScreen = useCallback((destination: Parameters<typeof router.replace>[0]) => {
     if (!hasUnsavedInput) {
