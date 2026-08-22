@@ -373,3 +373,12 @@
 - [x] Show username change history from Supabase with loading and error states
 - [x] Add profile navigation to account settings
 - [x] Add deterministic tests for settings status and history presentation
+
+## Attached audit and release follow-up
+
+- [ ] Audit repository capabilities against the attached requirements
+- [ ] Complete the recommended account-settings follow-up work that is safe and in scope
+- [ ] Run full validation and document verified versus unverified capabilities
+- [ ] Push the current source to GitHub
+- [ ] Attempt a fresh Android APK build and verify any resulting artifact
+- [ ] Deliver the audit and release outcome honestly
