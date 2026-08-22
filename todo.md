@@ -315,3 +315,10 @@
 - [ ] Submit a fresh managed Android internal-test APK build
 - [ ] Download and verify the fresh APK artifact
 - [ ] Deliver the downloadable APK and release report
+
+## User profile screen
+
+- [x] Add a profile screen with avatar, display name, and account summary
+- [x] Add basic locally persisted profile settings
+- [x] Add profile navigation entry and accessible interaction states
+- [ ] Add deterministic tests for profile settings persistence and validation
