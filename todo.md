@@ -337,3 +337,10 @@
 - [x] Add clear display-name editing affordance and validation
 - [x] Add short-bio editing affordance with character guidance and validation
 - [x] Add deterministic tests for profile field validation
+
+## Username availability validation
+
+- [x] Add authenticated username availability query with current-user exclusion
+- [x] Add inline checking, available, unavailable, and unverifiable states to the profile editor
+- [x] Prevent profile save when the username is unavailable or cannot be verified
+- [x] Add deterministic tests for username normalization and availability decisions
