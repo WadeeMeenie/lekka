@@ -444,3 +444,7 @@
 
 - [x] Add a real-time visual password-strength meter to the email sign-up form
 - [x] Add deterministic password-strength scoring tests and validate the UI integration
+
+- [x] Audit and improve the forgot-password flow from the Lekka login screen
+- [x] Add clear reset-email validation, loading feedback, and safe recovery messaging
+- [x] Add deterministic password-reset tests and run TypeScript, tests, and lint

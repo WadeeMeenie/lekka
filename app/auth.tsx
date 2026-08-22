@@ -10,6 +10,7 @@ import { hasAuthSession, isAuthTimeout } from "@/lib/auth-flow";
 import { asyncErrorMessage } from "@/lib/async-error";
 import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFooter, getConfirmationEmailIntro, getConfirmationEmailSubject, getPasswordToggleIcon, getPasswordToggleLabel, LEKKA_CONFIRMATION_MESSAGE } from "@/lib/auth-messages";
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
+import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE } from "@/lib/password-reset";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -31,6 +32,11 @@ export default function AuthScreen() {
   };
 
   const submit = async () => {
+    const resetValidationMessage = mode === "reset" ? getPasswordResetValidationMessage(email) : null;
+    if (resetValidationMessage) {
+      Alert.alert("Check your email address", resetValidationMessage);
+      return;
+    }
     if (!email.trim() || (mode !== "reset" && !password.trim())) {
       Alert.alert("Check your details", "Enter the required fields to continue.");
       return;
@@ -57,7 +63,9 @@ export default function AuthScreen() {
         return;
       }
       if (mode === "reset") {
-        Alert.alert("Check your inbox", "A password reset link has been sent if the account exists.");
+        Alert.alert("Check your inbox", PASSWORD_RESET_SUCCESS_MESSAGE);
+        setMode("signIn");
+        setPassword("");
       } else if (mode === "signUp" && !hasAuthSession(result)) {
         Alert.alert(getConfirmationEmailSubject(), `${LEKKA_CONFIRMATION_MESSAGE}\n\n${getConfirmationEmailIntro()}\n\n${getConfirmationEmailBody()}\n\n${getConfirmationEmailFooter()}`);
       } else {
@@ -80,7 +88,7 @@ export default function AuthScreen() {
         <View style={styles.logo}><IconSymbol name="location.fill" size={25} color="#10211D" /></View>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA</Text>
         <Text style={[styles.title, { color: colors.foreground }]}>{mode === "signIn" ? "Welcome back." : mode === "signUp" ? intent === "business" ? "Build your local business presence." : "Join your local network." : "Reset your password."}</Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>{mode === "reset" ? "We’ll send a secure link to your email address." : intent === "business" && mode === "signUp" ? "One secure Lekka identity can manage your personal profile and business profiles." : "Use your own email address and create a password for your Lekka account."}</Text>
+        <Text style={[styles.subtitle, { color: colors.muted }]}>{mode === "reset" ? "Enter the email address you use for Lekka. We’ll send a secure reset link if an account exists." : intent === "business" && mode === "signUp" ? "One secure Lekka identity can manage your personal profile and business profiles." : "Use your own email address and create a password for your Lekka account."}</Text>
         {mode === "signUp" && <TextInput value={name} onChangeText={setName} placeholder="Display name" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />}
         <TextInput value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" placeholder="Your email address" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />
         {mode !== "reset" && <>
@@ -91,7 +99,7 @@ export default function AuthScreen() {
           {mode === "signUp" && <><PasswordStrengthMeter password={password} colors={colors} /><PasswordRequirements password={password} colors={colors} /></>}
         </>}
         <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, busy }} onPress={() => void submit()} disabled={busy} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.85 : 1 }]}>{busy && <ActivityIndicator size="small" color="#10211D" />}<Text style={styles.primaryText}>{busy ? "Please wait…" : mode === "signIn" ? "Continue with email" : mode === "signUp" ? "Create account with email" : "Send reset link"}</Text></Pressable>
-        <Pressable onPress={() => setMode(isSignIn ? "signUp" : "signIn")}><Text style={[styles.switchText, { color: colors.primary }]}>{isSignIn ? "New here? Create an account" : "Already have an account? Sign in"}</Text></Pressable>
+        <Pressable onPress={() => setMode(mode === "reset" ? "signIn" : isSignIn ? "signUp" : "signIn")}><Text style={[styles.switchText, { color: colors.primary }]}>{mode === "reset" ? "Back to sign in" : isSignIn ? "New here? Create an account" : "Already have an account? Sign in"}</Text></Pressable>
         {isSignIn && <Pressable onPress={() => setMode("reset")}><Text style={[styles.secondaryText, { color: colors.muted }]}>Forgot your password?</Text></Pressable>}
       </View>
     </ScreenContainer>
