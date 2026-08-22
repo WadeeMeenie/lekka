@@ -8,6 +8,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { getPasswordRuleResults, getPasswordStrength, isStrongPassword } from "@/lib/password-rules";
 import { getRecoveryTokens, isRecoveryLink } from "@/lib/recovery-link";
+import { INVALID_RESET_LINK_BODY, INVALID_RESET_LINK_TITLE, REQUEST_NEW_LINK_LABEL } from "@/lib/reset-link-messages";
 import { supabase } from "@/lib/supabase";
 
 export default function ResetPasswordScreen() {
@@ -18,22 +19,30 @@ export default function ResetPasswordScreen() {
   const [visible, setVisible] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [linkInvalid, setLinkInvalid] = useState(false);
 
   useEffect(() => {
     let mounted = true;
     const handleUrl = async (url: string | null) => {
       if (!url || !isRecoveryLink(url) || !supabase) {
-        if (mounted) setError("This password-reset link is missing or has expired. Request a new link and try again.");
+        if (mounted) {
+          setLinkInvalid(true);
+          setError(INVALID_RESET_LINK_BODY);
+        }
         return;
       }
       const tokens = getRecoveryTokens(url);
       if (!tokens) {
-        if (mounted) setError("This password-reset link is incomplete. Request a new link and try again.");
+        if (mounted) {
+          setLinkInvalid(true);
+          setError(INVALID_RESET_LINK_BODY);
+        }
         return;
       }
       const { error: sessionError } = await supabase.auth.setSession({ access_token: tokens.accessToken, refresh_token: tokens.refreshToken });
       if (mounted) {
-        setError(sessionError ? "This password-reset link is no longer valid. Request a new link and try again." : null);
+        setLinkInvalid(Boolean(sessionError));
+        setError(sessionError ? INVALID_RESET_LINK_BODY : null);
         setReady(!sessionError);
       }
     };
@@ -69,7 +78,7 @@ export default function ResetPasswordScreen() {
   const strength = getPasswordStrength(newPassword);
   const meterColor = strength.label === "Strong" ? colors.success : strength.label === "Good" ? colors.primary : strength.label === "Fair" ? colors.warning : colors.error;
 
-  return <ScreenContainer edges={["top", "bottom", "left", "right"]}><View style={styles.content}><Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA ACCOUNT</Text><Text style={[styles.title, { color: colors.foreground }]}>Choose a new password.</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Use a password you have not used elsewhere. Your reset link is only valid for this recovery session.</Text>{!ready && !error && <View style={styles.loading}><ActivityIndicator color={colors.primary} /><Text style={[styles.loadingText, { color: colors.muted }]}>Verifying your secure reset link…</Text></View>}{ready && <><View style={[styles.passwordRow, { backgroundColor: colors.surface, borderColor: colors.border }]}><TextInput value={newPassword} onChangeText={setNewPassword} secureTextEntry={!visible} placeholder="New password" placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} /><Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide new password" : "Show new password"} onPress={() => setVisible((current) => !current)} style={styles.toggle}><MaterialIcons name={visible ? "visibility" : "visibility-off"} size={22} color={colors.muted} /></Pressable></View><View accessibilityLabel={strength.label ? `Password strength: ${strength.label}` : "Password strength not yet available"} style={styles.strength}><View style={styles.strengthHeader}><Text style={[styles.strengthTitle, { color: colors.foreground }]}>Password strength</Text>{strength.label ? <Text style={[styles.strengthLabel, { color: meterColor }]}>{strength.label}</Text> : null}</View><View style={styles.bars}>{[1, 2, 3, 4, 5, 6].map((segment) => <View key={segment} style={[styles.bar, { backgroundColor: segment <= strength.score ? meterColor : colors.border }]} />)}</View></View><View style={styles.rules}>{getPasswordRuleResults(newPassword).map((rule) => <Text key={rule.id} style={[styles.rule, { color: rule.valid ? colors.success : colors.muted }]}>{rule.valid ? "✓" : "○"} {rule.label}</Text>)}</View><TextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!visible} placeholder="Confirm new password" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} /><Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.8 : 1 }]}>{busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>Update password</Text>}</Pressable></>}{error ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}<Pressable onPress={() => router.replace("/auth")}><Text style={[styles.back, { color: colors.primary }]}>Back to sign in</Text></Pressable></View></ScreenContainer>;
+  return <ScreenContainer edges={["top", "bottom", "left", "right"]}><View style={styles.content}><Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA ACCOUNT</Text><Text style={[styles.title, { color: colors.foreground }]}>Choose a new password.</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Use a password you have not used elsewhere. Your reset link is only valid for this recovery session.</Text>{!ready && !error && <View style={styles.loading}><ActivityIndicator color={colors.primary} /><Text style={[styles.loadingText, { color: colors.muted }]}>Verifying your secure reset link…</Text></View>}{ready && <><View style={[styles.passwordRow, { backgroundColor: colors.surface, borderColor: colors.border }]}><TextInput value={newPassword} onChangeText={setNewPassword} secureTextEntry={!visible} placeholder="New password" placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} /><Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide new password" : "Show new password"} onPress={() => setVisible((current) => !current)} style={styles.toggle}><MaterialIcons name={visible ? "visibility" : "visibility-off"} size={22} color={colors.muted} /></Pressable></View><View accessibilityLabel={strength.label ? `Password strength: ${strength.label}` : "Password strength not yet available"} style={styles.strength}><View style={styles.strengthHeader}><Text style={[styles.strengthTitle, { color: colors.foreground }]}>Password strength</Text>{strength.label ? <Text style={[styles.strengthLabel, { color: meterColor }]}>{strength.label}</Text> : null}</View><View style={styles.bars}>{[1, 2, 3, 4, 5, 6].map((segment) => <View key={segment} style={[styles.bar, { backgroundColor: segment <= strength.score ? meterColor : colors.border }]} />)}</View></View><View style={styles.rules}>{getPasswordRuleResults(newPassword).map((rule) => <Text key={rule.id} style={[styles.rule, { color: rule.valid ? colors.success : colors.muted }]}>{rule.valid ? "✓" : "○"} {rule.label}</Text>)}</View><TextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!visible} placeholder="Confirm new password" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} /><Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.8 : 1 }]}>{busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>Update password</Text>}</Pressable></>}{linkInvalid ? <View style={[styles.linkError, { backgroundColor: colors.surface, borderColor: colors.border }]}><Text style={[styles.linkErrorTitle, { color: colors.foreground }]}>{INVALID_RESET_LINK_TITLE}</Text><Text accessibilityRole="alert" style={[styles.linkErrorBody, { color: colors.muted }]}>{error ?? INVALID_RESET_LINK_BODY}</Text><Pressable accessibilityRole="button" onPress={() => router.replace("/auth?mode=reset")} style={({ pressed }) => [styles.requestLink, { backgroundColor: colors.primary, opacity: pressed ? 0.82 : 1 }]}><Text style={styles.requestLinkText}>{REQUEST_NEW_LINK_LABEL}</Text></Pressable></View> : error ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}<Pressable onPress={() => router.replace("/auth")}><Text style={[styles.back, { color: colors.primary }]}>Back to sign in</Text></Pressable></View></ScreenContainer>;
 }
 
 const styles = StyleSheet.create({
@@ -94,5 +103,10 @@ const styles = StyleSheet.create({
   primary: { minHeight: 52, borderRadius: 16, justifyContent: "center", alignItems: "center", marginTop: 16 },
   primaryText: { color: "#10211D", fontSize: 15, fontWeight: "900" },
   error: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginTop: 14 },
+  linkError: { borderRadius: 16, borderWidth: 1, padding: 16, marginTop: 16 },
+  linkErrorTitle: { fontSize: 16, lineHeight: 21, fontWeight: "900" },
+  linkErrorBody: { fontSize: 13, lineHeight: 19, marginTop: 7 },
+  requestLink: { minHeight: 48, borderRadius: 14, justifyContent: "center", alignItems: "center", marginTop: 14 },
+  requestLinkText: { color: "#10211D", fontSize: 14, fontWeight: "900" },
   back: { textAlign: "center", fontSize: 13, fontWeight: "800", marginTop: 20 },
 });

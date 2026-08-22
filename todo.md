@@ -462,3 +462,6 @@
 - [ ] Verify the updated template configuration and document any provider limitations
 
 - [x] Verify `manuslocalradarsa://reset-password` native scheme, Android intent filter, Supabase redirect, and reset route
+
+- [x] Add clear invalid/expired reset-link messaging and a Request New Link button
+- [x] Add deterministic tests and validate the reset-link recovery state

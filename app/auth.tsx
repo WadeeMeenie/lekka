@@ -19,9 +19,9 @@ const AUTH_TIMEOUT_MS = 15_000;
 
 export default function AuthScreen() {
   const colors = useColors();
-  const { next, intent, token } = useLocalSearchParams<{ next?: string; intent?: "personal" | "business"; token?: string }>();
+  const { next, intent, token, mode: requestedMode } = useLocalSearchParams<{ next?: string; intent?: "personal" | "business"; token?: string; mode?: "signIn" | "signUp" | "reset" }>();
   const { signIn, signUp, resetPassword } = useSupabaseAuth();
-  const [mode, setMode] = useState<"signIn" | "signUp" | "reset">("signIn");
+  const [mode, setMode] = useState<"signIn" | "signUp" | "reset">(requestedMode === "reset" ? "reset" : "signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
