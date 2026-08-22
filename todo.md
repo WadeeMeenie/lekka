@@ -497,3 +497,6 @@
 
 - [x] Clear reset-password and confirmation fields when the screen is revisited
 - [x] Validate revisited reset-screen field-clearing behavior
+
+- [x] Add Generate Secure Password action that fills both reset-password fields
+- [x] Validate generated-password strength and autofill behavior
