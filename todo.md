@@ -385,10 +385,10 @@
 
 ## P0/P1 execution from audit
 
-- [ ] Read current audit artifacts and inspect current HEAD
-- [ ] Write IMPLEMENTATION_DECISION.md with P0/P1/P2 sequencing
-- [ ] Implement only the approved highest-value reliability/security improvements
-- [ ] Run full validation and security checks
-- [ ] Commit and push approved source changes
+- [x] Read current audit artifacts and inspect current HEAD
+- [x] Write IMPLEMENTATION_DECISION.md with P0/P1/P2 sequencing
+- [x] Implement only the approved highest-value reliability/security improvements
+- [x] Run full validation and security checks
+- [ ] Commit and push approved source changes (local commit complete; GitHub push blocked by managed S3 remote credentials)
 - [ ] Attempt and verify a fresh Android APK build
-- [ ] Deliver implementation and release outcome without false claims
+- [x] Deliver implementation and release outcome without false claims
