@@ -8,6 +8,27 @@ export async function listBusinesses(filters?: { category?: string; verified?: b
   return query;
 }
 
+export type LocalDirectoryItem = { id: string; name: string; category: string; description: string; area: string; kind: "business" | "event" | "deal" | "post"; verified?: boolean };
+
+export async function listLocalDirectory(category: string) {
+  if (!supabase) return { data: [] as LocalDirectoryItem[], error: new Error("Backend is not configured") };
+  if (category === "Businesses") {
+    const result = await listBusinesses();
+    return { data: (result.data ?? []).map((item: any) => ({ id: item.id, name: item.name, category: item.category, description: item.description ?? "", area: item.area, kind: "business" as const, verified: item.verification_state === "verified" })), error: result.error };
+  }
+  if (category === "Events") {
+    const result = await supabase.from("events").select("id, title, description, category, area").order("start_time", { ascending: true }).limit(100);
+    return { data: (result.data ?? []).map((item: any) => ({ id: item.id, name: item.title, category: item.category ?? "Event", description: item.description ?? "", area: item.area, kind: "event" as const })), error: result.error };
+  }
+  if (category === "Deals") {
+    const result = await supabase.from("deals").select("id, title, description, area").order("created_at", { ascending: false }).limit(100);
+    return { data: (result.data ?? []).map((item: any) => ({ id: item.id, name: item.title, category: "Deal", description: item.description ?? "", area: item.area, kind: "deal" as const })), error: result.error };
+  }
+  const postCategory = category === "Marketplace" ? "marketplace" : category === "Jobs" ? "job" : "service";
+  const result = await supabase.from("posts").select("id, title, body, category, area").eq("category", postCategory).order("created_at", { ascending: false }).limit(100);
+  return { data: (result.data ?? []).map((item: any) => ({ id: item.id, name: item.title ?? category, category, description: item.body ?? "", area: item.area, kind: "post" as const })), error: result.error };
+}
+
 export async function listCommunities(area?: string) {
   if (!supabase) return { data: [], error: new Error("Backend is not configured") };
   let query = supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_at").eq("visibility", "public").order("created_at", { ascending: false }).limit(100);

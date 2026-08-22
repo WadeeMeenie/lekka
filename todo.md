@@ -516,3 +516,7 @@
 
 - [x] Show a bottom success toast after a profile picture uploads successfully
 - [x] Validate profile-picture toast visibility and upload feedback behavior
+
+- [x] Audit Home, Radar, Social, and Local tabs for fake data and dead-end actions
+- [x] Wire confirmed tab content to real Supabase data or truthful empty states
+- [x] Validate tab navigation, loading, and data states with deterministic tests

@@ -76,7 +76,7 @@ const SETTINGS_KEY = "local-radar/settings/v1";
 
 export async function loadPosts(): Promise<LocalPost[]> {
   const value = await AsyncStorage.getItem(POSTS_KEY);
-  return value ? JSON.parse(value) : seededPosts;
+  return value ? JSON.parse(value) : [];
 }
 
 export async function savePosts(posts: LocalPost[]) {
