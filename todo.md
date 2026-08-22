@@ -500,3 +500,8 @@
 
 - [x] Add Generate Secure Password action that fills both reset-password fields
 - [x] Validate generated-password strength and autofill behavior
+
+- [x] Add Copy to Clipboard for the generated password
+- [x] Show confirmation toast feedback after generation and copying
+- [x] Add generator settings for password length and character types
+- [x] Validate clipboard, toast, and configurable generator behavior
