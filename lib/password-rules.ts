@@ -11,8 +11,19 @@ export function getPasswordRuleResults(value: string) {
   return PASSWORD_RULES.map((rule) => ({ id: rule.id, label: rule.label, valid: rule.test(value) }));
 }
 
+export type PasswordStrength = { score: number; label: "" | "Weak" | "Fair" | "Good" | "Strong" };
+
+export function getPasswordStrength(value: string): PasswordStrength {
+  if (!value) return { score: 0, label: "" };
+  const score = getPasswordRuleResults(value).filter((rule) => rule.valid).length;
+  if (score <= 2) return { score, label: "Weak" };
+  if (score === 3) return { score, label: "Fair" };
+  if (score <= 5) return { score, label: "Good" };
+  return { score, label: "Strong" };
+}
+
 export function isStrongPassword(value: string): boolean {
-  return getPasswordRuleResults(value).every((rule) => rule.valid);
+  return getPasswordStrength(value).score === PASSWORD_RULES.length;
 }
 
 export function getPasswordValidationMessage(value: string): string | null {

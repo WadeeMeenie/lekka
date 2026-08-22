@@ -9,7 +9,7 @@ import { useColors } from "@/hooks/use-colors";
 import { hasAuthSession, isAuthTimeout } from "@/lib/auth-flow";
 import { asyncErrorMessage } from "@/lib/async-error";
 import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFooter, getConfirmationEmailIntro, getConfirmationEmailSubject, getPasswordToggleIcon, getPasswordToggleLabel, LEKKA_CONFIRMATION_MESSAGE } from "@/lib/auth-messages";
-import { getPasswordRuleResults, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
+import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -88,7 +88,7 @@ export default function AuthScreen() {
             <TextInput value={password} onChangeText={setPassword} secureTextEntry={!passwordVisible} placeholder={mode === "signUp" ? "Create your password" : "Password"} placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} />
             <Pressable accessibilityRole="button" accessibilityLabel={getPasswordToggleLabel(passwordVisible)} accessibilityHint="Changes whether your password is visible" onPress={() => setPasswordVisible((visible) => !visible)} style={styles.passwordToggle}><MaterialIcons name={getPasswordToggleIcon(passwordVisible)} size={22} color={colors.muted} /></Pressable>
           </View>
-          {mode === "signUp" && <PasswordRequirements password={password} colors={colors} />}
+          {mode === "signUp" && <><PasswordStrengthMeter password={password} colors={colors} /><PasswordRequirements password={password} colors={colors} /></>}
         </>}
         <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, busy }} onPress={() => void submit()} disabled={busy} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.85 : 1 }]}>{busy && <ActivityIndicator size="small" color="#10211D" />}<Text style={styles.primaryText}>{busy ? "Please wait…" : mode === "signIn" ? "Continue with email" : mode === "signUp" ? "Create account with email" : "Send reset link"}</Text></Pressable>
         <Pressable onPress={() => setMode(isSignIn ? "signUp" : "signIn")}><Text style={[styles.switchText, { color: colors.primary }]}>{isSignIn ? "New here? Create an account" : "Already have an account? Sign in"}</Text></Pressable>
@@ -96,6 +96,12 @@ export default function AuthScreen() {
       </View>
     </ScreenContainer>
   );
+}
+
+function PasswordStrengthMeter({ password, colors }: { password: string; colors: ReturnType<typeof useColors> }) {
+  const strength = getPasswordStrength(password);
+  const meterColor = strength.label === "Strong" ? colors.success : strength.label === "Good" ? colors.primary : strength.label === "Fair" ? colors.warning : colors.error;
+  return <View accessibilityLabel={strength.label ? `Password strength: ${strength.label}` : "Password strength not yet available"} style={styles.strengthMeter}><View style={styles.strengthHeader}><Text style={[styles.strengthTitle, { color: colors.foreground }]}>Password strength</Text>{strength.label ? <Text style={[styles.strengthLabel, { color: meterColor }]}>{strength.label}</Text> : null}</View><View style={styles.strengthBars}>{[1, 2, 3, 4, 5, 6].map((segment) => <View key={segment} style={[styles.strengthBar, { backgroundColor: segment <= strength.score ? meterColor : colors.border }]} />)}</View></View>;
 }
 
 function PasswordRequirements({ password, colors }: { password: string; colors: ReturnType<typeof useColors> }) {
@@ -112,6 +118,12 @@ const styles = StyleSheet.create({
   passwordRow: { minHeight: 52, borderRadius: 15, borderWidth: 1, flexDirection: "row", alignItems: "center", marginBottom: 8 },
   passwordInput: { flex: 1, minHeight: 52, paddingHorizontal: 15, fontSize: 15 },
   passwordToggle: { minWidth: 48, minHeight: 52, alignItems: "center", justifyContent: "center" },
+  strengthMeter: { marginBottom: 10, paddingHorizontal: 4 },
+  strengthHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 6 },
+  strengthTitle: { fontSize: 12, fontWeight: "800" },
+  strengthLabel: { fontSize: 12, fontWeight: "900" },
+  strengthBars: { flexDirection: "row", gap: 4 },
+  strengthBar: { height: 5, flex: 1, borderRadius: 4 },
   passwordRequirements: { marginBottom: 8, paddingHorizontal: 4 },
   requirementsTitle: { fontSize: 12, fontWeight: "800", marginBottom: 5 },
   requirement: { fontSize: 11, lineHeight: 18, fontWeight: "600" },

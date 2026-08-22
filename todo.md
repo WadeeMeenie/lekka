@@ -441,3 +441,6 @@
 - [x] Add strong visible password requirements for email account creation
 - [x] Validate password rules before submitting sign-up and preserve password visibility toggle
 - [x] Add deterministic password-rule tests and run TypeScript, tests, and lint
+
+- [x] Add a real-time visual password-strength meter to the email sign-up form
+- [x] Add deterministic password-strength scoring tests and validate the UI integration
