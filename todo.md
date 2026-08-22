@@ -468,3 +468,6 @@
 
 - [x] Automatically redirect to login with a password-reset success message after reset completion
 - [x] Add deterministic coverage and validate the post-reset redirect flow
+
+- [x] Ensure the reset-password screen has clear real-time password strength feedback and requirements guidance
+- [x] Add deterministic coverage and validate reset-screen password strength behavior
