@@ -392,3 +392,10 @@
 - [ ] Commit and push approved source changes (local commit complete; GitHub push blocked by managed S3 remote credentials)
 - [ ] Attempt and verify a fresh Android APK build
 - [x] Deliver implementation and release outcome without false claims
+
+## Execute all recommendations
+
+- [ ] Push the current implementation commit through the managed GitHub workflow
+- [ ] Retry and monitor the Android internal-test build
+- [ ] Run available two-account authorization and physical-device validation
+- [ ] Verify artifacts and deliver the complete execution status
