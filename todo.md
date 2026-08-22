@@ -505,3 +505,7 @@
 - [x] Show confirmation toast feedback after generation and copying
 - [x] Add generator settings for password length and character types
 - [x] Validate clipboard, toast, and configurable generator behavior
+
+- [ ] Commit and push the current Lekka source to GitHub
+- [ ] Build an APK from the pushed commit
+- [ ] Verify and attach the actual APK artifact
