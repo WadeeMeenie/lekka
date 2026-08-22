@@ -291,3 +291,22 @@
 - [x] Validate timeout messaging and existing auth recovery behavior
 - [x] Save and deliver the updated project checkpoint
 
+
+## Fresh APK release after timeout feedback
+
+- [ ] Commit and push the current authentication timeout-feedback changes
+- [ ] Build a fresh managed Android internal-test APK from the pushed HEAD
+- [ ] Verify APK integrity, package, label, version, ABI, and SHA-256
+- [ ] Attach the fresh APK and release report
+
+
+## Attached Lekka master brief execution
+
+- [x] Audit current repository, Supabase configuration/schema, routes, repositories, tests, and release configuration
+- [x] Produce the evidence-based Lekka production gap analysis
+- [ ] Implement confirmed high-priority gaps without inventing unverified functionality
+- [ ] Run automated, database, and available runtime validation
+- [ ] Commit and push validated source changes without credentials or APKs
+- [ ] Build and verify a fresh internal-test APK from final HEAD
+- [ ] Deliver the gap analysis, release status, and downloadable APK
+
