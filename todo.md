@@ -457,3 +457,8 @@
 - [x] Add a resend-reset-email button to the forgot-password screen
 - [x] Add resend cooldown protection and accessible success/error feedback
 - [x] Add deterministic resend-flow tests and run TypeScript, tests, and lint
+
+- [ ] Update Supabase Auth email template branding to match Lekka’s visual design
+- [ ] Verify the updated template configuration and document any provider limitations
+
+- [x] Verify `manuslocalradarsa://reset-password` native scheme, Android intent filter, Supabase redirect, and reset route
