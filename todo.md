@@ -474,3 +474,6 @@
 
 - [x] Make reset-password strength indicator and checklist scroll above the mobile keyboard
 - [x] Validate keyboard-aware reset-password scrolling behavior
+
+- [x] Show a green checkmark beside each met reset-password requirement
+- [x] Validate the updated checklist indicator behavior
