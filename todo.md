@@ -486,3 +486,6 @@
 
 - [x] Confirm before leaving reset-password when password text is unsaved
 - [x] Validate clean and unsaved exit navigation behavior
+
+- [x] Add independent Show/Hide Password toggle icons inside both reset-password fields
+- [x] Validate the reset-password visibility controls
