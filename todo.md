@@ -477,3 +477,6 @@
 
 - [x] Show a green checkmark beside each met reset-password requirement
 - [x] Validate the updated checklist indicator behavior
+
+- [x] Disable reset-password submit until all password requirements are met and explain why
+- [x] Validate disabled-submit behavior and tooltip guidance
