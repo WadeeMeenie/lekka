@@ -277,3 +277,10 @@
 - [x] Replace placeholder Google and Microsoft letter badges with proper provider icons
 - [x] Add deterministic regression coverage for auth completion and onboarding navigation
 - [ ] Build and verify an updated internal-test APK
+
+## Email sign-in feedback
+
+- [x] Add a loading spinner to the email sign-in button while authentication is in progress
+- [x] Validate spinner visibility, disabled state, and existing auth regression behavior
+- [x] Save and deliver the updated project checkpoint
+
