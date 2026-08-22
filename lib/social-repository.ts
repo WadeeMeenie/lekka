@@ -169,6 +169,73 @@ export async function toggleFollow(profileId: string) {
   return { following: true, error: result.error };
 }
 
+export type PostFeedbackPreference = "interested" | "not_interested";
+export type BuddyStatus = "none" | "outgoing" | "incoming" | "buddies";
+
+export async function listPostFeedback(postIds: string[]) {
+  if (!supabase) return { data: new Map<string, PostFeedbackPreference>(), error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || postIds.length === 0) return { data: new Map<string, PostFeedbackPreference>(), error: null };
+  const result = await supabase.from("post_feedback").select("post_id, preference").eq("user_id", user.id).in("post_id", postIds);
+  return { data: new Map((result.data ?? []).map((row: any) => [row.post_id, row.preference as PostFeedbackPreference])), error: result.error };
+}
+
+export async function setPostFeedback(postId: string, preference: PostFeedbackPreference) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  return supabase.from("post_feedback").upsert({ user_id: user.id, post_id: postId, preference, updated_at: new Date().toISOString() }, { onConflict: "user_id,post_id" });
+}
+
+export async function getBuddyState(profileId: string) {
+  if (!supabase) return { data: { status: "none" as BuddyStatus, requestId: null as string | null }, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user || user.id === profileId) return { data: { status: "none" as BuddyStatus, requestId: null as string | null }, error: null };
+  const [outgoing, incoming] = await Promise.all([
+    supabase.from("buddy_requests").select("id, status").eq("sender_id", user.id).eq("recipient_id", profileId).maybeSingle(),
+    supabase.from("buddy_requests").select("id, status").eq("sender_id", profileId).eq("recipient_id", user.id).maybeSingle(),
+  ]);
+  const row = outgoing.data ?? incoming.data;
+  if (!row || row.status === "declined" || row.status === "cancelled") return { data: { status: "none" as BuddyStatus, requestId: null as string | null }, error: outgoing.error || incoming.error };
+  if (row.status === "accepted") return { data: { status: "buddies" as BuddyStatus, requestId: row.id }, error: outgoing.error || incoming.error };
+  return { data: { status: outgoing.data ? "outgoing" as BuddyStatus : "incoming" as BuddyStatus, requestId: row.id }, error: outgoing.error || incoming.error };
+}
+
+export async function requestBuddy(profileId: string) {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  const result = await supabase.rpc("request_buddy", { p_recipient_id: profileId });
+  return { data: result.data, error: result.error };
+}
+
+export async function respondToBuddyRequest(requestId: string, status: "accepted" | "declined") {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  const result = await supabase.rpc("respond_to_buddy_request", { p_request_id: requestId, p_status: status });
+  return { data: result.data, error: result.error };
+}
+
+export async function removeBuddy(profileId: string) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const result = await supabase.rpc("remove_buddy", { p_profile_id: profileId });
+  return { error: result.error };
+}
+
+export type BuddyRecord = { id: string; status: "pending" | "accepted"; direction: "incoming" | "outgoing"; profile: { id: string; display_name: string; username: string | null; profile_image_path: string | null } | null };
+
+export async function listMyBuddies() {
+  if (!supabase) return { data: [] as BuddyRecord[], error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: [] as BuddyRecord[], error: new Error("Please sign in") };
+  const [outgoing, incoming] = await Promise.all([
+    supabase.from("buddy_requests").select("id, status, profile:recipient_id(id, display_name, username, profile_image_path)").eq("sender_id", user.id).in("status", ["pending", "accepted"]).order("updated_at", { ascending: false }),
+    supabase.from("buddy_requests").select("id, status, profile:sender_id(id, display_name, username, profile_image_path)").eq("recipient_id", user.id).in("status", ["pending", "accepted"]).order("updated_at", { ascending: false }),
+  ]);
+  const rows: BuddyRecord[] = [
+    ...(outgoing.data ?? []).map((row: any) => ({ ...row, direction: "outgoing" as const })),
+    ...(incoming.data ?? []).map((row: any) => ({ ...row, direction: "incoming" as const })),
+  ];
+  return { data: rows, error: outgoing.error || incoming.error };
+}
+
 export async function listNotifications(page = 0, pageSize = 30) {
   if (!supabase) return unavailable<any[]>([]);
   const { data: { user } } = await supabase.auth.getUser();

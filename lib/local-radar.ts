@@ -71,6 +71,13 @@ export function rankPosts(posts: LocalPost[], tab: FeedTab): LocalPost[] {
   return scored.sort((a, b) => b.score - a.score).map(({ post }) => post);
 }
 
+export type FeedPreference = "interested" | "not_interested";
+
+export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>): LocalPost[] {
+  return rankPosts(posts.filter((post) => feedback[post.id] !== "not_interested"), tab)
+    .sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested"));
+}
+
 const POSTS_KEY = "local-radar/posts/v1";
 const SETTINGS_KEY = "local-radar/settings/v1";
 

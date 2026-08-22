@@ -10,6 +10,7 @@ const smartAccountsMigration = readMigration("202608210006_smart_accounts.sql");
 const businessPostAuthorizationMigration = readMigration("202608210007_business_post_authorization.sql");
 const businessMembershipRolesMigration = readMigration("202608210008_business_membership_roles.sql");
 const businessInvitationsMigration = readMigration("202608210009_business_invitations.sql");
+const preferencesAndBuddiesMigration = readMigration("202608220007_feed_preferences_buddies.sql");
 
 describe("Supabase security migration", () => {
   it("defines the primary product tables", () => {
@@ -75,5 +76,15 @@ describe("Supabase security migration", () => {
     expect(businessInvitationsMigration).toContain("lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))");
     expect(businessInvitationsMigration).toContain("create or replace function public.accept_business_invitation");
     expect(businessInvitationsMigration).toContain("current_email <> lower(invitation.email)");
+  });
+
+  it("keeps post feedback private and Buddy actions behind authenticated RPCs", () => {
+    expect(preferencesAndBuddiesMigration).toContain("create table public.post_feedback");
+    expect(preferencesAndBuddiesMigration).toContain("alter table public.post_feedback enable row level security;");
+    expect(preferencesAndBuddiesMigration).toContain("post_feedback_self_access");
+    expect(preferencesAndBuddiesMigration).toContain("create table public.buddy_requests");
+    expect(preferencesAndBuddiesMigration).toContain("buddy_requests_participant_read");
+    expect(preferencesAndBuddiesMigration).toContain("create or replace function public.request_buddy");
+    expect(preferencesAndBuddiesMigration).toContain("grant execute on function public.request_buddy(uuid) to authenticated;");
   });
 });

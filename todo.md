@@ -547,3 +547,8 @@
 - [ ] Build the current source as an Android APK with the local native pipeline
 - [ ] Verify APK integrity, package, app label, version, and ABI
 - [ ] Attach the verified APK as a downloadable artifact
+
+- [x] Add persistent Interested and Not interested feed feedback
+- [x] Add mutual Buddy request, acceptance, and removal flows
+- [x] Add a compact profile menu with existing Lekka destinations only
+- [ ] Validate, push, build, verify, and attach the updated current-source APK
