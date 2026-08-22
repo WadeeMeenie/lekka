@@ -10,6 +10,16 @@ export async function listBusinesses(filters?: { category?: string; verified?: b
 
 export type LocalDirectoryItem = { id: string; name: string; category: string; description: string; area: string; kind: "business" | "event" | "deal" | "post"; verified?: boolean };
 
+export async function getBusiness(id: string) {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  return supabase.from("businesses").select("id, name, category, description, area, address, phone, whatsapp, website, opening_hours, verification_state").eq("id", id).maybeSingle();
+}
+
+export async function getCommunity(id: string) {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  return supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_at").eq("id", id).eq("visibility", "public").maybeSingle();
+}
+
 export async function listLocalDirectory(category: string) {
   if (!supabase) return { data: [] as LocalDirectoryItem[], error: new Error("Backend is not configured") };
   if (category === "Businesses") {

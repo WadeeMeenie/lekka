@@ -520,3 +520,7 @@
 - [x] Audit Home, Radar, Social, and Local tabs for fake data and dead-end actions
 - [x] Wire confirmed tab content to real Supabase data or truthful empty states
 - [x] Validate tab navigation, loading, and data states with deterministic tests
+
+- [x] Add community and directory detail destinations from the Social and Local tabs
+- [x] Wire authenticated follow, messaging, and listing actions where supported
+- [x] Validate the expanded tab flows and document device/account test limits
