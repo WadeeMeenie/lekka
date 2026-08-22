@@ -480,3 +480,6 @@
 
 - [x] Disable reset-password submit until all password requirements are met and explain why
 - [x] Validate disabled-submit behavior and tooltip guidance
+
+- [x] Add a subtle shake animation when disabled reset submission is attempted
+- [x] Validate the disabled-submit shake interaction
