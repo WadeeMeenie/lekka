@@ -489,3 +489,8 @@
 
 - [x] Add independent Show/Hide Password toggle icons inside both reset-password fields
 - [x] Validate the reset-password visibility controls
+
+- [x] Auto-hide visible reset passwords after five seconds of inactivity
+- [x] Animate show/hide icon transitions
+- [x] Add subtle haptic feedback for visibility toggles and newly met password requirements
+- [x] Validate the password interaction polish

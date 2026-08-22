@@ -8,6 +8,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { getPasswordRuleResults, getPasswordStrength, isStrongPassword } from "@/lib/password-rules";
 import { getRecoveryTokens, isRecoveryLink } from "@/lib/recovery-link";
+import { haptic } from "@/lib/haptics";
 import { INVALID_RESET_LINK_BODY, INVALID_RESET_LINK_TITLE, REQUEST_NEW_LINK_LABEL } from "@/lib/reset-link-messages";
 import { supabase } from "@/lib/supabase";
 
@@ -18,11 +19,32 @@ export default function ResetPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [visible, setVisible] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
+  const newIconScale = useRef(new Animated.Value(1)).current;
+  const confirmIconScale = useRef(new Animated.Value(1)).current;
+  const previousRules = useRef<boolean[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [linkInvalid, setLinkInvalid] = useState(false);
   const shakeX = useRef(new Animated.Value(0)).current;
   const hasUnsavedInput = newPassword.length > 0 || confirmPassword.length > 0;
+
+  const pulseIcon = (scale: Animated.Value) => {
+    scale.setValue(0.82);
+    Animated.sequence([
+      Animated.timing(scale, { toValue: 1.08, duration: 100, useNativeDriver: true }),
+      Animated.timing(scale, { toValue: 1, duration: 140, useNativeDriver: true }),
+    ]).start();
+  };
+  const toggleNewPassword = () => {
+    haptic.toggle();
+    pulseIcon(newIconScale);
+    setVisible((current) => !current);
+  };
+  const toggleConfirmPassword = () => {
+    haptic.toggle();
+    pulseIcon(confirmIconScale);
+    setConfirmVisible((current) => !current);
+  };
 
   const leaveResetScreen = useCallback((destination: Parameters<typeof router.replace>[0]) => {
     if (!hasUnsavedInput) {
@@ -38,6 +60,25 @@ export default function ResetPasswordScreen() {
       ],
     );
   }, [hasUnsavedInput]);
+
+  useEffect(() => {
+    if (!visible || !newPassword) return;
+    const timer = setTimeout(() => setVisible(false), 5000);
+    return () => clearTimeout(timer);
+  }, [visible, newPassword]);
+
+  useEffect(() => {
+    if (!confirmVisible || !confirmPassword) return;
+    const timer = setTimeout(() => setConfirmVisible(false), 5000);
+    return () => clearTimeout(timer);
+  }, [confirmVisible, confirmPassword]);
+
+  useEffect(() => {
+    const currentRules = getPasswordRuleResults(newPassword).map((rule) => rule.valid);
+    const newlyMet = currentRules.some((valid, index) => valid && !previousRules.current[index]);
+    if (newlyMet) haptic.selection();
+    previousRules.current = currentRules;
+  }, [newPassword]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -123,7 +164,7 @@ export default function ResetPasswordScreen() {
     if (!busy) void save();
   };
 
-  return <ScreenContainer edges={["top", "bottom", "left", "right"]}><KeyboardAvoidingView style={styles.keyboard} behavior={Platform.OS === "ios" ? "padding" : "height"}><ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} showsVerticalScrollIndicator={false}> <View style={styles.content}><Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA ACCOUNT</Text><Text style={[styles.title, { color: colors.foreground }]}>Choose a new password.</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Use a password you have not used elsewhere. Your reset link is only valid for this recovery session.</Text>{!ready && !error && <View style={styles.loading}><ActivityIndicator color={colors.primary} /><Text style={[styles.loadingText, { color: colors.muted }]}>Verifying your secure reset link…</Text></View>}{ready && <><View style={[styles.passwordRow, { backgroundColor: colors.surface, borderColor: colors.border }]}><TextInput value={newPassword} onChangeText={setNewPassword} secureTextEntry={!visible} placeholder="New password" placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} /><Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide new password" : "Show new password"} onPress={() => setVisible((current) => !current)} style={styles.toggle}><MaterialIcons name={visible ? "visibility" : "visibility-off"} size={22} color={colors.muted} /></Pressable></View><View accessibilityLabel={strength.label ? `Password strength: ${strength.label}` : "Password strength: start typing"} style={styles.strength}><View style={styles.strengthHeader}><Text style={[styles.strengthTitle, { color: colors.foreground }]}>Password strength</Text><Text style={[styles.strengthLabel, { color: meterColor }]}>{meterLabel}</Text></View><View style={styles.bars}>{[1, 2, 3, 4, 5, 6].map((segment) => <View key={segment} style={[styles.bar, { backgroundColor: segment <= strength.score ? meterColor : colors.border }]} />)}</View></View><Text style={[styles.strengthHint, { color: colors.muted }]}>Aim for Strong by meeting all six requirements.</Text><View accessibilityLabel="Password requirements" style={styles.rules}>{getPasswordRuleResults(newPassword).map((rule) => <View key={rule.id} style={styles.ruleRow}><MaterialIcons accessibilityLabel={rule.valid ? `${rule.label}: met` : `${rule.label}: not met`} name={rule.valid ? "check-circle" : "radio-button-unchecked"} size={16} color={rule.valid ? colors.success : colors.muted} /><Text style={[styles.rule, { color: rule.valid ? colors.success : colors.muted }]}>{rule.label}</Text></View>)}</View><View style={[styles.passwordRow, { backgroundColor: colors.surface, borderColor: colors.border }]}><TextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!confirmVisible} placeholder="Confirm new password" placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} /><Pressable accessibilityRole="button" accessibilityLabel={confirmVisible ? "Hide confirmation password" : "Show confirmation password"} accessibilityHint="Changes whether the confirmation password is visible" onPress={() => setConfirmVisible((current) => !current)} style={styles.toggle}><MaterialIcons name={confirmVisible ? "visibility" : "visibility-off"} size={22} color={colors.muted} /></Pressable></View><Animated.View style={{ transform: [{ translateX: shakeX }] }}><Pressable accessibilityRole="button" accessibilityLabel="Update password" accessibilityHint={passwordReady ? "Saves your new password" : "Complete all six password requirements to enable this button. Tap to see the button feedback."} accessibilityState={{ disabled: busy || !passwordReady, busy }} onPress={handleSubmitPress} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy || !passwordReady ? 0.45 : pressed ? 0.8 : 1 }]}>{busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>Update password</Text>}</Pressable></Animated.View>{!passwordReady && <Text accessibilityRole="text" style={[styles.submitHint, { color: colors.muted }]}>Complete all six password requirements to enable Update password. Tap the button for a gentle reminder.</Text>}</>}{linkInvalid ? <View style={[styles.linkError, { backgroundColor: colors.surface, borderColor: colors.border }]}><Text style={[styles.linkErrorTitle, { color: colors.foreground }]}>{INVALID_RESET_LINK_TITLE}</Text><Text accessibilityRole="alert" style={[styles.linkErrorBody, { color: colors.muted }]}>{error ?? INVALID_RESET_LINK_BODY}</Text><Pressable accessibilityRole="button" onPress={() => leaveResetScreen("/auth?mode=reset")} style={({ pressed }) => [styles.requestLink, { backgroundColor: colors.primary, opacity: pressed ? 0.82 : 1 }]}><Text style={styles.requestLinkText}>{REQUEST_NEW_LINK_LABEL}</Text></Pressable></View> : error ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}<Pressable accessibilityRole="button" onPress={() => leaveResetScreen("/auth")}><Text style={[styles.back, { color: colors.primary }]}>Back to sign in</Text></Pressable></View></ScrollView></KeyboardAvoidingView></ScreenContainer>;
+  return <ScreenContainer edges={["top", "bottom", "left", "right"]}><KeyboardAvoidingView style={styles.keyboard} behavior={Platform.OS === "ios" ? "padding" : "height"}><ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled" keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"} showsVerticalScrollIndicator={false}> <View style={styles.content}><Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA ACCOUNT</Text><Text style={[styles.title, { color: colors.foreground }]}>Choose a new password.</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Use a password you have not used elsewhere. Your reset link is only valid for this recovery session.</Text>{!ready && !error && <View style={styles.loading}><ActivityIndicator color={colors.primary} /><Text style={[styles.loadingText, { color: colors.muted }]}>Verifying your secure reset link…</Text></View>}{ready && <><View style={[styles.passwordRow, { backgroundColor: colors.surface, borderColor: colors.border }]}><TextInput value={newPassword} onChangeText={setNewPassword} secureTextEntry={!visible} placeholder="New password" placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} /><Pressable accessibilityRole="button" accessibilityLabel={visible ? "Hide new password" : "Show new password"} onPress={toggleNewPassword} style={styles.toggle}><Animated.View style={{ transform: [{ scale: newIconScale }] }}><MaterialIcons name={visible ? "visibility" : "visibility-off"} size={22} color={colors.muted} /></Animated.View></Pressable></View><View accessibilityLabel={strength.label ? `Password strength: ${strength.label}` : "Password strength: start typing"} style={styles.strength}><View style={styles.strengthHeader}><Text style={[styles.strengthTitle, { color: colors.foreground }]}>Password strength</Text><Text style={[styles.strengthLabel, { color: meterColor }]}>{meterLabel}</Text></View><View style={styles.bars}>{[1, 2, 3, 4, 5, 6].map((segment) => <View key={segment} style={[styles.bar, { backgroundColor: segment <= strength.score ? meterColor : colors.border }]} />)}</View></View><Text style={[styles.strengthHint, { color: colors.muted }]}>Aim for Strong by meeting all six requirements.</Text><View accessibilityLabel="Password requirements" style={styles.rules}>{getPasswordRuleResults(newPassword).map((rule) => <View key={rule.id} style={styles.ruleRow}><MaterialIcons accessibilityLabel={rule.valid ? `${rule.label}: met` : `${rule.label}: not met`} name={rule.valid ? "check-circle" : "radio-button-unchecked"} size={16} color={rule.valid ? colors.success : colors.muted} /><Text style={[styles.rule, { color: rule.valid ? colors.success : colors.muted }]}>{rule.label}</Text></View>)}</View><View style={[styles.passwordRow, { backgroundColor: colors.surface, borderColor: colors.border }]}><TextInput value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!confirmVisible} placeholder="Confirm new password" placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} /><Pressable accessibilityRole="button" accessibilityLabel={confirmVisible ? "Hide confirmation password" : "Show confirmation password"} accessibilityHint="Changes whether the confirmation password is visible" onPress={toggleConfirmPassword} style={styles.toggle}><Animated.View style={{ transform: [{ scale: confirmIconScale }] }}><MaterialIcons name={confirmVisible ? "visibility" : "visibility-off"} size={22} color={colors.muted} /></Animated.View></Pressable></View><Animated.View style={{ transform: [{ translateX: shakeX }] }}><Pressable accessibilityRole="button" accessibilityLabel="Update password" accessibilityHint={passwordReady ? "Saves your new password" : "Complete all six password requirements to enable this button. Tap to see the button feedback."} accessibilityState={{ disabled: busy || !passwordReady, busy }} onPress={handleSubmitPress} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy || !passwordReady ? 0.45 : pressed ? 0.8 : 1 }]}>{busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>Update password</Text>}</Pressable></Animated.View>{!passwordReady && <Text accessibilityRole="text" style={[styles.submitHint, { color: colors.muted }]}>Complete all six password requirements to enable Update password. Tap the button for a gentle reminder.</Text>}</>}{linkInvalid ? <View style={[styles.linkError, { backgroundColor: colors.surface, borderColor: colors.border }]}><Text style={[styles.linkErrorTitle, { color: colors.foreground }]}>{INVALID_RESET_LINK_TITLE}</Text><Text accessibilityRole="alert" style={[styles.linkErrorBody, { color: colors.muted }]}>{error ?? INVALID_RESET_LINK_BODY}</Text><Pressable accessibilityRole="button" onPress={() => leaveResetScreen("/auth?mode=reset")} style={({ pressed }) => [styles.requestLink, { backgroundColor: colors.primary, opacity: pressed ? 0.82 : 1 }]}><Text style={styles.requestLinkText}>{REQUEST_NEW_LINK_LABEL}</Text></Pressable></View> : error ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}<Pressable accessibilityRole="button" onPress={() => leaveResetScreen("/auth")}><Text style={[styles.back, { color: colors.primary }]}>Back to sign in</Text></Pressable></View></ScrollView></KeyboardAvoidingView></ScreenContainer>;
 }
 
 const styles = StyleSheet.create({
