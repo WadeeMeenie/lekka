@@ -422,3 +422,9 @@
 - [x] Build a fresh Android APK from the current sign-up retry fix checkpoint
 - [x] Verify the fresh APK package, app name, version, ABI, integrity, and SHA-256
 - [x] Attach the fresh APK for device testing
+
+- [x] Diagnose Google and Microsoft login failures and identify required Supabase provider configuration
+- [x] Replace date-of-birth free-form input with separate year, month, and day selectors
+- [x] Diagnose and fix the onboarding profile-save RLS error shown in the latest device screenshot
+- [x] Add deterministic tests for date selection/validation and onboarding save behavior
+- [x] Run TypeScript, tests, lint, and mobile-oriented validation for the changes

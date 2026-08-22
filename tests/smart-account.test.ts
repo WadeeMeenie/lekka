@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { businessTypeLabel, validateBusinessProfile, validatePersonalIdentity } from "../lib/account";
 import { isOAuthProviderFlagEnabled } from "../lib/oauth-config";
 import { validateBusinessInvite } from "../lib/business-invitation-validation";
+import { clampDateParts, daysInMonth, formatDateParts, parseDateParts } from "../lib/date-of-birth";
+import { getPersonalDetailsSaveMessage } from "../lib/account-errors";
 
 describe("smart account validation", () => {
   const validPersonal = { firstName: "Wade", surname: "Meenie", dateOfBirth: "1990-05-12", gender: null } as const;
@@ -35,6 +37,26 @@ describe("provider configuration flags", () => {
     expect(isOAuthProviderFlagEnabled(undefined)).toBe(false);
     expect(isOAuthProviderFlagEnabled("false")).toBe(false);
     expect(isOAuthProviderFlagEnabled("true")).toBe(true);
+  });
+});
+
+describe("date-of-birth selectors", () => {
+  it("round-trips separate date parts into the stored date format", () => {
+    const parts = parseDateParts("1991-02-05");
+    expect(parts).toEqual({ year: 1991, month: 2, day: 5 });
+    expect(formatDateParts(parts)).toBe("1991-02-05");
+  });
+
+  it("limits days to the selected month and leap year", () => {
+    expect(daysInMonth(2024, 2)).toBe(29);
+    expect(daysInMonth(2023, 2)).toBe(28);
+    expect(clampDateParts({ year: 2023, month: 2, day: 31 })).toEqual({ year: 2023, month: 2, day: 28 });
+  });
+});
+
+describe("personal-details error messaging", () => {
+  it("hides raw RLS details from users", () => {
+    expect(getPersonalDetailsSaveMessage(new Error("new row violates row-level security policy for table profiles"))).toMatch(/couldn’t save your personal details/i);
   });
 });
 
