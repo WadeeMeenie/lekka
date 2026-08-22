@@ -448,3 +448,8 @@
 - [x] Audit and improve the forgot-password flow from the Lekka login screen
 - [x] Add clear reset-email validation, loading feedback, and safe recovery messaging
 - [x] Add deterministic password-reset tests and run TypeScript, tests, and lint
+
+- [x] Audit the installed APK scheme and password-reset callback handling
+- [x] Configure the Supabase password-reset redirect allowlist for Lekka
+- [x] Pass the APK redirect URI in the reset-email request and handle recovery links in-app
+- [x] Validate reset-link configuration and document any dashboard-only action

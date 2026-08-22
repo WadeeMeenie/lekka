@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import * as Linking from "expo-linking";
 import { router, useLocalSearchParams } from "expo-router";
 
 import { ScreenContainer } from "@/components/screen-container";
@@ -52,7 +53,7 @@ export default function AuthScreen() {
         ? signIn(email.trim(), password)
         : mode === "signUp"
           ? signUp(email.trim(), password, name.trim())
-          : resetPassword(email.trim());
+          : resetPassword(email.trim(), Linking.createURL("reset-password"));
       const result = await Promise.race([
         request,
         new Promise<never>((_, reject) => setTimeout(() => reject(new Error("The sign-in request timed out. Check your connection and try again.")), AUTH_TIMEOUT_MS)),
