@@ -483,3 +483,6 @@
 
 - [x] Add a subtle shake animation when disabled reset submission is attempted
 - [x] Validate the disabled-submit shake interaction
+
+- [x] Confirm before leaving reset-password when password text is unsaved
+- [x] Validate clean and unsaved exit navigation behavior
