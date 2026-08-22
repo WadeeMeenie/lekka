@@ -17,7 +17,7 @@ export async function getBusiness(id: string) {
 
 export async function getCommunity(id: string) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
-  return supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_by, created_at").eq("id", id).eq("visibility", "public").maybeSingle();
+  return supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_by, created_at").eq("id", id).maybeSingle();
 }
 
 export async function getCommunityMembershipState(communityId: string) {
@@ -25,9 +25,46 @@ export async function getCommunityMembershipState(communityId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   const [countResult, mineResult] = await Promise.all([
     supabase.from("community_members").select("community_id", { count: "exact", head: true }).eq("community_id", communityId),
-    user ? supabase.from("community_members").select("community_id").eq("community_id", communityId).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+    user ? supabase.from("community_members").select("community_id, is_moderator").eq("community_id", communityId).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
   ]);
-  return { data: { memberCount: countResult.count ?? 0, isMember: Boolean(mineResult.data) }, error: countResult.error || mineResult.error || null };
+  return { data: { memberCount: countResult.count ?? 0, isMember: Boolean(mineResult.data), isModerator: Boolean(mineResult.data?.is_moderator) }, error: countResult.error || mineResult.error || null };
+}
+
+export type CommunityPost = { id: string; author_id: string; title: string | null; body: string; area: string; created_at: string; profiles: { id: string; display_name: string; username: string | null } | null };
+
+export async function listCommunityPosts(communityId: string) {
+  if (!supabase) return { data: [] as CommunityPost[], error: new Error("Backend is not configured") };
+  const result = await supabase.from("posts").select("id, author_id, title, body, area, created_at, profiles(id, display_name, username)").eq("community_id", communityId).order("created_at", { ascending: false }).limit(50);
+  return { data: (result.data ?? []) as unknown as CommunityPost[], error: result.error };
+}
+
+export async function removeCommunityPost(communityId: string, postId: string) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  const result = await supabase.from("posts").delete().eq("id", postId).eq("community_id", communityId);
+  return { error: result.error };
+}
+
+export async function getCommunitySettings(communityId: string) {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: new Error("Please sign in") };
+  return supabase.from("communities").select("id, name, description, area, category, visibility, rules, created_by, created_at").eq("id", communityId).eq("created_by", user.id).maybeSingle();
+}
+
+export async function updateCommunitySettings(communityId: string, input: { name: string; description: string; visibility: "public" | "private"; rules: string[] }) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  const name = input.name.trim();
+  const description = input.description.trim();
+  const rules = input.rules.map((rule) => rule.trim()).filter(Boolean).slice(0, 12);
+  if (name.length < 3 || name.length > 80) return { error: new Error("Community name must be between 3 and 80 characters") };
+  if (description.length > 500) return { error: new Error("Description must be 500 characters or fewer") };
+  if (rules.some((rule) => rule.length > 200)) return { error: new Error("Each guideline must be 200 characters or fewer") };
+  const result = await supabase.from("communities").update({ name, description, visibility: input.visibility, rules }).eq("id", communityId).eq("created_by", user.id);
+  return { error: result.error };
 }
 
 export async function joinCommunity(communityId: string) {

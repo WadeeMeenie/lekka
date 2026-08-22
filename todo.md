@@ -532,3 +532,8 @@
 - [x] Add owner/moderator controls for member management and community settings
 - [x] Add Realtime member-count synchronization with safe policy handling
 - [x] Validate community management flows and document unavailable multi-account tests; TypeScript and focused community tests pass, while three pre-existing suites still hit the Rollup parser error
+
+- [x] Add moderator-level permissions for community post and content moderation
+- [x] Add dedicated owner community settings for description, rules, visibility, and branding metadata
+- [x] Add deterministic tests for moderator authorization and settings validation
+- [x] Validate the new management flows and save a checkpoint
