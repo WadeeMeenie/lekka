@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Linking from "expo-linking";
@@ -12,6 +12,7 @@ import { asyncErrorMessage } from "@/lib/async-error";
 import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFooter, getConfirmationEmailIntro, getConfirmationEmailSubject, getPasswordToggleIcon, getPasswordToggleLabel, LEKKA_CONFIRMATION_MESSAGE } from "@/lib/auth-messages";
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE } from "@/lib/password-reset";
+import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -25,6 +26,14 @@ export default function AuthScreen() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [busy, setBusy] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => setResendCooldown((current) => Math.max(0, current - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isSignIn = mode === "signIn";
 
@@ -34,6 +43,7 @@ export default function AuthScreen() {
 
   const submit = async () => {
     const resetValidationMessage = mode === "reset" ? getPasswordResetValidationMessage(email) : null;
+    if (mode === "reset" && resendCooldown > 0 && resetSent) return;
     if (resetValidationMessage) {
       Alert.alert("Check your email address", resetValidationMessage);
       return;
@@ -65,8 +75,8 @@ export default function AuthScreen() {
       }
       if (mode === "reset") {
         Alert.alert("Check your inbox", PASSWORD_RESET_SUCCESS_MESSAGE);
-        setMode("signIn");
-        setPassword("");
+        setResetSent(true);
+        setResendCooldown(RESET_RESEND_COOLDOWN_SECONDS);
       } else if (mode === "signUp" && !hasAuthSession(result)) {
         Alert.alert(getConfirmationEmailSubject(), `${LEKKA_CONFIRMATION_MESSAGE}\n\n${getConfirmationEmailIntro()}\n\n${getConfirmationEmailBody()}\n\n${getConfirmationEmailFooter()}`);
       } else {
@@ -99,7 +109,8 @@ export default function AuthScreen() {
           </View>
           {mode === "signUp" && <><PasswordStrengthMeter password={password} colors={colors} /><PasswordRequirements password={password} colors={colors} /></>}
         </>}
-        <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, busy }} onPress={() => void submit()} disabled={busy} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.85 : 1 }]}>{busy && <ActivityIndicator size="small" color="#10211D" />}<Text style={styles.primaryText}>{busy ? "Please wait…" : mode === "signIn" ? "Continue with email" : mode === "signUp" ? "Create account with email" : "Send reset link"}</Text></Pressable>
+        <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, busy }} onPress={() => void submit()} disabled={busy} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.85 : 1 }]}>{busy && <ActivityIndicator size="small" color="#10211D" />}<Text style={styles.primaryText}>{busy ? "Please wait…" : mode === "signIn" ? "Continue with email" : mode === "signUp" ? "Create account with email" : resetSent ? "Send reset link again" : "Send reset link"}</Text></Pressable>
+        {mode === "reset" && resetSent && <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || resendCooldown > 0 }} disabled={busy || resendCooldown > 0} onPress={() => void submit()} style={({ pressed }) => [styles.resend, { borderColor: colors.border, opacity: busy || resendCooldown > 0 ? 0.55 : pressed ? 0.7 : 1 }]}><Text style={[styles.resendText, { color: colors.primary }]}>{getResendEmailLabel(resendCooldown)}</Text></Pressable>}
         <Pressable onPress={() => setMode(mode === "reset" ? "signIn" : isSignIn ? "signUp" : "signIn")}><Text style={[styles.switchText, { color: colors.primary }]}>{mode === "reset" ? "Back to sign in" : isSignIn ? "New here? Create an account" : "Already have an account? Sign in"}</Text></Pressable>
         {isSignIn && <Pressable onPress={() => setMode("reset")}><Text style={[styles.secondaryText, { color: colors.muted }]}>Forgot your password?</Text></Pressable>}
       </View>
@@ -138,6 +149,8 @@ const styles = StyleSheet.create({
   requirement: { fontSize: 11, lineHeight: 18, fontWeight: "600" },
   primary: { minHeight: 52, borderRadius: 16, flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center", marginTop: 6 },
   primaryText: { color: "#10211D", fontSize: 15, fontWeight: "800" },
+  resend: { minHeight: 46, borderRadius: 14, borderWidth: 1, justifyContent: "center", alignItems: "center", marginTop: 10 },
+  resendText: { fontSize: 13, fontWeight: "800" },
   switchText: { textAlign: "center", fontSize: 13, fontWeight: "700", marginTop: 19 },
   secondaryText: { textAlign: "center", fontSize: 12, marginTop: 15 },
 });

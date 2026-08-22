@@ -453,3 +453,7 @@
 - [x] Configure the Supabase password-reset redirect allowlist for Lekka
 - [x] Pass the APK redirect URI in the reset-email request and handle recovery links in-app
 - [x] Validate reset-link configuration and document any dashboard-only action
+
+- [x] Add a resend-reset-email button to the forgot-password screen
+- [x] Add resend cooldown protection and accessible success/error feedback
+- [x] Add deterministic resend-flow tests and run TypeScript, tests, and lint
