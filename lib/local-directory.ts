@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { uploadMedia } from "@/lib/supabase-repository";
 
 export async function listBusinesses(filters?: { category?: string; verified?: boolean }) {
   if (!supabase) return { data: [], error: new Error("Backend is not configured") };
@@ -32,6 +33,41 @@ export async function getCommunityMembershipState(communityId: string) {
 
 export type CommunityPost = { id: string; author_id: string; title: string | null; body: string; area: string; created_at: string; profiles: { id: string; display_name: string; username: string | null } | null };
 
+export type CommunityReport = { id: string; reason: string; status: "open" | "reviewing" | "resolved" | "dismissed"; created_at: string; reporter: { id: string; display_name: string; username: string | null } | null; posts: { id: string; title: string | null; body: string } | null; comments: { id: string; body: string } | null };
+
+export async function listCommunityReports(communityId: string) {
+  if (!supabase) return { data: [] as CommunityReport[], error: new Error("Backend is not configured") };
+  const [postResult, commentResult] = await Promise.all([
+    supabase.from("reports").select("id, reason, status, created_at, reporter:reporter_id(id, display_name, username), posts!inner(id, community_id, title, body), comments(id, body)").eq("posts.community_id", communityId).order("created_at", { ascending: false }).limit(50),
+    supabase.from("reports").select("id, reason, status, created_at, reporter:reporter_id(id, display_name, username), posts(id, title, body), comments!inner(id, body, posts!inner(community_id))").eq("comments.posts.community_id", communityId).order("created_at", { ascending: false }).limit(50),
+  ]);
+  const data = [...(postResult.data ?? []), ...(commentResult.data ?? [])].sort((a: any, b: any) => Date.parse(b.created_at) - Date.parse(a.created_at)).slice(0, 50) as unknown as CommunityReport[];
+  return { data, error: postResult.error || commentResult.error };
+}
+
+export async function updateCommunityReportStatus(reportId: string, status: CommunityReport["status"]) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const result = await supabase.from("reports").update({ status }).eq("id", reportId);
+  return { error: result.error };
+}
+
+export async function saveCommunityBranding(communityId: string, slot: "logo" | "cover", uri: string, contentType = "image/jpeg") {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: new Error("Please sign in") };
+  const path = `${user.id}/communities/${communityId}/${slot}-${Date.now()}.jpg`;
+  const upload = await uploadMedia(uri, path, contentType);
+  if (upload.error) return { data: null, error: upload.error };
+  const column = slot === "logo" ? "logo_path" : "cover_path";
+  const update = await supabase.from("communities").update({ [column]: path }).eq("id", communityId).eq("created_by", user.id);
+  return { data: path, error: update.error };
+}
+
+export async function createSignedCommunityMediaUrl(path: string) {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  return supabase.storage.from("local-radar-media").createSignedUrl(path, 60 * 60);
+}
+
 export async function listCommunityPosts(communityId: string) {
   if (!supabase) return { data: [] as CommunityPost[], error: new Error("Backend is not configured") };
   const result = await supabase.from("posts").select("id, author_id, title, body, area, created_at, profiles(id, display_name, username)").eq("community_id", communityId).order("created_at", { ascending: false }).limit(50);
@@ -50,7 +86,7 @@ export async function getCommunitySettings(communityId: string) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Please sign in") };
-  return supabase.from("communities").select("id, name, description, area, category, visibility, rules, created_by, created_at").eq("id", communityId).eq("created_by", user.id).maybeSingle();
+  return supabase.from("communities").select("id, name, description, area, category, visibility, rules, logo_path, cover_path, created_by, created_at").eq("id", communityId).eq("created_by", user.id).maybeSingle();
 }
 
 export async function updateCommunitySettings(communityId: string, input: { name: string; description: string; visibility: "public" | "private"; rules: string[] }) {

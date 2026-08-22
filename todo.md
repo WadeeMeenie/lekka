@@ -537,3 +537,8 @@
 - [x] Add dedicated owner community settings for description, rules, visibility, and branding metadata
 - [x] Add deterministic tests for moderator authorization and settings validation
 - [x] Validate the new management flows and save a checkpoint
+
+- [x] Add moderator report inbox with real Supabase report records
+- [x] Add report status transitions for reviewing, resolved, and dismissed
+- [x] Add owner community avatar and cover branding controls with secure storage persistence
+- [x] Add deterministic tests and validate the new moderation and branding flows
