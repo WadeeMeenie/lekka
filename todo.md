@@ -418,3 +418,7 @@
 - [x] Fix the sign-up flow or backend configuration issue with the smallest safe change
 - [x] Add or update deterministic tests covering the sign-up failure path and user-safe messaging
 - [x] Re-run TypeScript, tests, and lint; document any remaining provider configuration requirement
+
+- [x] Build a fresh Android APK from the current sign-up retry fix checkpoint
+- [x] Verify the fresh APK package, app name, version, ABI, integrity, and SHA-256
+- [x] Attach the fresh APK for device testing
