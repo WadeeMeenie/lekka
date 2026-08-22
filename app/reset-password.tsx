@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Linking from "expo-linking";
 import { router } from "expo-router";
@@ -72,7 +72,7 @@ export default function ResetPasswordScreen() {
       setError("Lekka could not update your password. Request a new reset link and try again.");
       return;
     }
-    Alert.alert("Password updated", "Your Lekka password has been changed. You can now sign in.", [{ text: "Sign in", onPress: () => router.replace("/auth") }]);
+    router.replace("/auth?resetSuccess=1");
   };
 
   const strength = getPasswordStrength(newPassword);

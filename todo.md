@@ -465,3 +465,6 @@
 
 - [x] Add clear invalid/expired reset-link messaging and a Request New Link button
 - [x] Add deterministic tests and validate the reset-link recovery state
+
+- [x] Automatically redirect to login with a password-reset success message after reset completion
+- [x] Add deterministic coverage and validate the post-reset redirect flow

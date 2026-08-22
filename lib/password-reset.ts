@@ -9,3 +9,4 @@ export function getPasswordResetValidationMessage(email: string): string | null 
 }
 
 export const PASSWORD_RESET_SUCCESS_MESSAGE = "If a Lekka account uses that email address, we’ve sent a secure password-reset link. Check your inbox and spam folder, then return to Lekka to sign in with your new password.";
+export const PASSWORD_UPDATED_LOGIN_MESSAGE = "Your Lekka password has been updated successfully. Sign in with your new password.";

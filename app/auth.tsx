@@ -11,7 +11,7 @@ import { hasAuthSession, isAuthTimeout } from "@/lib/auth-flow";
 import { asyncErrorMessage } from "@/lib/async-error";
 import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFooter, getConfirmationEmailIntro, getConfirmationEmailSubject, getPasswordToggleIcon, getPasswordToggleLabel, LEKKA_CONFIRMATION_MESSAGE } from "@/lib/auth-messages";
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
-import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE } from "@/lib/password-reset";
+import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
@@ -19,7 +19,7 @@ const AUTH_TIMEOUT_MS = 15_000;
 
 export default function AuthScreen() {
   const colors = useColors();
-  const { next, intent, token, mode: requestedMode } = useLocalSearchParams<{ next?: string; intent?: "personal" | "business"; token?: string; mode?: "signIn" | "signUp" | "reset" }>();
+  const { next, intent, token, mode: requestedMode, resetSuccess } = useLocalSearchParams<{ next?: string; intent?: "personal" | "business"; token?: string; mode?: "signIn" | "signUp" | "reset"; resetSuccess?: string }>();
   const { signIn, signUp, resetPassword } = useSupabaseAuth();
   const [mode, setMode] = useState<"signIn" | "signUp" | "reset">(requestedMode === "reset" ? "reset" : "signIn");
   const [email, setEmail] = useState("");
@@ -34,6 +34,12 @@ export default function AuthScreen() {
     const timer = setInterval(() => setResendCooldown((current) => Math.max(0, current - 1)), 1000);
     return () => clearInterval(timer);
   }, [resendCooldown]);
+
+  useEffect(() => {
+    if (resetSuccess === "1") {
+      Alert.alert("Password updated", PASSWORD_UPDATED_LOGIN_MESSAGE);
+    }
+  }, [resetSuccess]);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isSignIn = mode === "signIn";
 
