@@ -428,3 +428,16 @@
 - [x] Diagnose and fix the onboarding profile-save RLS error shown in the latest device screenshot
 - [x] Add deterministic tests for date selection/validation and onboarding save behavior
 - [x] Run TypeScript, tests, lint, and mobile-oriented validation for the changes
+
+- [ ] Audit the current email-confirmation and provider-confirmation behavior
+- [ ] Clarify in sign-up UX that users create their own Lekka email/password credentials
+- [ ] Add visible password conditions and client-side validation for account creation
+- [ ] Remove or bypass only the app-side confirmation block where Supabase permits it
+- [ ] Document any Supabase dashboard confirmation setting that cannot be changed safely in app code
+- [ ] Run TypeScript, deterministic tests, and lint for the authentication update
+
+- [x] Remove Google sign-in controls from the Lekka authentication screen
+- [x] Remove Microsoft sign-in controls from the Lekka authentication screen
+- [x] Add strong visible password requirements for email account creation
+- [x] Validate password rules before submitting sign-up and preserve password visibility toggle
+- [x] Add deterministic password-rule tests and run TypeScript, tests, and lint
