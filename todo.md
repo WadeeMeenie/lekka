@@ -321,7 +321,7 @@
 - [x] Add a profile screen with avatar, display name, and account summary
 - [x] Add basic locally persisted profile settings
 - [x] Add profile navigation entry and accessible interaction states
-- [ ] Add deterministic tests for profile settings persistence and validation
+- [x] Add deterministic tests for profile settings persistence and validation
 
 ## Profile follow-up and authentication fixes
 
