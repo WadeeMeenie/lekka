@@ -527,3 +527,8 @@
 
 - [x] Persist community join/leave membership and show live member counts
 - [x] Validate authenticated community membership behavior and count updates
+
+- [x] Add a live member list to community details
+- [x] Add owner/moderator controls for member management and community settings
+- [x] Add Realtime member-count synchronization with safe policy handling
+- [x] Validate community management flows and document unavailable multi-account tests; TypeScript and focused community tests pass, while three pre-existing suites still hit the Rollup parser error

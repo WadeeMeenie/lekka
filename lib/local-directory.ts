@@ -17,7 +17,7 @@ export async function getBusiness(id: string) {
 
 export async function getCommunity(id: string) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
-  return supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_at").eq("id", id).eq("visibility", "public").maybeSingle();
+  return supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_by, created_at").eq("id", id).eq("visibility", "public").maybeSingle();
 }
 
 export async function getCommunityMembershipState(communityId: string) {
@@ -44,6 +44,40 @@ export async function leaveCommunity(communityId: string) {
   return supabase.from("community_members").delete().eq("community_id", communityId).eq("user_id", user.id);
 }
 
+export type CommunityMember = { user_id: string; is_moderator: boolean; joined_at: string; profiles: { id: string; display_name: string; username: string | null; profile_image_path: string | null } | null };
+
+export async function listCommunityMembers(communityId: string) {
+  if (!supabase) return { data: [] as CommunityMember[], error: new Error("Backend is not configured") };
+  const result = await supabase.from("community_members").select("user_id, is_moderator, joined_at, profiles(id, display_name, username, profile_image_path)").eq("community_id", communityId).order("joined_at", { ascending: true }).limit(100);
+  return { data: (result.data ?? []) as unknown as CommunityMember[], error: result.error };
+}
+
+export async function updateCommunityMemberRole(communityId: string, userId: string, isModerator: boolean) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  const owner = await supabase.from("communities").select("id").eq("id", communityId).eq("created_by", user.id).maybeSingle();
+  if (owner.error) return { error: owner.error };
+  if (!owner.data) return { error: new Error("Only the community owner can manage moderators") };
+  return supabase.from("community_members").update({ is_moderator: isModerator }).eq("community_id", communityId).eq("user_id", userId);
+}
+
+export async function removeCommunityMember(communityId: string, userId: string) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  const owner = await supabase.from("communities").select("id").eq("id", communityId).eq("created_by", user.id).maybeSingle();
+  if (owner.error) return { error: owner.error };
+  if (!owner.data) return { error: new Error("Only the community owner can remove members") };
+  return supabase.from("community_members").delete().eq("community_id", communityId).eq("user_id", userId);
+}
+
+export function subscribeToCommunityMembers(communityId: string, onChange: () => void) {
+  if (!supabase) return () => undefined;
+  const channel = supabase.channel(`community-members-${communityId}`).on("postgres_changes", { event: "*", schema: "public", table: "community_members", filter: `community_id=eq.${communityId}` }, onChange).subscribe();
+  return () => { void supabase?.removeChannel(channel); };
+}
+
 export async function listLocalDirectory(category: string) {
   if (!supabase) return { data: [] as LocalDirectoryItem[], error: new Error("Backend is not configured") };
   if (category === "Businesses") {
@@ -65,7 +99,7 @@ export async function listLocalDirectory(category: string) {
 
 export async function listCommunities(area?: string) {
   if (!supabase) return { data: [], error: new Error("Backend is not configured") };
-  let query = supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_at").eq("visibility", "public").order("created_at", { ascending: false }).limit(100);
+  let query = supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_by, created_at").eq("visibility", "public").order("created_at", { ascending: false }).limit(100);
   if (area) query = query.eq("area", area);
   return query;
 }
