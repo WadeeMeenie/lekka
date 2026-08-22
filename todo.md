@@ -399,3 +399,7 @@
 - [ ] Retry and monitor the Android internal-test build
 - [ ] Run available two-account authorization and physical-device validation
 - [ ] Verify artifacts and deliver the complete execution status
+- [ ] Rebuild and attach a fresh downloadable Lekka internal-test APK from the current source commit
+- [ ] Fix release APK Supabase authentication configuration so email sign-in is not reported as backend-unconfigured
+- [ ] Verify Google and Microsoft provider configuration messaging in the current build
+- [ ] Build and attach a fresh current-commit internal-test APK after the release configuration fix
