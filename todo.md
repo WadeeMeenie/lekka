@@ -331,3 +331,9 @@
 - [x] Diagnose the screenshot-reported Google, Microsoft, and email authentication failures
 - [x] Fix project-controlled authentication error and timeout handling without exposing credentials
 - [x] Run regression validation and document provider-configuration blockers that require Supabase setup
+
+## Profile editing enhancement
+
+- [x] Add clear display-name editing affordance and validation
+- [x] Add short-bio editing affordance with character guidance and validation
+- [x] Add deterministic tests for profile field validation
