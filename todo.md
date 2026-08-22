@@ -322,3 +322,12 @@
 - [x] Add basic locally persisted profile settings
 - [x] Add profile navigation entry and accessible interaction states
 - [ ] Add deterministic tests for profile settings persistence and validation
+
+## Profile follow-up and authentication fixes
+
+- [x] Add deterministic tests for profile settings persistence and validation
+- [x] Add avatar photo selection/upload using the existing profile image field where supported
+- [x] Add dedicated notification and privacy settings controls
+- [x] Diagnose the screenshot-reported Google, Microsoft, and email authentication failures
+- [x] Fix project-controlled authentication error and timeout handling without exposing credentials
+- [x] Run regression validation and document provider-configuration blockers that require Supabase setup
