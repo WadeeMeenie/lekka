@@ -10,6 +10,11 @@ export function authFailureMessage(error: unknown, fallback = "The request could
   return fallback;
 }
 
+export function isAuthTimeout(error: unknown): boolean {
+  const message = authFailureMessage(error, "").toLowerCase();
+  return message.includes("timed out") || message.includes("timeout");
+}
+
 export function isOnboardingFlowPath(pathname: string): boolean {
   return ["/onboarding", "/account-intent", "/personal-details", "/business-setup", "/business-invite", "/business-team", "/auth"].some((route) => pathname === route || pathname.startsWith(`${route}/`)) || pathname.startsWith("/oauth");
 }

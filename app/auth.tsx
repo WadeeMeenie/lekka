@@ -8,7 +8,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { isOAuthProviderEnabled, providerDisplayName, type LekkaOAuthProvider } from "@/lib/supabase-oauth";
-import { authFailureMessage, hasAuthSession } from "@/lib/auth-flow";
+import { authFailureMessage, hasAuthSession, isAuthTimeout } from "@/lib/auth-flow";
 
 const AUTH_TIMEOUT_MS = 15_000;
 
@@ -59,7 +59,11 @@ export default function AuthScreen() {
         continueToNext();
       }
     } catch (error) {
-      Alert.alert("Sign-in unavailable", authFailureMessage(error));
+      if (isAuthTimeout(error)) {
+        Alert.alert("Connection problem", "Lekka couldn’t reach the authentication service in time. Check your internet connection and try again.");
+      } else {
+        Alert.alert("Sign-in unavailable", authFailureMessage(error));
+      }
     } finally {
       setBusy(false);
     }

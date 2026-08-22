@@ -284,3 +284,10 @@
 - [x] Validate spinner visibility, disabled state, and existing auth regression behavior
 - [x] Save and deliver the updated project checkpoint
 
+
+## Authentication timeout feedback
+
+- [x] Add a clear connection-status error message when authentication requests time out
+- [x] Validate timeout messaging and existing auth recovery behavior
+- [x] Save and deliver the updated project checkpoint
+
