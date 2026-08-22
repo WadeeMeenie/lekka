@@ -310,3 +310,8 @@
 - [ ] Build and verify a fresh internal-test APK from final HEAD
 - [ ] Deliver the gap analysis, release status, and downloadable APK
 
+
+- [ ] Push the current Lekka source changes to GitHub
+- [ ] Submit a fresh managed Android internal-test APK build
+- [ ] Download and verify the fresh APK artifact
+- [ ] Deliver the downloadable APK and release report
