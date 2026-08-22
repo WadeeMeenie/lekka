@@ -543,12 +543,12 @@
 - [x] Add owner community avatar and cover branding controls with secure storage persistence
 - [x] Add deterministic tests and validate the new moderation and branding flows
 
-- [ ] Commit and push the current Lekka source to GitHub
-- [ ] Build the current source as an Android APK with the local native pipeline
-- [ ] Verify APK integrity, package, app label, version, and ABI
-- [ ] Attach the verified APK as a downloadable artifact
+- [x] Commit and push the current Lekka source to GitHub
+- [x] Build the current source as an Android APK through the managed internal preview pipeline after local native memory limits
+- [x] Verify APK integrity, package, app label, version, and ABI
+- [x] Attach the verified APK as a downloadable artifact
 
 - [x] Add persistent Interested and Not interested feed feedback
 - [x] Add mutual Buddy request, acceptance, and removal flows
 - [x] Add a compact profile menu with existing Lekka destinations only
-- [ ] Validate, push, build, verify, and attach the updated current-source APK
+- [x] Validate, push, build, verify, and attach the updated current-source APK
