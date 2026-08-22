@@ -55,3 +55,30 @@ export async function findAvailableUsernameSuggestions(value: string, currentUse
   }
   return available;
 }
+
+export async function loadServerUsernameHistory(userId: string) {
+  if (!supabase) return { data: [], error: new Error("Backend is not configured") };
+  const { data, error } = await supabase
+    .from("username_changes")
+    .select("old_username,new_username,changed_at")
+    .eq("user_id", userId)
+    .order("changed_at", { ascending: false })
+    .limit(5);
+  return { data: data ?? [], error };
+}
+
+export async function recordServerUsernameChange(userId: string, oldUsername: string | null, newUsername: string) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { error } = await supabase.from("username_changes").insert({
+    user_id: userId,
+    old_username: oldUsername ? normalizeUsername(oldUsername) : null,
+    new_username: normalizeUsername(newUsername),
+  });
+  return { error };
+}
+
+export async function trackUsernameEvent(userId: string, eventType: "unavailable" | "suggestion_selected") {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { error } = await supabase.from("username_events").insert({ user_id: userId, event_type: eventType });
+  return { error };
+}

@@ -358,3 +358,10 @@
 - [x] Add accessibility announcements for username availability changes
 - [x] Add username-change history and a safe cooldown rule
 - [x] Add deterministic tests for reserved words and cooldown behavior
+
+## Server-enforced username safeguards
+
+- [x] Add server-backed username change history and cooldown enforcement
+- [x] Add a confirmation step before applying a username change
+- [x] Add privacy-conscious analytics for availability failures and suggestion selection
+- [x] Add deterministic tests for server cooldown decisions and confirmation behavior
