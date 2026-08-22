@@ -506,6 +506,6 @@
 - [x] Add generator settings for password length and character types
 - [x] Validate clipboard, toast, and configurable generator behavior
 
-- [ ] Commit and push the current Lekka source to GitHub
-- [ ] Build an APK from the pushed commit
-- [ ] Verify and attach the actual APK artifact
+- [x] Commit and push the current Lekka source to GitHub
+- [x] Build an APK from the pushed commit
+- [x] Verify and attach the actual APK artifact
