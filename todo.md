@@ -542,3 +542,8 @@
 - [x] Add report status transitions for reviewing, resolved, and dismissed
 - [x] Add owner community avatar and cover branding controls with secure storage persistence
 - [x] Add deterministic tests and validate the new moderation and branding flows
+
+- [ ] Commit and push the current Lekka source to GitHub
+- [ ] Build the current source as an Android APK with the local native pipeline
+- [ ] Verify APK integrity, package, app label, version, and ABI
+- [ ] Attach the verified APK as a downloadable artifact
