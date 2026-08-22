@@ -382,3 +382,13 @@
 - [x] Push the current source to GitHub
 - [ ] Attempt a fresh Android APK build and verify any resulting artifact
 - [x] Deliver the audit and release outcome honestly
+
+## P0/P1 execution from audit
+
+- [ ] Read current audit artifacts and inspect current HEAD
+- [ ] Write IMPLEMENTATION_DECISION.md with P0/P1/P2 sequencing
+- [ ] Implement only the approved highest-value reliability/security improvements
+- [ ] Run full validation and security checks
+- [ ] Commit and push approved source changes
+- [ ] Attempt and verify a fresh Android APK build
+- [ ] Deliver implementation and release outcome without false claims
