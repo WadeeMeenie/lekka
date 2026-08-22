@@ -524,3 +524,6 @@
 - [x] Add community and directory detail destinations from the Social and Local tabs
 - [x] Wire authenticated follow, messaging, and listing actions where supported
 - [x] Validate the expanded tab flows and document device/account test limits
+
+- [x] Persist community join/leave membership and show live member counts
+- [x] Validate authenticated community membership behavior and count updates

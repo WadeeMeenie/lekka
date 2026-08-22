@@ -20,6 +20,30 @@ export async function getCommunity(id: string) {
   return supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_at").eq("id", id).eq("visibility", "public").maybeSingle();
 }
 
+export async function getCommunityMembershipState(communityId: string) {
+  if (!supabase) return { data: { memberCount: 0, isMember: false }, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  const [countResult, mineResult] = await Promise.all([
+    supabase.from("community_members").select("community_id", { count: "exact", head: true }).eq("community_id", communityId),
+    user ? supabase.from("community_members").select("community_id").eq("community_id", communityId).eq("user_id", user.id).maybeSingle() : Promise.resolve({ data: null, error: null }),
+  ]);
+  return { data: { memberCount: countResult.count ?? 0, isMember: Boolean(mineResult.data) }, error: countResult.error || mineResult.error || null };
+}
+
+export async function joinCommunity(communityId: string) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  return supabase.from("community_members").upsert({ community_id: communityId, user_id: user.id }, { onConflict: "community_id,user_id", ignoreDuplicates: true });
+}
+
+export async function leaveCommunity(communityId: string) {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: new Error("Please sign in") };
+  return supabase.from("community_members").delete().eq("community_id", communityId).eq("user_id", user.id);
+}
+
 export async function listLocalDirectory(category: string) {
   if (!supabase) return { data: [] as LocalDirectoryItem[], error: new Error("Backend is not configured") };
   if (category === "Businesses") {
