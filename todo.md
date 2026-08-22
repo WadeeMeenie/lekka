@@ -471,3 +471,6 @@
 
 - [x] Ensure the reset-password screen has clear real-time password strength feedback and requirements guidance
 - [x] Add deterministic coverage and validate reset-screen password strength behavior
+
+- [x] Make reset-password strength indicator and checklist scroll above the mobile keyboard
+- [x] Validate keyboard-aware reset-password scrolling behavior
