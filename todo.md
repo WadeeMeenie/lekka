@@ -376,9 +376,9 @@
 
 ## Attached audit and release follow-up
 
-- [ ] Audit repository capabilities against the attached requirements
-- [ ] Complete the recommended account-settings follow-up work that is safe and in scope
-- [ ] Run full validation and document verified versus unverified capabilities
-- [ ] Push the current source to GitHub
+- [x] Audit repository capabilities against the attached requirements
+- [x] Complete the recommended account-settings follow-up work that is safe and in scope
+- [x] Run full validation and document verified versus unverified capabilities
+- [x] Push the current source to GitHub
 - [ ] Attempt a fresh Android APK build and verify any resulting artifact
-- [ ] Deliver the audit and release outcome honestly
+- [x] Deliver the audit and release outcome honestly
