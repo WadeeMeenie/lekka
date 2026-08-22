@@ -403,3 +403,9 @@
 - [ ] Fix release APK Supabase authentication configuration so email sign-in is not reported as backend-unconfigured
 - [ ] Verify Google and Microsoft provider configuration messaging in the current build
 - [ ] Build and attach a fresh current-commit internal-test APK after the release configuration fix
+- [ ] Retrieve and attach the direct APK binary from Expo build 2dbd9faa instead of only providing the build page URL
+- [x] Add password visibility toggle to the Lekka email sign-up/sign-in password field
+- [x] Improve sign-up confirmation messaging for email authorization and handle 502/bad-gateway failures safely
+- [ ] Customize the Supabase confirmation-email wording for Lekka where the configured project integration permits it
+- [x] Add deterministic tests for password visibility state and sign-up error messaging
+- [ ] Push auth UX fixes and prepare a fresh APK build
