@@ -365,3 +365,11 @@
 - [x] Add a confirmation step before applying a username change
 - [x] Add privacy-conscious analytics for availability failures and suggestion selection
 - [x] Add deterministic tests for server cooldown decisions and confirmation behavior
+
+## Account settings page
+
+- [x] Add an authenticated account settings route
+- [x] Show current username and cooldown status
+- [x] Show username change history from Supabase with loading and error states
+- [x] Add profile navigation to account settings
+- [x] Add deterministic tests for settings status and history presentation
