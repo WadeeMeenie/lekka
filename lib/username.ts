@@ -2,6 +2,11 @@ import { supabase } from "./supabase";
 
 export const USERNAME_MIN_LENGTH = 3;
 export const USERNAME_MAX_LENGTH = 24;
+export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
+
+const RESERVED_USERNAMES = new Set([
+  "admin", "administrator", "api", "help", "lekka", "moderator", "official", "root", "support", "system", "user", "users",
+]);
 
 export function normalizeUsername(value: string) {
   return value.trim().toLowerCase().replace(/^@+/, "").replace(/[^a-z0-9._-]/g, "");
@@ -13,6 +18,7 @@ export function validateUsername(value: string) {
   if (username.length < USERNAME_MIN_LENGTH) return `Username must be at least ${USERNAME_MIN_LENGTH} characters.`;
   if (username.length > USERNAME_MAX_LENGTH) return `Username must be ${USERNAME_MAX_LENGTH} characters or fewer.`;
   if (!/^[a-z0-9]/.test(username)) return "Username must start with a letter or number.";
+  if (RESERVED_USERNAMES.has(username)) return "That username is reserved. Choose a different handle.";
   return null;
 }
 

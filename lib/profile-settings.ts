@@ -34,3 +34,42 @@ export async function saveProfileSettings(settings: ProfileSettings): Promise<Pr
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   return next;
 }
+
+import { USERNAME_CHANGE_COOLDOWN_DAYS, normalizeUsername } from "./username";
+
+export type UsernameChange = { username: string; changedAt: string };
+
+function usernameHistoryKey(userId: string) {
+  return `lekka/profile-username-history/v1/${userId}`;
+}
+
+export async function loadUsernameHistory(userId: string): Promise<UsernameChange[]> {
+  try {
+    const raw = await AsyncStorage.getItem(usernameHistoryKey(userId));
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is UsernameChange => Boolean(item && typeof item.username === "string" && typeof item.changedAt === "string"));
+  } catch {
+    return [];
+  }
+}
+
+export async function saveUsernameHistory(userId: string, history: UsernameChange[]) {
+  const next = history.slice(-5);
+  await AsyncStorage.setItem(usernameHistoryKey(userId), JSON.stringify(next));
+  return next;
+}
+
+export function usernameCooldownMessage(history: UsernameChange[], now = Date.now()) {
+  const latest = history.at(-1);
+  if (!latest) return null;
+  const elapsed = now - Date.parse(latest.changedAt);
+  if (!Number.isFinite(elapsed) || elapsed < USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 60 * 60 * 1000) {
+    return `You can change your username again after ${USERNAME_CHANGE_COOLDOWN_DAYS} days.`;
+  }
+  return null;
+}
+
+export function recordUsernameChange(history: UsernameChange[], username: string, changedAt = new Date().toISOString()) {
+  return [...history, { username: normalizeUsername(username), changedAt }].slice(-5);
+}

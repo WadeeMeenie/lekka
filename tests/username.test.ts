@@ -21,6 +21,10 @@ describe("Lekka usernames", () => {
     expect(validateUsername("-wade")).toContain("start");
   });
 
+  it("rejects reserved public handles", () => {
+    expect(validateUsername("admin")).toContain("reserved");
+  });
+
   it("accepts a valid public handle", () => {
     expect(validateUsername("wade.me")).toBeNull();
   });

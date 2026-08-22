@@ -351,3 +351,10 @@
 - [x] Add debounced username availability checks
 - [x] Add alternative username suggestions for unavailable handles
 - [x] Add deterministic tests for suggestions and debounce-related decisions
+
+## Username safeguards follow-up
+
+- [x] Add reserved-word validation for public usernames
+- [x] Add accessibility announcements for username availability changes
+- [x] Add username-change history and a safe cooldown rule
+- [x] Add deterministic tests for reserved words and cooldown behavior
