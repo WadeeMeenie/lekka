@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/supabase-repository";
+import { createProfileAvatarPath } from "@/lib/profile-avatar";
 
 export type ProfileInput = {
   displayName: string;
@@ -47,7 +48,9 @@ export async function saveMyProfileAvatar(uri: string, contentType = "image/jpeg
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Please sign in") };
-  const path = `${user.id}/profile/avatar`;
+  // Use a new key for every avatar update. The shared media uploader intentionally
+  // does not overwrite objects, and a unique key also avoids stale image caches.
+  const path = createProfileAvatarPath(user.id);
   const upload = await uploadMedia(uri, path, contentType);
   if (upload.error) return { data: null, error: upload.error };
   const update = await supabase

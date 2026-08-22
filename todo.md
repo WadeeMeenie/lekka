@@ -509,3 +509,7 @@
 - [x] Commit and push the current Lekka source to GitHub
 - [x] Build an APK from the pushed commit
 - [x] Verify and attach the actual APK artifact
+
+- [x] Fix avatar upload overwrite and persist the new profile-image path
+- [x] Render the saved avatar in the home header and refresh it after profile changes
+- [x] Add deterministic avatar persistence coverage and validate the full flow

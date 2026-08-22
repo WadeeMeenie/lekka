@@ -150,9 +150,18 @@ export default function ProfileScreen() {
       await saveProfileSettings(profileSettings);
       if (avatarUri) {
         setAvatarBusy(true);
-        const avatarResult = await saveMyProfileAvatar(avatarUri, "image/jpeg");
-        setAvatarBusy(false);
-        if (avatarResult.error) Alert.alert("Profile partly saved", "Your details were saved, but the avatar could not upload. Check your connection and try again.");
+        try {
+          const avatarResult = await saveMyProfileAvatar(avatarUri, "image/jpeg");
+          if (avatarResult.error) {
+            Alert.alert("Profile partly saved", "Your details were saved, but the avatar could not upload. Check your connection and try again.");
+          } else if (avatarResult.data) {
+            const { data: signed } = await createSignedMediaUrl(avatarResult.data);
+            setAvatarUrl(signed?.signedUrl ?? null);
+            setAvatarUri(null);
+          }
+        } finally {
+          setAvatarBusy(false);
+        }
       }
     }
     setBusy(false);
