@@ -1,3 +1,5 @@
+export const PROFILE_AVATAR_UPDATED_MESSAGE = "Profile picture updated successfully.";
+
 export function createProfileAvatarPath(userId: string, timestamp = Date.now()) {
   return `${userId}/profile/avatar-${timestamp}.jpg`;
 }

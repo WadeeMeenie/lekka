@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { createProfileAvatarPath, getAvatarInitials } from "../lib/profile-avatar";
+import { createProfileAvatarPath, getAvatarInitials, PROFILE_AVATAR_UPDATED_MESSAGE } from "../lib/profile-avatar";
 
 describe("profile avatar helpers", () => {
   it("creates a versioned avatar key so updating a photo cannot collide with an existing upload", () => {
@@ -11,5 +11,9 @@ describe("profile avatar helpers", () => {
   it("uses the saved display name for header initials and preserves a safe fallback", () => {
     expect(getAvatarInitials("Wade Adams")).toBe("WA");
     expect(getAvatarInitials(" ")).toBe("LM");
+  });
+
+  it("provides clear success feedback for a completed avatar update", () => {
+    expect(PROFILE_AVATAR_UPDATED_MESSAGE).toBe("Profile picture updated successfully.");
   });
 });

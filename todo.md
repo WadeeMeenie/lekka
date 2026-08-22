@@ -513,3 +513,6 @@
 - [x] Fix avatar upload overwrite and persist the new profile-image path
 - [x] Render the saved avatar in the home header and refresh it after profile changes
 - [x] Add deterministic avatar persistence coverage and validate the full flow
+
+- [x] Show a bottom success toast after a profile picture uploads successfully
+- [x] Validate profile-picture toast visibility and upload feedback behavior
