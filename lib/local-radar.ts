@@ -6,6 +6,7 @@ export type PostKind = "post" | "alert";
 
 export type LocalPost = {
   id: string;
+  authorId?: string | null;
   kind: PostKind;
   category?: RadarCategory;
   author: string;
@@ -35,13 +36,7 @@ export type RadarItem = {
   icon: string;
 };
 
-export type LocalSettings = {
-  area: string;
-  radius: string;
-  useLocation: boolean;
-  approximateVisibility: boolean;
-};
-
+export type LocalSettings = { area: string; radius: string; useLocation: boolean; approximateVisibility: boolean };
 export const defaultSettings: LocalSettings = { area: "Bellville", radius: "5 km", useLocation: false, approximateVisibility: true };
 
 export const seededPosts: LocalPost[] = [
@@ -59,22 +54,11 @@ export const seededRadar: RadarItem[] = [
 ];
 
 export function rankPosts(posts: LocalPost[], tab: FeedTab): LocalPost[] {
-  const scored = posts.map((post) => {
-    const distanceScore = post.distance.includes("0.7") ? 4 : post.distance.includes("1.2") ? 3 : 2;
-    const trustScore = post.trusted ? 2 : 0;
-    const tabScore = tab === "Nearby" ? distanceScore : tab === "Following" && post.author.includes("Neighbourhood") ? 4 : tab === "Trending" ? post.likes / 10 : post.kind === "alert" ? 3 : 1;
-    return { post, score: distanceScore + trustScore + tabScore };
-  });
+  const scored = posts.map((post) => { const distanceScore = post.distance.includes("0.7") ? 4 : post.distance.includes("1.2") ? 3 : 2; const trustScore = post.trusted ? 2 : 0; const tabScore = tab === "Nearby" ? distanceScore : tab === "Following" && post.author.includes("Neighbourhood") ? 4 : tab === "Trending" ? post.likes / 10 : post.kind === "alert" ? 3 : 1; return { post, score: distanceScore + trustScore + tabScore }; });
   return scored.sort((a, b) => b.score - a.score).map(({ post }) => post);
 }
-
 export type FeedPreference = "interested" | "not_interested";
-
-export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>, currentUserPostIds: ReadonlySet<string> = new Set()): LocalPost[] {
-  return rankPosts(posts.filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested"), tab)
-    .sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested"));
-}
-
+export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>, currentUserPostIds: ReadonlySet<string> = new Set()): LocalPost[] { return rankPosts(posts.filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested"), tab).sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested")); }
 const POSTS_KEY = "local-radar/posts/v1";
 const SETTINGS_KEY = "local-radar/settings/v1";
 export async function loadPosts(): Promise<LocalPost[]> { const value = await AsyncStorage.getItem(POSTS_KEY); return value ? JSON.parse(value) : []; }
