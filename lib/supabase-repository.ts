@@ -34,16 +34,8 @@ export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPo
   const cached = await loadPosts();
   if (!isSupabaseConfigured || !supabase) return cached;
   const result = location
-    ? await supabase.rpc("nearby_feed_posts", {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        radius_meters: 5000,
-      })
-    : await supabase
-        .from("posts")
-        .select("id, kind, category, title, body, area, trust_score, created_at, profiles(display_name)")
-        .order("created_at", { ascending: false })
-        .limit(50);
+    ? await supabase.rpc("nearby_feed_posts", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000 })
+    : await supabase.from("posts").select("id, kind, category, title, body, area, trust_score, created_at, profiles(display_name)").order("created_at", { ascending: false }).limit(50);
   const { data, error } = result;
   if (error || !data) return cached;
   const posts = data.map(toLocalPost);
@@ -55,28 +47,13 @@ export async function createPost(input: { kind: LocalPost["kind"]; category?: Ra
   if (!isSupabaseConfigured || !supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Please sign in to publish to the community") };
-  return supabase.from("posts").insert({
-    author_id: user.id,
-    kind: input.kind,
-    category: input.category,
-    title: input.title,
-    body: input.body,
-    business_id: input.businessId ?? null,
-    area: input.area,
-    visibility: input.visibility ?? "nearby",
-    approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null,
-  }).select().single();
+  return supabase.from("posts").insert({ author_id: user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, business_id: input.businessId ?? null, area: input.area, visibility: input.visibility ?? "nearby", approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null }).select().single();
 }
 
 export async function fetchNearbyItems(location?: DeviceLocation, settings?: LocalSettings, category?: RadarCategory | "All"): Promise<RadarItem[]> {
   const activeSettings = settings ?? await loadSettings();
   if (!isSupabaseConfigured || !supabase || !location) return [];
-  const { data, error } = await supabase.rpc("nearby_radar", {
-    latitude: location.latitude,
-    longitude: location.longitude,
-    radius_meters: radiusToMeters(activeSettings.radius),
-    category_filter: category && category !== "All" ? category : null,
-  });
+  const { data, error } = await supabase.rpc("nearby_radar", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusToMeters(activeSettings.radius), category_filter: category && category !== "All" ? category : null });
   if (error || !data) return [];
   return data as RadarItem[];
 }
@@ -108,27 +85,52 @@ export async function attachPostMedia(input: { postId: string; storagePath: stri
   return supabase.from("post_media").insert({ post_id: input.postId, storage_path: input.storagePath, media_type: input.mediaType, width: input.width ?? null, height: input.height ?? null, sort_order: 0 }).select().single();
 }
 
-
 export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean };
+
+function parseRankCursor(cursor: string | null) {
+  if (!cursor) return { seed: Math.random(), score: null as string | null, id: null as string | null };
+  const parts = cursor.split("|");
+  if (parts.length === 3) return { seed: Number(parts[0]) || 0.5, score: parts[1], id: parts[2] };
+  return { seed: 0.5, score: null, id: null };
+}
+
+async function chronologicalFallback(location: DeviceLocation | undefined, cursor: string | null, pageSize: number): Promise<FeedPage> {
+  if (!supabase) return { posts: [], nextCursor: null, hasMore: false };
+  let query = supabase.from("posts").select("id, kind, category, title, body, area, trust_score, created_at, profiles(display_name)").order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
+  if (location) {
+    const fallback = await supabase.rpc("nearby_feed_posts_page", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000, cursor_created_at: null, cursor_id: null, page_size: pageSize });
+    if (!fallback.error && fallback.data) {
+      const rows = fallback.data as any[];
+      return { posts: rows.map(toLocalPost), nextCursor: null, hasMore: false };
+    }
+  }
+  if (cursor) {
+    const parts = cursor.split("|");
+    const createdAt = parts.length > 1 ? parts[parts.length - 2] : null;
+    const id = parts.length > 0 ? parts[parts.length - 1] : null;
+    if (createdAt && id) query = query.or(`created_at.lt.${createdAt},and(created_at.eq.${createdAt},id.lt.${id})`);
+  }
+  const result = await query;
+  if (result.error || !result.data) return { posts: [], nextCursor: null, hasMore: false };
+  const rows = result.data as any[];
+  const last = rows[rows.length - 1];
+  return { posts: rows.map(toLocalPost), nextCursor: rows.length === pageSize && last ? `${last.created_at}|${last.id}` : null, hasMore: rows.length === pageSize };
+}
 
 export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20): Promise<FeedPage> {
   const cached = await loadPosts();
   if (!isSupabaseConfigured || !supabase) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
-  const cursorParts = cursor ? cursor.split("|") : [];
-  const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null;
-  const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null;
-  let result: any;
-  if (location) {
-    result = await supabase.rpc("nearby_feed_posts_page", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000, cursor_created_at: cursorCreatedAt, cursor_id: cursorId, page_size: pageSize });
-  } else {
-    let query = supabase.from("posts").select("id, kind, category, title, body, area, trust_score, created_at, profiles(display_name)").order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
-    if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
-    result = await query;
+  const parsed = parseRankCursor(cursor);
+  const result = await supabase.rpc("ranked_feed_posts_page", { latitude: location?.latitude ?? null, longitude: location?.longitude ?? null, radius_meters: 5000, cursor_score: parsed.score, cursor_id: parsed.id, page_size: pageSize, refresh_seed: parsed.seed });
+  if (result.error || !result.data) {
+    const fallback = await chronologicalFallback(location, cursor, pageSize);
+    if (fallback.posts.length || cursor) return fallback;
+    return { posts: cached, nextCursor: null, hasMore: false };
   }
-  if (result.error || !result.data) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
-  const rows = result.data as Array<{ id: string; created_at: string }>;
+  const rows = result.data as any[];
   const posts = rows.map(toLocalPost);
-  const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null;
+  const last = rows[rows.length - 1];
+  const next = rows.length === pageSize && last ? `${parsed.seed}|${last.ranked_score ?? last.final_score}|${last.id}` : null;
   return { posts, nextCursor: next, hasMore: Boolean(next) };
 }
 
