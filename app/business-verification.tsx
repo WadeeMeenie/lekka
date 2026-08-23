@@ -6,7 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { submitBusinessVerification } from "@/lib/account-repository";
-import { createYocoVerificationCheckout } from "@/lib/yoco";
+import { createYocoVerificationCheckout } from "@/lib/yoco-v2";
 
 export default function BusinessVerificationScreen() {
   const colors = useColors();
@@ -79,7 +79,7 @@ export default function BusinessVerificationScreen() {
         ) : (
           <View style={[styles.success, { borderColor: colors.border }]}>
             <Text style={[styles.successTitle, { color: colors.foreground }]}>{paymentStarted ? "Checkout opened." : "Request already pending."}</Text>
-            <Text style={[styles.successBody, { color: colors.muted }]}>{paymentStarted ? "Complete the Yoco sandbox payment using Yoco's supplied test credentials. The webhook will update Lekka's payment order." : "This business already has a pending verification request. We will add a retry-payment action once the pending request lookup is wired into this screen."}</Text>
+            <Text style={[styles.successBody, { color: colors.muted }]}>{paymentStarted ? "Complete the Yoco sandbox payment using the test credentials shown in your Yoco dashboard. The webhook will update Lekka's payment order." : "This business already has a pending verification request. We will add a retry-payment action once the pending request lookup is wired into this screen."}</Text>
           </View>
         )}
         {error && submitted ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
