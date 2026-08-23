@@ -1,0 +1,2 @@
+create index if not exists business_verification_requests_requested_by_idx on public.business_verification_requests(requested_by);
+create index if not exists business_verification_requests_reviewed_by_idx on public.business_verification_requests(reviewed_by);
