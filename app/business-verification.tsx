@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
+import * as WebBrowser from "expo-web-browser";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { submitBusinessVerification } from "@/lib/account-repository";
+import { createYocoVerificationCheckout } from "@/lib/yoco";
 
 export default function BusinessVerificationScreen() {
   const colors = useColors();
@@ -12,19 +14,32 @@ export default function BusinessVerificationScreen() {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [paymentStarted, setPaymentStarted] = useState(false);
   const [submitted, setSubmitted] = useState(state === "pending");
 
-  const submit = async () => {
+  const submitAndPay = async () => {
     if (!businessId) return;
     setBusy(true);
     setError(null);
-    const result = await submitBusinessVerification(businessId, note.trim());
-    setBusy(false);
-    if (result.error) {
-      setError(result.error.message);
+
+    const verification = await submitBusinessVerification(businessId, note.trim());
+    if (verification.error || !verification.data?.id) {
+      setBusy(false);
+      setError(verification.error?.message ?? "Lekka could not create the verification request.");
       return;
     }
+
     setSubmitted(true);
+    const checkout = await createYocoVerificationCheckout(businessId, verification.data.id);
+    if (checkout.error || !checkout.data?.redirectUrl) {
+      setBusy(false);
+      setError(checkout.error?.message ?? "Lekka could not start the Yoco test checkout.");
+      return;
+    }
+
+    setPaymentStarted(true);
+    setBusy(false);
+    await WebBrowser.openBrowserAsync(checkout.data.redirectUrl);
   };
 
   return (
@@ -35,15 +50,15 @@ export default function BusinessVerificationScreen() {
         </Pressable>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA VERIFIED</Text>
         <Text style={[styles.title, { color: colors.foreground }]}>Build trust with local customers.</Text>
-        <Text style={[styles.subtitle, { color: colors.muted }]}>
-          Verification is reviewed by Lekka. It cannot be purchased or switched on from the business profile itself.
-        </Text>
+        <Text style={[styles.subtitle, { color: colors.muted }]}>Verification is reviewed by Lekka. The R200 test payment is processed by Yoco and never marks the business verified by itself.</Text>
+
         <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
           <Text style={[styles.business, { color: colors.foreground }]}>{businessName || "Your business"}</Text>
-          <Text style={[styles.status, { color: submitted ? colors.primary : colors.muted }]}>
-            {submitted ? "Verification request pending" : "Not verified"}
+          <Text style={[styles.status, { color: paymentStarted ? colors.primary : submitted ? colors.primary : colors.muted }]}>
+            {paymentStarted ? "Yoco test checkout started" : submitted ? "Verification request created" : "Not verified"}
           </Text>
         </View>
+
         {!submitted ? (
           <>
             <Text style={[styles.label, { color: colors.muted }]}>OPTIONAL NOTE FOR REVIEW</Text>
@@ -57,16 +72,17 @@ export default function BusinessVerificationScreen() {
               style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]}
             />
             {error ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
-            <Pressable disabled={busy} onPress={() => void submit()} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.55 : pressed ? 0.8 : 1 }]}>
-              {busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>Submit for R200 verification</Text>}
+            <Pressable disabled={busy} onPress={() => void submitAndPay()} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.55 : pressed ? 0.8 : 1 }]}>
+              {busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>Pay R200 with Yoco (TEST)</Text>}
             </Pressable>
           </>
         ) : (
           <View style={[styles.success, { borderColor: colors.border }]}>
-            <Text style={[styles.successTitle, { color: colors.foreground }]}>Request received.</Text>
-            <Text style={[styles.successBody, { color: colors.muted }]}>Lekka will review the request before the verified badge is activated.</Text>
+            <Text style={[styles.successTitle, { color: colors.foreground }]}>{paymentStarted ? "Checkout opened." : "Request already pending."}</Text>
+            <Text style={[styles.successBody, { color: colors.muted }]}>{paymentStarted ? "Complete the Yoco sandbox payment using Yoco's supplied test credentials. The webhook will update Lekka's payment order." : "This business already has a pending verification request. We will add a retry-payment action once the pending request lookup is wired into this screen."}</Text>
           </View>
         )}
+        {error && submitted ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
       </View>
     </ScreenContainer>
   );
