@@ -32,6 +32,31 @@ Deno.serve(async (req) => {
   });
   if (adminError || !isAdmin) return json({ error: "admin_required" }, 403);
 
+  const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
+  // Do not create another Yoco subscription if Lekka already has a TEST subscription.
+  const { data: existing, error: existingError } = await service
+    .from("yoco_webhook_subscriptions")
+    .select("provider_subscription_id,name,notification_url,event_types,status,environment")
+    .eq("environment", "test")
+    .eq("notification_url", NOTIFICATION_URL)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingError) return json({ error: "subscription_lookup_failed" }, 500);
+  if (existing) {
+    return json({
+      subscriptionId: existing.provider_subscription_id,
+      notificationUrl: existing.notification_url,
+      eventTypes: existing.event_types,
+      status: existing.status,
+      environment: existing.environment,
+      alreadyExists: true,
+      secret: null,
+      secretStorage: "The webhook secret is only returned by Yoco at subscription creation. Do not create a duplicate subscription.",
+    });
+  }
+
   const response = await fetch("https://api.yoco.com/v1/webhooks/subscriptions/", {
     method: "POST",
     headers: {
@@ -53,7 +78,6 @@ Deno.serve(async (req) => {
   const subscriptionId = String(body.id ?? body.subscription_id ?? "");
   if (!subscriptionId) return json({ error: "yoco_subscription_missing_id" }, 502);
 
-  const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
   const { error: persistError } = await service.from("yoco_webhook_subscriptions").upsert({
     provider_subscription_id: subscriptionId,
     name: String(body.name ?? SUBSCRIPTION_NAME),
@@ -72,6 +96,9 @@ Deno.serve(async (req) => {
     subscriptionId,
     notificationUrl: NOTIFICATION_URL,
     eventTypes: EVENT_TYPES,
+    status: String(body.status ?? (body.active === false ? "inactive" : "active")),
+    environment: "test",
+    alreadyExists: false,
     secret: body.secret ?? null,
     secretStorage: "Store the returned secret as Supabase secret YOCO_WEBHOOK_SECRET. Never commit it.",
   });
