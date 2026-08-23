@@ -6,6 +6,13 @@ export type YocoCheckoutResult = {
   redirectUrl: string;
 };
 
+export type YocoWebhookSubscriptionResult = {
+  subscriptionId: string;
+  notificationUrl: string;
+  eventTypes: string[];
+  secret: string | null;
+};
+
 /** The single client entry point for Lekka's Yoco checkout flow. */
 export async function createYocoVerificationCheckout(businessId: string, verificationRequestId: string) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
@@ -17,6 +24,40 @@ export async function createYocoVerificationCheckout(businessId: string, verific
     return { data: null, error: new Error("Yoco did not return a valid checkout") };
   }
   return { data: data as YocoCheckoutResult, error: null };
+}
+
+/**
+ * Creates the single Yoco TEST webhook subscription using the current authenticated
+ * Supabase session. The Edge Function performs the authoritative platform-admin check.
+ * The returned secret is intentionally returned only to the caller so an admin can
+ * configure YOCO_WEBHOOK_SECRET manually; it is never persisted or logged here.
+ */
+export async function createYocoTestWebhookSubscription() {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+
+  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  if (sessionError || !sessionData.session?.user) {
+    return { data: null, error: sessionError ?? new Error("You must be signed in") };
+  }
+
+  const { data: isAdmin, error: adminError } = await supabase.rpc("is_platform_admin", {
+    target_user: sessionData.session.user.id,
+  });
+  if (adminError) return { data: null, error: adminError };
+  if (!isAdmin) return { data: null, error: new Error("Platform admin access required") };
+
+  const { data, error } = await supabase.functions.invoke("yoco-webhook-subscription", {
+    body: {},
+  });
+  if (error) return { data: null, error };
+  if (!data?.subscriptionId) {
+    return { data: null, error: new Error("Yoco did not return a subscription ID") };
+  }
+
+  return {
+    data: data as YocoWebhookSubscriptionResult,
+    error: null,
+  };
 }
 
 export async function getPaymentOrder(orderId: string) {
