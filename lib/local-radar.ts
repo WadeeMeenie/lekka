@@ -11,6 +11,7 @@ export type LocalPost = {
   author: string;
   initials: string;
   profileImagePath?: string | null;
+  mediaPath?: string | null;
   area: string;
   distance: string;
   time: string;
