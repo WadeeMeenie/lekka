@@ -43,8 +43,14 @@ export default function AuthScreen() {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isSignIn = mode === "signIn";
 
+  // Existing users signing in should enter the main app directly. The onboarding
+  // resume flow is only for account creation/new-user setup, not returning users.
   const continueToNext = () => {
-    router.replace((next === "onboarding" ? "/onboarding?resume=1" : next === "business-invite" && token ? `/business-invite?token=${encodeURIComponent(token)}` : intent === "business" ? "/business-setup" : "/(tabs)") as never);
+    if (mode === "signIn") {
+      router.replace("/(tabs)");
+      return;
+    }
+    router.replace((next === "business-invite" && token ? `/business-invite?token=${encodeURIComponent(token)}` : intent === "business" ? "/business-setup" : next === "onboarding" ? "/onboarding?resume=1" : "/(tabs)") as never);
   };
 
   const submit = async () => {
