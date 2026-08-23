@@ -62,7 +62,14 @@ export async function loadMyBusinessProfile(businessId: string) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Please sign in") };
-  return supabase.from("business_members").select("role, businesses(id, name, category, description, area, address, phone, business_email, website, business_type, location_mode, service_areas, opening_hours)").eq("business_id", businessId).eq("user_id", user.id).maybeSingle();
+  return supabase.from("business_members").select("role, businesses(id, name, category, description, area, address, phone, business_email, website, business_type, location_mode, service_areas, opening_hours, verification_state)").eq("business_id", businessId).eq("user_id", user.id).maybeSingle();
+}
+
+export async function submitBusinessVerification(businessId: string, evidenceNote = "") {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: new Error("Please sign in") };
+  return supabase.rpc("submit_business_verification", { p_business_id: businessId, p_evidence_note: evidenceNote });
 }
 
 export async function saveBusinessLogo(businessId: string, uri: string, contentType = "image/jpeg") {
