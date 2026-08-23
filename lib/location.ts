@@ -39,10 +39,9 @@ export async function getGrantedLocationOrFallback(fallbackArea = "your area"): 
   }
 }
 
+/** Passive location read. It never asks the user for permission. */
 export async function getLastKnownOrCurrentLocation(fallbackArea = "your area"): Promise<LocationResult> {
-  const passive = await getGrantedLocationOrFallback(fallbackArea);
-  if (passive.status === "granted") return passive;
-  return requestApproximateLocation(fallbackArea);
+  return getGrantedLocationOrFallback(fallbackArea);
 }
 
 export async function watchMeaningfulForegroundLocation(
