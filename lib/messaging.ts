@@ -47,7 +47,7 @@ export async function sendDirectMessage(conversationId: string, body: string) {
   if (conversation.error) return { data: null, error: conversation.error };
   if (!conversation.data) return { data: null, error: new Error("Conversation not found") };
   if (conversation.data.request_status === "rejected") return { data: null, error: new Error("This conversation was declined") };
-  if (conversation.data.request_status === "pending" && conversation.data.requested_by !== auth.user.id) return { data: null, error: new Error("Accept the message request before replying") };
+  if (conversation.data.request_status !== "accepted") return { data: null, error: new Error("Wait for the recipient to accept the message request before sending another message") };
   const result = await supabase.from("direct_messages").insert({ conversation_id: conversationId, sender_id: auth.user.id, body: text }).select("id, conversation_id, sender_id, body, created_at, read_at").single();
   if (!result.error) await supabase.from("direct_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
   return { data: result.data as DirectMessage | null, error: result.error };
