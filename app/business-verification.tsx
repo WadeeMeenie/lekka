@@ -6,7 +6,7 @@ import * as WebBrowser from "expo-web-browser";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { submitBusinessVerification } from "@/lib/account-repository";
-import { createYocoVerificationCheckout } from "@/lib/yoco-v2";
+import { createYocoVerificationCheckout } from "@/lib/yoco";
 
 export default function BusinessVerificationScreen() {
   const colors = useColors();
