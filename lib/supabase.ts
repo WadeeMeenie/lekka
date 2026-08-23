@@ -28,9 +28,22 @@ function wait(milliseconds: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
+function isTransientAuthError(error: { status?: number; message?: string } | null) {
+  if (!error) return false;
+  const status = error.status ?? 0;
+  const message = (error.message ?? "").toLowerCase();
+  return status === 408 || status === 429 || status >= 500 || message.includes("timeout") || message.includes("timed out") || message.includes("network") || message.includes("connection") || message.includes("fetch");
+}
+
 export async function signInWithPassword(email: string, password: string) {
   if (!supabase) throw new Error("Backend is not configured yet.");
-  return supabase.auth.signInWithPassword({ email, password });
+
+  let result = await supabase.auth.signInWithPassword({ email, password });
+  for (let attempt = 1; attempt <= 2 && isTransientAuthError(result.error); attempt += 1) {
+    await wait(750 * attempt);
+    result = await supabase.auth.signInWithPassword({ email, password });
+  }
+  return result;
 }
 
 export async function signUpWithPassword(email: string, password: string, displayName: string) {
