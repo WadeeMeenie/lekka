@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type FeedTab = "For You" | "Nearby" | "Trending" | "Following";
-export type RadarCategory = "Food" | "Event" | "Deal" | "Job" | "Marketplace" | "Alert" | "Service";
+export type RadarCategory = "Food" | "Event" | "Deal" | "Job" | "Marketplace" | "Alert" | "Service" | "business" | "deal" | "event" | "job" | "marketplace" | "service";
 export type PostKind = "post" | "alert";
 
 export type LocalPost = {
