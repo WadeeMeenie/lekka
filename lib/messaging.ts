@@ -1,6 +1,15 @@
 import { supabase } from "@/lib/supabase";
 
-export type Conversation = { id: string; user_a: string; user_b: string; updated_at: string; other_profile: { id: string; display_name: string; username: string | null; profile_image_path: string | null } | null; last_message: { body: string; created_at: string; sender_id: string } | null };
+export type Conversation = {
+  id: string;
+  user_a: string;
+  user_b: string;
+  updated_at: string;
+  request_status: "pending" | "accepted" | "rejected";
+  requested_by: string | null;
+  other_profile: { id: string; display_name: string; username: string | null; profile_image_path: string | null } | null;
+  last_message: { body: string; created_at: string; sender_id: string } | null;
+};
 export type DirectMessage = { id: string; conversation_id: string; sender_id: string; body: string; created_at: string; read_at: string | null };
 
 export async function getOrCreateConversation(otherUserId: string) {
@@ -14,7 +23,7 @@ export async function listMyConversations() {
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) return { data: [], error: new Error("Please sign in") };
   const result = await supabase.from("direct_conversations")
-    .select("id, user_a, user_b, updated_at, user_a_profile:profiles!direct_conversations_user_a_fkey(id, display_name, username, profile_image_path), user_b_profile:profiles!direct_conversations_user_b_fkey(id, display_name, username, profile_image_path)")
+    .select("id, user_a, user_b, updated_at, request_status, requested_by, user_a_profile:profiles!direct_conversations_user_a_fkey(id, display_name, username, profile_image_path), user_b_profile:profiles!direct_conversations_user_b_fkey(id, display_name, username, profile_image_path)")
     .or(`user_a.eq.${auth.user.id},user_b.eq.${auth.user.id}`)
     .order("updated_at", { ascending: false });
   if (result.error) return { data: [] as Conversation[], error: result.error };
@@ -34,9 +43,20 @@ export async function sendDirectMessage(conversationId: string, body: string) {
   if (!auth.user) return { data: null, error: new Error("Please sign in") };
   const text = body.trim();
   if (!text) return { data: null, error: new Error("Message cannot be empty") };
+  const conversation = await supabase.from("direct_conversations").select("request_status, requested_by").eq("id", conversationId).maybeSingle();
+  if (conversation.error) return { data: null, error: conversation.error };
+  if (!conversation.data) return { data: null, error: new Error("Conversation not found") };
+  if (conversation.data.request_status === "rejected") return { data: null, error: new Error("This conversation was declined") };
+  if (conversation.data.request_status === "pending" && conversation.data.requested_by !== auth.user.id) return { data: null, error: new Error("Accept the message request before replying") };
   const result = await supabase.from("direct_messages").insert({ conversation_id: conversationId, sender_id: auth.user.id, body: text }).select("id, conversation_id, sender_id, body, created_at, read_at").single();
   if (!result.error) await supabase.from("direct_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
   return { data: result.data as DirectMessage | null, error: result.error };
+}
+
+export async function respondToMessageRequest(conversationId: string, status: "accepted" | "rejected") {
+  if (!supabase) return { error: new Error("Backend is not configured") };
+  const result = await supabase.from("direct_conversations").update({ request_status: status, updated_at: new Date().toISOString() }).eq("id", conversationId).eq("request_status", "pending");
+  return { error: result.error };
 }
 
 export async function markConversationRead(conversationId: string) {
