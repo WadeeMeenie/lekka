@@ -7,16 +7,26 @@ import type { SocialPost } from "@/lib/social-repository";
 function toLocalPost(row: any): LocalPost {
   const profile = row.profiles ?? null;
   const author = row.author_name || profile?.display_name || "Local neighbour";
-  return { id: row.id, kind: row.kind === "alert" ? "alert" : "post", category: row.category ?? undefined, author, initials: author.slice(0, 2).toUpperCase(), profileImagePath: profile?.profile_image_path ?? null, area: row.area, distance: row.distance_label || "Nearby", time: formatRelativeTime(row.created_at), title: row.title ?? undefined, body: row.body, likes: row.reaction_count ?? 0, comments: row.comment_count ?? 0, trusted: Number(row.trust_score ?? 0) >= 0.8, accent: row.kind === "alert" ? "#D95D4F" : "#2F7D67" };
+  return { id: row.id, kind: row.kind === "alert" ? "alert" : "post", category: row.category ?? undefined, author, initials: author.slice(0, 2).toUpperCase(), profileImagePath: profile?.profile_image_path ?? null, mediaPath: row.post_media?.[0]?.storage_path ?? row.media_path ?? null, area: row.area, distance: row.distance_label || "Nearby", time: formatRelativeTime(row.created_at), title: row.title ?? undefined, body: row.body, likes: row.reaction_count ?? 0, comments: row.comment_count ?? 0, trusted: Number(row.trust_score ?? 0) >= 0.8, accent: row.kind === "alert" ? "#D95D4F" : "#2F7D67" };
 }
 function formatRelativeTime(value: string) { const minutes = Math.max(1, Math.round((Date.now() - new Date(value).getTime()) / 60000)); if (minutes < 60) return `${minutes} min`; return `${Math.round(minutes / 60)} hr`; }
 const PROFILE_SELECT = "profiles(display_name, profile_image_path)";
+
+async function hydratePostMedia(posts: LocalPost[]): Promise<LocalPost[]> {
+  if (!supabase || posts.length === 0) return posts;
+  const ids = posts.map((post) => post.id);
+  const { data, error } = await supabase.from("post_media").select("post_id, storage_path, media_type, sort_order").in("post_id", ids).order("sort_order", { ascending: true });
+  if (error || !data) return posts;
+  const firstMedia = new Map<string, string>();
+  for (const row of data as Array<{ post_id: string; storage_path: string }>) if (!firstMedia.has(row.post_id)) firstMedia.set(row.post_id, row.storage_path);
+  return posts.map((post) => ({ ...post, mediaPath: post.mediaPath ?? firstMedia.get(post.id) ?? null }));
+}
 
 export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPost[]> {
   const cached = await loadPosts();
   if (!isSupabaseConfigured || !supabase) return cached;
   const result = location ? await supabase.rpc("nearby_feed_posts", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000 }) : await supabase.from("posts").select(`id, kind, category, title, body, area, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).limit(50);
-  const { data, error } = result; if (error || !data) return cached; const posts = data.map(toLocalPost); await savePosts(posts); return posts;
+  const { data, error } = result; if (error || !data) return cached; const posts = await hydratePostMedia(data.map(toLocalPost)); await savePosts(posts); return posts;
 }
 
 export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
@@ -40,7 +50,7 @@ export async function fetchFeedPage(location: DeviceLocation | undefined, cursor
   const cursorParts = cursor ? cursor.split("|") : []; const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null; const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null; let result: any;
   if (location) result = await supabase.rpc("nearby_feed_posts_page", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000, cursor_created_at: cursorCreatedAt, cursor_id: cursorId, page_size: pageSize });
   else { let query = supabase.from("posts").select(`id, kind, category, title, body, area, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize); if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`); result = await query; }
-  if (result.error || !result.data) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false }; const rows = result.data as Array<{ id: string; created_at: string }>; const posts = rows.map(toLocalPost); const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null; return { posts, nextCursor: next, hasMore: Boolean(next) };
+  if (result.error || !result.data) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false }; const rows = result.data as Array<{ id: string; created_at: string }>; const posts = await hydratePostMedia(rows.map(toLocalPost)); const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null; return { posts, nextCursor: next, hasMore: Boolean(next) };
 }
 
 export async function listPublicProfilePosts(profileId: string, cursor: string | null, pageSize = 20) {
