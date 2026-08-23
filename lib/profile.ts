@@ -2,6 +2,8 @@ import { supabase } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/supabase-repository";
 import { createProfileAvatarPath } from "@/lib/profile-avatar";
 
+export type FriendsListVisibility = "only_me" | "friends" | "everyone";
+
 export type ProfileInput = {
   displayName: string;
   username: string;
@@ -10,6 +12,8 @@ export type ProfileInput = {
   preferredRadiusM: number;
   interests?: string[];
   locationVisibility?: "hidden" | "area";
+  isPrivate?: boolean;
+  friendsListVisibility?: FriendsListVisibility;
 };
 
 export async function loadMyProfile() {
@@ -18,7 +22,7 @@ export async function loadMyProfile() {
   if (!user) return { data: null, error: new Error("Please sign in") };
   return supabase
     .from("profiles")
-    .select("id, display_name, username, bio, home_area, preferred_radius_m, interests, location_visibility, profile_image_path")
+    .select("id, display_name, username, bio, home_area, preferred_radius_m, interests, location_visibility, profile_image_path, is_private, friends_list_visibility")
     .eq("id", user.id)
     .maybeSingle();
 }
@@ -38,6 +42,8 @@ export async function saveMyProfile(input: ProfileInput) {
       preferred_radius_m: input.preferredRadiusM,
       interests: input.interests ?? [],
       location_visibility: input.locationVisibility ?? "area",
+      is_private: input.isPrivate ?? false,
+      friends_list_visibility: input.friendsListVisibility ?? "friends",
       updated_at: new Date().toISOString(),
     })
     .select()
@@ -48,8 +54,6 @@ export async function saveMyProfileAvatar(uri: string, contentType = "image/jpeg
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { data: null, error: new Error("Please sign in") };
-  // Use a new key for every avatar update. The shared media uploader intentionally
-  // does not overwrite objects, and a unique key also avoids stale image caches.
   const path = createProfileAvatarPath(user.id);
   const upload = await uploadMedia(uri, path, contentType);
   if (upload.error) return { data: null, error: upload.error };
