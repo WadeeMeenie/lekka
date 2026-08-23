@@ -22,7 +22,7 @@ export async function loadMyProfile() {
   if (!user) return { data: null, error: new Error("Please sign in") };
   return supabase
     .from("profiles")
-    .select("id, display_name, username, bio, home_area, preferred_radius_m, interests, location_visibility, profile_image_path, is_private, friends_list_visibility")
+    .select("id, display_name, username, bio, home_area, preferred_radius_m, interests, location_visibility, profile_image_path")
     .eq("id", user.id)
     .maybeSingle();
 }
@@ -42,11 +42,9 @@ export async function saveMyProfile(input: ProfileInput) {
       preferred_radius_m: input.preferredRadiusM,
       interests: input.interests ?? [],
       location_visibility: input.locationVisibility ?? "area",
-      is_private: input.isPrivate ?? false,
-      friends_list_visibility: input.friendsListVisibility ?? "friends",
       updated_at: new Date().toISOString(),
     })
-    .select()
+    .select("id, display_name, username, bio, home_area, preferred_radius_m, interests, location_visibility, profile_image_path")
     .single();
 }
 
