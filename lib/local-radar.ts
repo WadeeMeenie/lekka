@@ -10,6 +10,7 @@ export type LocalPost = {
   category?: RadarCategory;
   author: string;
   initials: string;
+  profileImagePath?: string | null;
   area: string;
   distance: string;
   time: string;
@@ -40,12 +41,7 @@ export type LocalSettings = {
   approximateVisibility: boolean;
 };
 
-export const defaultSettings: LocalSettings = {
-  area: "Bellville",
-  radius: "5 km",
-  useLocation: false,
-  approximateVisibility: true,
-};
+export const defaultSettings: LocalSettings = { area: "Bellville", radius: "5 km", useLocation: false, approximateVisibility: true };
 
 export const seededPosts: LocalPost[] = [
   { id: "p1", kind: "post", author: "Bellville Neighbourhood Watch", initials: "BN", area: "Bellville", distance: "0.7 km", time: "12 min", title: "Water-wise garden swap this Saturday", body: "Bring cuttings, seedlings, and stories. Everyone in the northern suburbs is welcome at the community garden.", likes: 42, comments: 8, trusted: true, accent: "#2F7D67" },
@@ -73,11 +69,6 @@ export function rankPosts(posts: LocalPost[], tab: FeedTab): LocalPost[] {
 
 export type FeedPreference = "interested" | "not_interested";
 
-/**
- * Apply feed feedback without ever hiding the user's own posts.
- * Personalisation is allowed to affect discovery of other people's content,
- * but a user's own content must remain visible in their feed/profile views.
- */
 export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>, currentUserPostIds: ReadonlySet<string> = new Set()): LocalPost[] {
   return rankPosts(posts.filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested"), tab)
     .sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested"));
@@ -85,21 +76,7 @@ export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Reco
 
 const POSTS_KEY = "local-radar/posts/v1";
 const SETTINGS_KEY = "local-radar/settings/v1";
-
-export async function loadPosts(): Promise<LocalPost[]> {
-  const value = await AsyncStorage.getItem(POSTS_KEY);
-  return value ? JSON.parse(value) : [];
-}
-
-export async function savePosts(posts: LocalPost[]) {
-  await AsyncStorage.setItem(POSTS_KEY, JSON.stringify(posts));
-}
-
-export async function loadSettings(): Promise<LocalSettings> {
-  const value = await AsyncStorage.getItem(SETTINGS_KEY);
-  return value ? { ...defaultSettings, ...JSON.parse(value) } : defaultSettings;
-}
-
-export async function saveSettings(settings: LocalSettings) {
-  await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
-}
+export async function loadPosts(): Promise<LocalPost[]> { const value = await AsyncStorage.getItem(POSTS_KEY); return value ? JSON.parse(value) : []; }
+export async function savePosts(posts: LocalPost[]) { await AsyncStorage.setItem(POSTS_KEY, JSON.stringify(posts)); }
+export async function loadSettings(): Promise<LocalSettings> { const value = await AsyncStorage.getItem(SETTINGS_KEY); return value ? { ...defaultSettings, ...JSON.parse(value) } : defaultSettings; }
+export async function saveSettings(settings: LocalSettings) { await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
