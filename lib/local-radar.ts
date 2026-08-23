@@ -73,8 +73,13 @@ export function rankPosts(posts: LocalPost[], tab: FeedTab): LocalPost[] {
 
 export type FeedPreference = "interested" | "not_interested";
 
-export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>): LocalPost[] {
-  return rankPosts(posts.filter((post) => feedback[post.id] !== "not_interested"), tab)
+/**
+ * Apply feed feedback without ever hiding the user's own posts.
+ * Personalisation is allowed to affect discovery of other people's content,
+ * but a user's own content must remain visible in their feed/profile views.
+ */
+export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>, currentUserPostIds: ReadonlySet<string> = new Set()): LocalPost[] {
+  return rankPosts(posts.filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested"), tab)
     .sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested"));
 }
 
