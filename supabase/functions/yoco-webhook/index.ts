@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const WEBHOOK_SECRET = Deno.env.get("YOCO_WEBHOOK_SECRET");
-const MAX_SKEW_SECONDS = 300;
+const MAX_SKEW_SECONDS = 180;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -25,8 +25,8 @@ async function verifySignature(rawBody: string, req: Request) {
   if (!WEBHOOK_SECRET) return false;
   const id = req.headers.get("webhook-id");
   const timestamp = req.headers.get("webhook-timestamp");
-  const signature = req.headers.get("webhook-signature");
-  if (!id || !timestamp || !signature) return false;
+  const signatureHeader = req.headers.get("webhook-signature");
+  if (!id || !timestamp || !signatureHeader) return false;
 
   const ts = Number(timestamp);
   if (!Number.isFinite(ts) || Math.abs(Math.floor(Date.now() / 1000) - ts) > MAX_SKEW_SECONDS) return false;
@@ -39,29 +39,26 @@ async function verifySignature(rawBody: string, req: Request) {
     return false;
   }
 
-  const key = await crypto.subtle.importKey("raw", secretBytes, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const signed = new TextEncoder().encode(`${id}.${timestamp}.${rawBody}`);
-  const digest = new Uint8Array(await crypto.subtle.sign("HMAC", key, signed));
+  const key = await crypto.subtle.importKey(
+    "raw",
+    secretBytes,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signedContent = new TextEncoder().encode(`${id}.${timestamp}.${rawBody}`);
+  const digest = new Uint8Array(await crypto.subtle.sign("HMAC", key, signedContent));
 
-  return signature.split(" ").some((entry) => {
-    const parts = entry.split(",", 2);
-    if (parts.length !== 2 || parts[0] !== "v1") return false;
+  // Yoco/Standard Webhooks format: "v1,base64signature v1,base64signature".
+  return signatureHeader.split(" ").some((entry) => {
+    const [version, encodedSignature] = entry.split(",", 2);
+    if (version !== "v1" || !encodedSignature) return false;
     try {
-      return timingSafeEqual(digest, base64ToBytes(parts[1]));
+      return timingSafeEqual(digest, base64ToBytes(encodedSignature));
     } catch {
       return false;
     }
   });
-}
-
-function findValue(value: unknown, keys: string[]): unknown {
-  if (!value || typeof value !== "object") return undefined;
-  for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
-    if (keys.includes(key) && (typeof child === "string" || typeof child === "number")) return child;
-    const nested = findValue(child, keys);
-    if (nested !== undefined) return nested;
-  }
-  return undefined;
 }
 
 Deno.serve(async (req) => {
@@ -81,10 +78,8 @@ Deno.serve(async (req) => {
   if (!webhookId) return json({ error: "missing_webhook_id" }, 400);
 
   const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-  const eventType = String(payload.event_type ?? payload.type ?? payload.event ?? "unknown");
+  const eventType = String(payload.event_type ?? "unknown");
 
-  // Yoco documents webhook-id as the unique delivery identifier. Persist it before
-  // processing so retries are acknowledged without applying the payment twice.
   const { error: eventInsertError } = await service.from("yoco_webhook_events").insert({
     webhook_id: webhookId,
     event_type: eventType,
@@ -95,37 +90,29 @@ Deno.serve(async (req) => {
     return json({ error: "webhook_persistence_failed" }, 500);
   }
 
-  // The current Yoco webhook API documents payment.created and payment.refunded.
-  // A payment.created delivery is the authoritative payment event for this flow.
-  const isPaid = eventType === "payment.created";
-  const isRefunded = eventType === "payment.refunded";
-  if (!isPaid && !isRefunded) return json({ received: true, ignored: true });
-
-  const paymentId = String(findValue(payload, ["payment_id", "paymentId", "id"]) ?? "");
-  const checkoutId = String(findValue(payload, ["checkout_id", "checkoutId"]) ?? "");
-  const metadataValue = findValue(payload, ["metadata", "metaData", "meta_data"]);
-  const metadata = metadataValue && typeof metadataValue === "object"
-    ? metadataValue as Record<string, unknown>
-    : {};
-  const lekkaOrderId = String(metadata.lekkaOrderId ?? metadata.lekka_order_id ?? "");
-
-  if (lekkaOrderId) {
-    await service.from("payment_orders").update({
-      status: isPaid ? "paid" : "refunded",
-      provider_checkout_id: checkoutId || undefined,
-      provider_payment_id: paymentId || undefined,
-      paid_at: isPaid ? new Date().toISOString() : undefined,
-      metadata: { yoco_event_type: eventType, yoco_payload: payload },
-      updated_at: new Date().toISOString(),
-    }).eq("id", lekkaOrderId);
-  } else if (checkoutId) {
-    await service.rpc("set_payment_order_status_from_yoco", {
-      p_checkout_id: checkoutId,
-      p_status: isPaid ? "paid" : "refunded",
-      p_provider_payment_id: paymentId || null,
-      p_metadata: { yoco_event_type: eventType },
-    });
+  if (eventType !== "payment.created" && eventType !== "payment.refunded") {
+    return json({ received: true, ignored: true });
   }
+
+  // Current Yoco webhook payloads expose order_id and payment_id at the top level.
+  // The checkout ID returned by Checkout API is persisted as provider_checkout_id.
+  const providerOrderId = typeof payload.order_id === "string" ? payload.order_id : "";
+  const paymentId = typeof payload.payment_id === "string" ? payload.payment_id : "";
+  if (!providerOrderId) return json({ error: "missing_order_id" }, 400);
+
+  const nextStatus = eventType === "payment.created" ? "paid" : "refunded";
+  const { data: updatedOrder, error: updateError } = await service.rpc(
+    "set_payment_order_status_from_yoco",
+    {
+      p_checkout_id: providerOrderId,
+      p_status: nextStatus,
+      p_provider_payment_id: paymentId || null,
+      p_metadata: { yoco_event_type: eventType, webhook_id: webhookId },
+    },
+  );
+
+  if (updateError) return json({ error: "payment_update_failed" }, 500);
+  if (!updatedOrder) return json({ error: "payment_order_not_found" }, 404);
 
   return json({ received: true });
 });
