@@ -2,7 +2,6 @@
 import "./scripts/load-env.js";
 import type { ExpoConfig } from "expo/config";
 
-// Bundle ID format: space.manus.<project_name_dots>.<timestamp>
 const rawBundleId = "com.app.localradarsa";
 const bundleId =
   rawBundleId
@@ -35,8 +34,10 @@ const config: ExpoConfig = {
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
 
-  // Expo SDK 54 + Reanimated 4 require the New Architecture.
-  newArchEnabled: true,
+  // Expo SDK 54 supports legacy architecture. We deliberately use it for the
+  // CodeMagic Android build because the current New Architecture C++ link step
+  // fails inside react-native-safe-area-context codegen.
+  newArchEnabled: false,
 
   ios: {
     supportsTablet: true,
@@ -92,8 +93,6 @@ const config: ExpoConfig = {
       "expo-build-properties",
       {
         android: {
-          // Lekka is currently tested on ARM64 Android devices (e.g. S23 FE).
-          // Avoid generating unnecessary 32-bit native C++ targets in CI.
           buildArchs: ["arm64-v8a"],
           minSdkVersion: 24,
         },
