@@ -4,7 +4,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const YOCO_API_KEY = Deno.env.get("YOCO_API_KEY");
+const YOCO_SECRET_KEY = Deno.env.get("YOCO_SECRET_KEY");
 const NOTIFICATION_URL = Deno.env.get("YOCO_WEBHOOK_NOTIFICATION_URL")
   ?? `${SUPABASE_URL}/functions/v1/yoco-webhook`;
 const SUBSCRIPTION_NAME = "Lekka payments";
@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200) =>
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-  if (!YOCO_API_KEY) return json({ error: "yoco_api_not_configured" }, 503);
+  if (!YOCO_SECRET_KEY) return json({ error: "yoco_secret_key_not_configured" }, 503);
 
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return json({ error: "missing_authorization" }, 401);
@@ -34,7 +34,7 @@ Deno.serve(async (req) => {
 
   const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 
-  // Do not create another Yoco subscription if Lekka already has a TEST subscription.
+  // Do not create another Yoco webhook if Lekka already has a TEST subscription.
   const { data: existing, error: existingError } = await service
     .from("yoco_webhook_subscriptions")
     .select("provider_subscription_id,name,notification_url,event_types,status,environment")
@@ -53,53 +53,63 @@ Deno.serve(async (req) => {
       environment: existing.environment,
       alreadyExists: true,
       secret: null,
-      secretStorage: "The webhook secret is only returned by Yoco at subscription creation. Do not create a duplicate subscription.",
+      secretStorage: "The webhook secret is only returned by Yoco at webhook creation. Do not create a duplicate webhook.",
     });
   }
 
-  const response = await fetch("https://api.yoco.com/v1/webhooks/subscriptions/", {
+  // Current Yoco Checkout API webhook registration endpoint.
+  // Webhook registration authenticates with the Yoco secret key and accepts only
+  // the webhook name + destination URL. Event delivery is handled by Yoco's
+  // supported Checkout API webhook events (including payment/refund notifications).
+  const response = await fetch("https://payments.yoco.com/api/webhooks", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${YOCO_API_KEY}`,
+      Authorization: `Bearer ${YOCO_SECRET_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      event_types: EVENT_TYPES,
       name: SUBSCRIPTION_NAME,
-      notification_url: NOTIFICATION_URL,
+      url: NOTIFICATION_URL,
     }),
   });
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    return json({ error: "yoco_subscription_creation_failed", status: response.status, detail: body }, 502);
+    return json({ error: "yoco_webhook_registration_failed", status: response.status, detail: body }, 502);
   }
 
   const subscriptionId = String(body.id ?? body.subscription_id ?? "");
-  if (!subscriptionId) return json({ error: "yoco_subscription_missing_id" }, 502);
+  if (!subscriptionId) return json({ error: "yoco_webhook_missing_id" }, 502);
+
+  const environment = String(body.mode ?? "test").toLowerCase() === "live" ? "live" : "test";
+  if (environment !== "test") {
+    return json({ error: "yoco_webhook_not_test_mode", environment }, 502);
+  }
+
+  const webhookSecret = body.secret ?? null;
 
   const { error: persistError } = await service.from("yoco_webhook_subscriptions").upsert({
     provider_subscription_id: subscriptionId,
     name: String(body.name ?? SUBSCRIPTION_NAME),
-    notification_url: NOTIFICATION_URL,
+    notification_url: String(body.url ?? NOTIFICATION_URL),
     event_types: EVENT_TYPES,
-    status: String(body.status ?? (body.active === false ? "inactive" : "active")),
-    environment: "test",
+    status: "active",
+    environment,
     updated_at: new Date().toISOString(),
   }, { onConflict: "provider_subscription_id" });
 
   if (persistError) return json({ error: "subscription_persistence_failed" }, 500);
 
-  // Yoco returns the whsec_ secret only once at creation. Return it only to the
-  // authenticated platform admin so it can be stored as YOCO_WEBHOOK_SECRET.
+  // Yoco returns the webhook signing secret only once at creation. Return it only
+  // to the authenticated platform admin so it can be stored as YOCO_WEBHOOK_SECRET.
   return json({
     subscriptionId,
-    notificationUrl: NOTIFICATION_URL,
+    notificationUrl: String(body.url ?? NOTIFICATION_URL),
     eventTypes: EVENT_TYPES,
-    status: String(body.status ?? (body.active === false ? "inactive" : "active")),
-    environment: "test",
+    status: "active",
+    environment,
     alreadyExists: false,
-    secret: body.secret ?? null,
+    secret: webhookSecret,
     secretStorage: "Store the returned secret as Supabase secret YOCO_WEBHOOK_SECRET. Never commit it.",
   });
 });
