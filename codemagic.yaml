@@ -16,14 +16,14 @@ workflows:
         script: |
           corepack enable
           corepack prepare pnpm@9.12.0 --activate
-      - name: Install dependencies
+      - name: Install dependencies from locked native stack
         script: |
-          # package.json was deliberately aligned to Expo SDK 54's native stack.
-          # Resolve the lockfile if dependency ranges changed; do not fail CI on
-          # a stale lockfile while we stabilize the Android native build.
-          pnpm install --no-frozen-lockfile
+          pnpm install --frozen-lockfile
+          node -e 'const p=require("./package.json"); const ok=p.dependencies.expo==="~54.0.29" && p.dependencies["react-native"]==="0.81.5" && p.dependencies["react-native-safe-area-context"]==="~5.6.2" && p.dependencies["react-native-worklets"]==="0.5.1" && p.dependencies["react-native-reanimated"]==="~4.1.1"; if(!ok){console.error(p.dependencies); process.exit(1)}; console.log("Locked Expo 54 / RN 0.81.5 native stack verified")'
+          pnpm exec expo install --check || true
       - name: Generate native Android project
         script: |
+          rm -rf android
           npx expo prebuild --platform android --non-interactive --clean
       - name: Enforce React Native New Architecture
         script: |
@@ -40,21 +40,26 @@ workflows:
       - name: Verify Expo native configuration
         script: |
           node -e 'const fs=require("fs"); const p="android/gradle.properties"; const s=fs.readFileSync(p,"utf8"); if(!/^newArchEnabled=true$/m.test(s)) process.exit(1); console.log("New Architecture enabled")'
-          node -e 'const p=require("./package.json"); if(p.dependencies["react-native-reanimated"]!=="~4.1.1") process.exit(1); console.log("Reanimated aligned to Expo SDK 54")'
-      - name: Remove stale native CMake state
+          node -e 'const p=require("./package.json"); if(p.dependencies["react-native-reanimated"]!=="~4.1.1") process.exit(1); if(p.dependencies["react-native-worklets"]!=="0.5.1") process.exit(1); if(p.dependencies["react-native-safe-area-context"]!=="~5.6.2") process.exit(1); console.log("Reanimated 4.1.x + Worklets 0.5.1 + Safe Area 5.6.x aligned")'
+      - name: Purge stale native CMake and Gradle state
         script: |
-          rm -rf android/.cxx android/app/.cxx
-          find node_modules -type d -name .cxx -prune -exec rm -rf {} + 2>/dev/null || true
-          echo "Removed stale CMake/Ninja state"
+          ./android/gradlew --stop || true
+          rm -rf android/.cxx android/app/.cxx android/build android/app/build
+          find node_modules -type d \( -name .cxx -o -path '*/android/build' \) -prune -exec rm -rf {} + 2>/dev/null || true
+          export GRADLE_USER_HOME="$CM_BUILD_DIR/.gradle-clean"
+          rm -rf "$GRADLE_USER_HOME"
+          mkdir -p "$GRADLE_USER_HOME"
+          echo "Native CMake, module Android build outputs and Gradle user cache purged"
       - name: Build installable Android debug APK
         script: |
+          export GRADLE_USER_HOME="$CM_BUILD_DIR/.gradle-clean"
           cd android
-          ./gradlew clean --no-daemon --max-workers=1
-          ./gradlew assembleDebug --no-daemon --max-workers=1 -PreactNativeArchitectures=arm64-v8a --rerun-tasks --stacktrace --info 2>&1 | tee ../android-build.log
+          ./gradlew clean --no-daemon --max-workers=1 --refresh-dependencies
+          ./gradlew assembleDebug --no-daemon --max-workers=1 -PreactNativeArchitectures=arm64-v8a --rerun-tasks --refresh-dependencies --stacktrace --info 2>&1 | tee ../android-build.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             echo "===== NATIVE BUILD ERROR SUMMARY ====="
-            grep -E -i 'error:|fatal error:|undefined reference|ld\.lld|clang:|ninja: error|FAILED' ../android-build.log | tail -n 80 || true
+            grep -E -i 'error:|fatal error:|undefined reference|ld\.lld|clang:|ninja: error|FAILED' ../android-build.log | tail -n 100 || true
             echo "===== END ERROR SUMMARY ====="
             exit "$status"
           fi
