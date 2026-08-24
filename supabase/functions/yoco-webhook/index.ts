@@ -49,7 +49,6 @@ async function verifySignature(rawBody: string, req: Request) {
   const signedContent = new TextEncoder().encode(`${id}.${timestamp}.${rawBody}`);
   const digest = new Uint8Array(await crypto.subtle.sign("HMAC", key, signedContent));
 
-  // Yoco/Standard Webhooks format: "v1,base64signature v1,base64signature".
   return signatureHeader.split(" ").some((entry) => {
     const [version, encodedSignature] = entry.split(",", 2);
     if (version !== "v1" || !encodedSignature) return false;
@@ -85,8 +84,7 @@ Deno.serve(async (req) => {
     event_type: eventType,
     payload,
   });
-  if (eventInsertError) {
-    if (eventInsertError.code === "23505") return json({ received: true, duplicate: true });
+  if (eventInsertError && eventInsertError.code !== "23505") {
     return json({ error: "webhook_persistence_failed" }, 500);
   }
 
@@ -94,8 +92,6 @@ Deno.serve(async (req) => {
     return json({ received: true, ignored: true });
   }
 
-  // Current Yoco webhook payloads expose order_id and payment_id at the top level.
-  // The checkout ID returned by Checkout API is persisted as provider_checkout_id.
   const providerOrderId = typeof payload.order_id === "string" ? payload.order_id : "";
   const paymentId = typeof payload.payment_id === "string" ? payload.payment_id : "";
   if (!providerOrderId) return json({ error: "missing_order_id" }, 400);
