@@ -28,21 +28,21 @@ workflows:
         script: |
           rm -rf android
           pnpm exec expo prebuild --platform android --clean
-      - name: Enforce React Native New Architecture
+      - name: Configure React Native architecture
         script: |
           python3 - <<'PY'
           from pathlib import Path
           p = Path("android/gradle.properties")
           text = p.read_text() if p.exists() else ""
           lines = [line for line in text.splitlines() if not line.startswith("newArchEnabled=")]
-          lines.append("newArchEnabled=true")
+          lines.append("newArchEnabled=false")
           p.write_text("\n".join(lines) + "\n")
-          print("Verified android/gradle.properties contains newArchEnabled=true")
+          print("Configured legacy React Native architecture to avoid the current C++ codegen linker failure")
           PY
-          grep -n "^newArchEnabled=true$" android/gradle.properties
+          grep -n "^newArchEnabled=false$" android/gradle.properties
       - name: Verify Expo native configuration
         script: |
-          node -e 'const fs=require("fs"); const s=fs.readFileSync("android/gradle.properties","utf8"); if(!/^newArchEnabled=true$/m.test(s)) process.exit(1); console.log("New Architecture enabled")'
+          node -e 'const fs=require("fs"); const s=fs.readFileSync("android/gradle.properties","utf8"); if(!/^newArchEnabled=false$/m.test(s)) process.exit(1); console.log("Legacy React Native architecture enabled")'
           node -e 'const p=require("./package.json"); if(p.dependencies.expo!=="~54.0.29") process.exit(1); if(p.dependencies["react-native"]!=="0.81.5") process.exit(1); if(p.dependencies["react-native-worklets"]!=="0.5.1") process.exit(1); if(p.dependencies["react-native-safe-area-context"]!=="~5.6.2") process.exit(1); console.log("Expo 54 + RN 0.81.5 native stack verified")'
       - name: Purge stale native CMake and Gradle state
         script: |
