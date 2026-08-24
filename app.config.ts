@@ -35,9 +35,7 @@ const config: ExpoConfig = {
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
 
-  // Reanimated 4.x requires React Native New Architecture.
-  // Keeping this disabled causes Codemagic to fail at
-  // :react-native-reanimated:assertNewArchitectureEnabledTask.
+  // Expo SDK 54 + Reanimated 4 require the New Architecture.
   newArchEnabled: true,
 
   ios: {
@@ -94,7 +92,9 @@ const config: ExpoConfig = {
       "expo-build-properties",
       {
         android: {
-          buildArchs: ["armeabi-v7a", "arm64-v8a"],
+          // Lekka is currently tested on ARM64 Android devices (e.g. S23 FE).
+          // Avoid generating unnecessary 32-bit native C++ targets in CI.
+          buildArchs: ["arm64-v8a"],
           minSdkVersion: 24,
         },
       },
