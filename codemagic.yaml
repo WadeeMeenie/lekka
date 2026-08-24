@@ -20,12 +20,12 @@ workflows:
       - name: Generate native Android project
         script: |
           npx expo prebuild --platform android --non-interactive
-      - name: Build signed internal-test APK
+      - name: Build installable Android debug APK
         script: |
           cd android
-          ./gradlew assembleInternalDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --max-workers=1 -PreactNativeArchitectures=arm64-v8a --stacktrace
     artifacts:
-      - android/app/build/outputs/apk/internalDebug/*.apk
+      - android/app/build/outputs/apk/debug/*.apk
     publishing:
       email:
         recipients:
