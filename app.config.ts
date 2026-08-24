@@ -35,10 +35,10 @@ const config: ExpoConfig = {
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
 
-  // Use the stable React Native architecture for the Codemagic direct-install
-  // debug APK. This avoids the native C++/CMake codegen build path that is
-  // failing on the available Codemagic build environment.
-  newArchEnabled: false,
+  // Reanimated 4.x requires React Native New Architecture.
+  // Keeping this disabled causes Codemagic to fail at
+  // :react-native-reanimated:assertNewArchitectureEnabledTask.
+  newArchEnabled: true,
 
   ios: {
     supportsTablet: true,
