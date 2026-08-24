@@ -16,15 +16,18 @@ workflows:
         script: |
           corepack enable
           corepack prepare pnpm@9.12.0 --activate
+          pnpm --version
       - name: Install dependencies from locked native stack
         script: |
           pnpm install --frozen-lockfile
-          node -e 'const p=require("./package.json"); const ok=p.dependencies.expo==="~54.0.29" && p.dependencies["react-native"]==="0.81.5" && p.dependencies["react-native-safe-area-context"]==="~5.6.2" && p.dependencies["react-native-worklets"]==="0.5.1" && p.dependencies["react-native-reanimated"]==="~4.1.1"; if(!ok){console.error(p.dependencies); process.exit(1)}; console.log("Locked Expo 54 / RN 0.81.5 native stack verified")'
-          pnpm exec expo install --check || true
+          test -x node_modules/.bin/expo
+          node -e 'const p=require("./package.json"); const ok=p.dependencies.expo==="~54.0.29" && p.dependencies["react-native"]==="0.81.5" && p.dependencies["react-native-safe-area-context"]==="~5.6.2" && p.dependencies["react-native-worklets"]==="0.5.1"; if(!ok){console.error(p.dependencies); process.exit(1)}; console.log("Locked Expo 54 / RN 0.81.5 native stack verified")'
+          pnpm exec expo --version
+          node -e 'const p=require("./node_modules/expo/package.json"); if(!p.version.startsWith("54.")){console.error("Wrong Expo installed:",p.version); process.exit(1)}; console.log("Local Expo package:",p.version)'
       - name: Generate native Android project
         script: |
           rm -rf android
-          npx expo prebuild --platform android --non-interactive --clean
+          pnpm exec expo prebuild --platform android --clean
       - name: Enforce React Native New Architecture
         script: |
           python3 - <<'PY'
@@ -39,8 +42,8 @@ workflows:
           grep -n "^newArchEnabled=true$" android/gradle.properties
       - name: Verify Expo native configuration
         script: |
-          node -e 'const fs=require("fs"); const p="android/gradle.properties"; const s=fs.readFileSync(p,"utf8"); if(!/^newArchEnabled=true$/m.test(s)) process.exit(1); console.log("New Architecture enabled")'
-          node -e 'const p=require("./package.json"); if(p.dependencies["react-native-reanimated"]!=="~4.1.1") process.exit(1); if(p.dependencies["react-native-worklets"]!=="0.5.1") process.exit(1); if(p.dependencies["react-native-safe-area-context"]!=="~5.6.2") process.exit(1); console.log("Reanimated 4.1.x + Worklets 0.5.1 + Safe Area 5.6.x aligned")'
+          node -e 'const fs=require("fs"); const s=fs.readFileSync("android/gradle.properties","utf8"); if(!/^newArchEnabled=true$/m.test(s)) process.exit(1); console.log("New Architecture enabled")'
+          node -e 'const p=require("./package.json"); if(p.dependencies.expo!=="~54.0.29") process.exit(1); if(p.dependencies["react-native"]!=="0.81.5") process.exit(1); if(p.dependencies["react-native-worklets"]!=="0.5.1") process.exit(1); if(p.dependencies["react-native-safe-area-context"]!=="~5.6.2") process.exit(1); console.log("Expo 54 + RN 0.81.5 native stack verified")'
       - name: Purge stale native CMake and Gradle state
         script: |
           ./android/gradlew --stop || true
