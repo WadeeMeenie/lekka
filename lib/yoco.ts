@@ -11,6 +11,9 @@ export type YocoWebhookSubscriptionResult = {
   notificationUrl: string;
   eventTypes: string[];
   secret: string | null;
+  alreadyExists?: boolean;
+  status?: string;
+  environment?: string;
 };
 
 /** The single client entry point for Lekka's Yoco checkout flow. */
