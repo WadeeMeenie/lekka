@@ -48,14 +48,14 @@ export default function AdminYocoScreen() {
           <Text style={[styles.value, { color: colors.foreground }]}>payment.created + payment.refunded</Text>
           <Text style={[styles.body, { color: colors.muted }]}>This action must only be run once. If a subscription already exists, stop and verify it before creating another one.</Text>
           <Pressable disabled={loading} onPress={() => void createSubscription()} style={[styles.button, { backgroundColor: colors.primary }, loading && styles.disabled]}>
-            {loading ? <ActivityIndicator color="#10211D" /> : <Text style={styles.buttonText}>Create Yoco TEST webhook</Text>}
+            {loading ? <ActivityIndicator color="#10211D" /> : <Text style={styles.buttonText}>Verify Yoco TEST webhook</Text>}
           </Pressable>
         </View>
 
         {error ? <View style={[styles.card, { backgroundColor: `${colors.error}12`, borderColor: colors.error }]}><Text style={[styles.label, { color: colors.error }]}>ERROR</Text><Text style={[styles.body, { color: colors.foreground }]}>{error}</Text></View> : null}
 
         {result ? <View style={[styles.card, { backgroundColor: `${colors.success}12`, borderColor: colors.success }]}>
-          <Text style={[styles.label, { color: colors.success }]}>SUBSCRIPTION CREATED</Text>
+          <Text style={[styles.label, { color: colors.success }]}>{result.alreadyExists ? "SUBSCRIPTION VERIFIED" : "SUBSCRIPTION CREATED"}</Text>
           <Text style={[styles.body, { color: colors.foreground }]}>Subscription ID: {result.subscriptionId}</Text>
           <Text style={[styles.body, { color: colors.foreground }]}>Events: {result.eventTypes.join(", ")}</Text>
           <Text style={[styles.body, { color: colors.foreground }]}>Webhook: {result.notificationUrl}</Text>
@@ -64,7 +64,7 @@ export default function AdminYocoScreen() {
             <Text selectable style={[styles.secret, { color: colors.foreground }]}>{result.secret}</Text>
             <Pressable onPress={() => void copySecret()} style={[styles.secondary, { borderColor: colors.border }]}><Text style={[styles.secondaryText, { color: colors.primary }]}>Copy webhook secret</Text></Pressable>
             <Text style={[styles.warning, { color: colors.warning }]}>Configure this immediately as Supabase Edge Function secret YOCO_WEBHOOK_SECRET. Do not commit or share it.</Text>
-          </> : <Text style={[styles.body, { color: colors.warning }]}>Yoco did not return a webhook secret. Do not proceed to payment testing.</Text>}
+          </> : <Text style={[styles.body, { color: colors.success }]}>{result.alreadyExists ? "This TEST webhook already exists. The signing secret is intentionally not returned again by Yoco. If YOCO_WEBHOOK_SECRET is already configured, do not create another webhook." : "Yoco did not return a webhook secret. Do not proceed to payment testing."}</Text>}
         </View> : null}
       </ScrollView>
     </ScreenContainer>
