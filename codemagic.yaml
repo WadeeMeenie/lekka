@@ -9,6 +9,7 @@ workflows:
         - expo
       vars:
         EXPO_NO_DOCTOR: "1"
+        NODE_ENV: "production"
     scripts:
       - name: Install pnpm
         script: |
@@ -19,7 +20,22 @@ workflows:
           pnpm install --frozen-lockfile
       - name: Generate native Android project
         script: |
-          npx expo prebuild --platform android --non-interactive
+          npx expo prebuild --platform android --non-interactive --clean
+      - name: Enforce React Native New Architecture
+        script: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/gradle.properties")
+          text = p.read_text() if p.exists() else ""
+          lines = [line for line in text.splitlines() if not line.startswith("newArchEnabled=")]
+          lines.append("newArchEnabled=true")
+          p.write_text("\n".join(lines) + "\n")
+          print("Verified android/gradle.properties contains newArchEnabled=true")
+          PY
+          grep -n "^newArchEnabled=true$" android/gradle.properties
+      - name: Verify Expo native configuration
+        script: |
+          node -e 'const fs=require("fs"); const p="android/gradle.properties"; const s=fs.readFileSync(p,"utf8"); if(!/^newArchEnabled=true$/m.test(s)) process.exit(1); console.log("New Architecture enabled")'
       - name: Build installable Android debug APK
         script: |
           cd android
