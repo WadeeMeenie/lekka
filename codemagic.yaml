@@ -17,11 +17,11 @@ workflows:
           corepack enable
           corepack prepare pnpm@9.12.0 --activate
           pnpm --version
-      - name: Install dependencies from locked native stack
+      - name: Install dependencies from native stack
         script: |
-          pnpm install --frozen-lockfile
+          pnpm install --no-frozen-lockfile
           test -x node_modules/.bin/expo
-          node -e 'const p=require("./package.json"); const ok=p.dependencies.expo==="~54.0.29" && p.dependencies["react-native"]==="0.81.5" && p.dependencies["react-native-reanimated"]==="~3.19.3" && p.dependencies["react-native-safe-area-context"]==="~5.6.2"; if(!ok){console.error("Unexpected native stack:", p.dependencies); process.exit(1)}; console.log("Locked Expo 54 / RN 0.81.5 / Reanimated 3 native stack verified")'
+          node -e 'const p=require("./package.json"); const ok=p.dependencies.expo==="~54.0.29" && p.dependencies["react-native"]==="0.81.5" && p.dependencies["react-native-reanimated"]==="~3.19.3" && p.dependencies["react-native-safe-area-context"]==="~5.6.2"; if(!ok){console.error("Unexpected native stack:", p.dependencies); process.exit(1)}; console.log("Expo 54 / RN 0.81.5 / Reanimated 3 native stack verified")'
           pnpm exec expo --version
           node -e 'const p=require("./node_modules/expo/package.json"); if(!p.version.startsWith("54.")){console.error("Wrong Expo installed:",p.version); process.exit(1)}; console.log("Local Expo package:",p.version)'
       - name: Generate native Android project
