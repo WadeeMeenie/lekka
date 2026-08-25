@@ -21,17 +21,17 @@ workflows:
         script: |
           pnpm install --frozen-lockfile
           test -x node_modules/.bin/expo
-          node -e 'const p=require("./package.json"); const ok=p.dependencies.expo==="~54.0.29" && p.dependencies["react-native"]==="0.81.5" && p.dependencies["react-native-safe-area-context"]==="~5.6.2" && p.dependencies["react-native-worklets"]==="0.5.1"; if(!ok){console.error(p.dependencies); process.exit(1)}; console.log("Locked Expo 54 / RN 0.81.5 native stack verified")'
+          node -e 'const p=require("./package.json"); const ok=p.dependencies.expo==="~54.0.29" && p.dependencies["react-native"]==="0.81.5" && p.dependencies["react-native-reanimated"]==="~3.19.3" && p.dependencies["react-native-safe-area-context"]==="~5.6.2"; if(!ok){console.error("Unexpected native stack:", p.dependencies); process.exit(1)}; console.log("Locked Expo 54 / RN 0.81.5 / Reanimated 3 native stack verified")'
           pnpm exec expo --version
           node -e 'const p=require("./node_modules/expo/package.json"); if(!p.version.startsWith("54.")){console.error("Wrong Expo installed:",p.version); process.exit(1)}; console.log("Local Expo package:",p.version)'
       - name: Generate native Android project
         script: |
           rm -rf android
           pnpm exec expo prebuild --platform android --clean
-      - name: Verify React Native architecture
+      - name: Verify React Native architecture and native stack
         script: |
-          node -e 'const fs=require("fs"); const s=fs.readFileSync("android/gradle.properties","utf8"); if(!/^newArchEnabled=true$/m.test(s)) { console.error("New Architecture is not enabled in generated native project"); process.exit(1); } console.log("New Architecture enabled as required by Expo 54 + Reanimated 4")'
-          node -e 'const p=require("./package.json"); if(p.dependencies.expo!=="~54.0.29") process.exit(1); if(p.dependencies["react-native"]!=="0.81.5") process.exit(1); if(p.dependencies["react-native-worklets"]!=="0.5.1") process.exit(1); if(p.dependencies["react-native-safe-area-context"]!=="~5.6.2") process.exit(1); console.log("Expo 54 + RN 0.81.5 native stack verified")'
+          node -e 'const fs=require("fs"); const s=fs.readFileSync("android/gradle.properties","utf8"); if(!/^newArchEnabled=false$/m.test(s)) { console.error("Legacy Architecture is not enabled in generated native project"); process.exit(1); } console.log("Legacy Architecture enabled for Expo 54 + Reanimated 3")'
+          node -e 'const p=require("./package.json"); if(p.dependencies.expo!=="~54.0.29") process.exit(1); if(p.dependencies["react-native"]!=="0.81.5") process.exit(1); if(p.dependencies["react-native-reanimated"]!=="~3.19.3") process.exit(1); if(p.dependencies["react-native-safe-area-context"]!=="~5.6.2") process.exit(1); if(p.dependencies["react-native-worklets"]) { console.error("Unexpected react-native-worklets dependency"); process.exit(1); } console.log("Expo 54 + RN 0.81.5 + Reanimated 3 legacy native stack verified")'
       - name: Verify internal Android build variant
         script: |
           grep -n "internalDebug" android/app/build.gradle
