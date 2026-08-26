@@ -74,7 +74,7 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
     "./plugins/with-internal-debug-android",
-    ["expo-web-browser", { experimentalLauncherActivity: true }],
+    ["expo-web-browser", { experimentalLauncherActivity: false }],
     "expo-mail-composer",
     ["expo-location", { locationWhenInUsePermission: "Allow Lekka to use your approximate location to show what is happening nearby." }],
     ["expo-audio", { microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone." }],
