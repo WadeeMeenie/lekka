@@ -1,41 +1,47 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 
 import { useColors } from "@/hooks/use-colors";
 import { getMediaUploadPresentation, type MediaUploadStage } from "@/lib/media-upload-state";
 
 export function UploadProgressCard({ stage, onRetry }: { stage: MediaUploadStage; onRetry?: () => void }) {
   const colors = useColors();
-  const pulse = useSharedValue(0.55);
   const presentation = getMediaUploadPresentation(stage);
   const isActive = presentation.tone === "active";
+  const [pulseOpacity, setPulseOpacity] = useState(0.55);
 
   useEffect(() => {
-    pulse.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 650, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.55, { duration: 650, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
-    );
-  }, [pulse]);
+    if (!isActive) {
+      setPulseOpacity(1);
+      return;
+    }
 
-  const pulseStyle = useAnimatedStyle(() => ({ opacity: isActive ? pulse.value : 1 }));
+    const interval = setInterval(() => {
+      setPulseOpacity((current) => (current === 0.55 ? 1 : 0.55));
+    }, 650);
+
+    return () => clearInterval(interval);
+  }, [isActive]);
+
   const accent = presentation.tone === "error" ? colors.error : presentation.tone === "warning" ? colors.warning : presentation.tone === "success" ? colors.success : colors.primary;
 
   return (
     <View accessibilityLabel={`${presentation.label}. ${presentation.detail}`} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.header}>
-        <Animated.View style={[styles.dot, { backgroundColor: accent }, pulseStyle]} />
+        <View style={[styles.dot, { backgroundColor: accent, opacity: pulseOpacity }]} />
         <View style={styles.copy}>
           <Text style={[styles.label, { color: colors.foreground }]}>{presentation.label}</Text>
           <Text style={[styles.detail, { color: colors.muted }]}>{presentation.detail}</Text>
         </View>
-        {onRetry && <Pressable onPress={onRetry} accessibilityRole="button" style={({ pressed }) => [styles.retry, { borderColor: accent, opacity: pressed ? 0.65 : 1 }]}><Text style={[styles.retryText, { color: accent }]}>Retry</Text></Pressable>}
+        {onRetry && (
+          <Pressable onPress={onRetry} accessibilityRole="button" style={({ pressed }) => [styles.retry, { borderColor: accent, opacity: pressed ? 0.65 : 1 }]}>
+            <Text style={[styles.retryText, { color: accent }]}>Retry</Text>
+          </Pressable>
+        )}
       </View>
-      <View style={[styles.track, { backgroundColor: colors.border }]}><View style={[styles.progress, { width: `${Math.round(presentation.progress * 100)}%`, backgroundColor: accent }]} /></View>
+      <View style={[styles.track, { backgroundColor: colors.border }]}>
+        <View style={[styles.progress, { width: `${Math.round(presentation.progress * 100)}%`, backgroundColor: accent }]} />
+      </View>
     </View>
   );
 }
