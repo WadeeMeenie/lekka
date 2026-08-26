@@ -2,6 +2,7 @@ import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
@@ -33,6 +34,13 @@ export default function RootLayout() {
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
+
+  // Explicitly complete the native splash -> React handoff once the root
+  // layout has mounted. This prevents the packaged Android splash from
+  // remaining visible indefinitely while startup/auth work continues.
+  useEffect(() => {
+    void SplashScreen.hideAsync();
+  }, []);
 
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
