@@ -4,14 +4,28 @@ import { createClient, type Session, type SupabaseClient } from "@supabase/supab
 
 import { shouldRetrySignUp } from "./auth-retry";
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+// Expo inlines EXPO_PUBLIC_* values at bundle time. Normalize the URL so a
+// value copied from a dashboard (with whitespace, quotes, or a trailing slash)
+// cannot produce malformed Supabase request paths.
+const rawSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
+const supabaseUrl = rawSupabaseUrl.trim().replace(/^['"]|['"]$/g, "").replace(/\/+$/, "");
+const supabaseKey = (process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim().replace(/^['"]|['"]$/g, "");
 const authStorage = Platform.OS === "web" ? undefined : AsyncStorage;
 
-export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseKey);
+const isValidSupabaseUrl = (() => {
+  if (!supabaseUrl) return false;
+  try {
+    const parsed = new URL(supabaseUrl);
+    return parsed.protocol === "https:" && parsed.hostname.endsWith(".supabase.co") && !parsed.pathname.includes("/auth/") && !parsed.pathname.includes("/rest/");
+  } catch {
+    return false;
+  }
+})();
+
+export const isSupabaseConfigured = Boolean(supabaseKey && isValidSupabaseUrl);
 
 export const supabase: SupabaseClient | null = isSupabaseConfigured
-  ? createClient(supabaseUrl as string, supabaseKey as string, {
+  ? createClient(supabaseUrl, supabaseKey, {
       auth: {
         storage: authStorage,
         autoRefreshToken: true,
@@ -36,7 +50,10 @@ function isTransientAuthError(error: { status?: number; message?: string } | nul
 }
 
 export async function signInWithPassword(email: string, password: string) {
-  if (!supabase) throw new Error("Backend is not configured yet.");
+  if (!supabase) {
+    if (!isValidSupabaseUrl) throw new Error("Supabase URL is invalid or missing.");
+    throw new Error("Supabase publishable key is missing.");
+  }
 
   let result = await supabase.auth.signInWithPassword({ email, password });
   for (let attempt = 1; attempt <= 2 && isTransientAuthError(result.error); attempt += 1) {
@@ -47,7 +64,10 @@ export async function signInWithPassword(email: string, password: string) {
 }
 
 export async function signUpWithPassword(email: string, password: string, displayName: string) {
-  if (!supabase) throw new Error("Backend is not configured yet.");
+  if (!supabase) {
+    if (!isValidSupabaseUrl) throw new Error("Supabase URL is invalid or missing.");
+    throw new Error("Supabase publishable key is missing.");
+  }
 
   let result = await supabase.auth.signUp({ email, password, options: { data: { display_name: displayName } } });
   if (shouldRetrySignUp(result.error, 0)) {
