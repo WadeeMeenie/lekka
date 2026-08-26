@@ -18,10 +18,18 @@ export default function CommunityPostScreen() {
     if (!isAuthenticated || !user || !id) return Alert.alert("Sign in required", "Please sign in to post in a community.");
     if (!body.trim()) return Alert.alert("Add something", "Write a message before posting.");
     setBusy(true);
-    const result = await supabase?.from("posts").insert({ author_id: user.id, community_id: id, kind: "post", category: "general", title: title.trim() || null, body: body.trim(), visibility: "community" }).select("id").single();
-    setBusy(false);
-    if (result?.error) return Alert.alert("Couldn't publish", result.error.message);
-    router.replace({ pathname: "/community/[id]", params: { id } } as never);
+    try {
+      const { error } = await supabase.rpc("create_community_post", {
+        p_community_id: id,
+        p_author_id: user.id,
+        p_body: body.trim(),
+        p_title: title.trim() || null,
+      });
+      if (error) return Alert.alert("Couldn't publish", error.message);
+      router.replace({ pathname: "/community/[id]", params: { id } } as never);
+    } finally {
+      setBusy(false);
+    }
   };
 
   return <ScreenContainer><View style={styles.content}><Pressable onPress={() => router.back()}><Text style={[styles.back, { color: colors.primary }]}>Cancel</Text></Pressable><Text style={[styles.title, { color: colors.foreground }]}>Post to community</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Only members who can access this community will see the post.</Text><TextInput value={title} onChangeText={setTitle} placeholder="Title (optional)" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} /><TextInput value={body} onChangeText={setBody} placeholder="What's happening in the community?" placeholderTextColor={colors.muted} multiline textAlignVertical="top" style={[styles.bodyInput, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} /><Pressable disabled={busy} onPress={() => void publish()} style={[styles.publish, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}><Text style={styles.publishText}>{busy ? "Publishing…" : "Publish"}</Text></Pressable></View></ScreenContainer>;
