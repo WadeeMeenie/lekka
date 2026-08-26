@@ -32,10 +32,10 @@ workflows:
         script: |
           node -e 'const fs=require("fs"); const s=fs.readFileSync("android/gradle.properties","utf8"); if(!/^newArchEnabled=false$/m.test(s)) { console.error("Legacy Architecture is not enabled in generated native project"); process.exit(1); } console.log("Legacy Architecture enabled for Expo 54 + Reanimated 3")'
           node -e 'const p=require("./package.json"); if(p.dependencies.expo!=="~54.0.29") process.exit(1); if(p.dependencies["react-native"]!=="0.81.5") process.exit(1); if(p.dependencies["react-native-reanimated"]!=="~3.19.3") process.exit(1); if(p.dependencies["react-native-safe-area-context"]!=="~5.6.2") process.exit(1); if(p.dependencies["react-native-worklets"]) { console.error("Unexpected react-native-worklets dependency"); process.exit(1); } console.log("Expo 54 + RN 0.81.5 + Reanimated 3 legacy native stack verified")'
-      - name: Verify Android debug build
+      - name: Verify internal Android build variant
         script: |
-          grep -n "buildTypes" android/app/build.gradle
-          grep -n "debug" android/app/build.gradle | head -n 10
+          grep -n "internalDebug" android/app/build.gradle
+          grep -n "Lekka internal-test variant" android/app/build.gradle
       - name: Purge stale native CMake and Gradle state
         script: |
           ./android/gradlew --stop || true
@@ -50,7 +50,7 @@ workflows:
           export GRADLE_USER_HOME="$CM_BUILD_DIR/.gradle-clean"
           cd android
           ./gradlew clean --no-daemon --max-workers=1 --refresh-dependencies
-          ./gradlew assembleDebug --no-daemon --max-workers=1 -PreactNativeArchitectures=arm64-v8a --rerun-tasks --refresh-dependencies --stacktrace --info 2>&1 | tee ../android-build.log
+          ./gradlew assembleInternalDebug --no-daemon --max-workers=1 -PreactNativeArchitectures=arm64-v8a --rerun-tasks --refresh-dependencies --stacktrace --info 2>&1 | tee ../android-build.log
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             echo "===== NATIVE BUILD ERROR SUMMARY ====="
@@ -58,10 +58,10 @@ workflows:
             echo "===== END ERROR SUMMARY ====="
             exit "$status"
           fi
-          test -f app/build/outputs/apk/debug/app-debug.apk || (echo "Expected debug APK was not produced"; find app/build/outputs/apk -maxdepth 3 -type f -name '*.apk' -print; exit 1)
-          echo "Installable Lekka debug APK produced successfully"
+          test -f app/build/outputs/apk/internalDebug/app-internal-debug.apk || (echo "Expected internal-test APK was not produced"; find app/build/outputs/apk -maxdepth 3 -type f -name '*.apk' -print; exit 1)
+          echo "Installable Lekka internal-test APK produced successfully"
     artifacts:
-      - android/app/build/outputs/apk/debug/*.apk
+      - android/app/build/outputs/apk/internalDebug/*.apk
     publishing:
       email:
         recipients:
