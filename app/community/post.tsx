@@ -18,9 +18,14 @@ export default function CommunityPostScreen() {
     if (!isAuthenticated || !user || !id) return Alert.alert("Sign in required", "Please sign in to post in a community.");
     if (!body.trim()) return Alert.alert("Add something", "Write a message before posting.");
     setBusy(true);
-    const result = await supabase?.from("posts").insert({ author_id: user.id, community_id: id, kind: "post", category: "general", title: title.trim() || null, body: body.trim(), visibility: "community" }).select("id").single();
+    const { error } = await supabase.rpc("create_community_post", {
+      p_community_id: id,
+      p_author_id: user.id,
+      p_body: body.trim(),
+      p_title: title.trim() || null,
+    });
     setBusy(false);
-    if (result?.error) return Alert.alert("Couldn't publish", result.error.message);
+    if (error) return Alert.alert("Couldn't publish", error.message);
     router.replace({ pathname: "/community/[id]", params: { id } } as never);
   };
 
