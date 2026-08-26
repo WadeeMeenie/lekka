@@ -7,9 +7,9 @@ const INTERNAL_VARIANT_MARKER = "// Lekka internal-test variant: debug-signed on
  * Adds a dedicated internal-test build type to generated Android projects.
  *
  * Production release signing is deliberately left unresolved. The generated
- * `internalDebug` type can use the existing local debug signing configuration
- * for internal device testing without representing the output as a production
- * or Play Store artifact.
+ * `internalDebug` type uses the normal debug build as its native/runtime base,
+ * while retaining debug signing for standalone device testing. This keeps the
+ * internal APK out of the production/release runtime path.
  */
 function withInternalDebugAndroid(config) {
   return withAppBuildGradle(config, (modConfig) => {
@@ -36,10 +36,12 @@ function withInternalDebugAndroid(config) {
         internalDebug {
             ${INTERNAL_VARIANT_MARKER}
             // For internal device testing only; never production or Play Store signing.
-            initWith release
+            // Base the test APK on the standard debug runtime so release-only
+            // optimization/minification cannot cause a false launch crash.
+            initWith debug
             signingConfig signingConfigs.debug
-            debuggable false
-            matchingFallbacks = ['release']
+            debuggable true
+            matchingFallbacks = ['debug']
             versionNameSuffix '-internal'
             resValue 'string', 'app_name', 'Lekka Internal Test'
         }
