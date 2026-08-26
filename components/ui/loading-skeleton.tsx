@@ -1,13 +1,4 @@
 import React from "react";
-import Animated, {
-  Easing,
-  cancelAnimation,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from "react-native-reanimated";
 import { StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 
 import { useColors } from "@/hooks/use-colors";
@@ -20,27 +11,12 @@ export function LoadingSkeleton({
   label?: string;
 }) {
   const colors = useColors();
-  const opacity = useSharedValue(0.55);
-  const animatedStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
-
-  // A restrained pulse keeps the screen feeling alive without distracting from navigation.
-  React.useEffect(() => {
-    opacity.value = withRepeat(
-      withSequence(
-        withTiming(0.9, { duration: 700, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.55, { duration: 700, easing: Easing.inOut(Easing.ease) }),
-      ),
-      -1,
-      false,
-    );
-    return () => cancelAnimation(opacity);
-  }, [opacity]);
 
   return (
-    <Animated.View
+    <View
       accessible
       accessibilityLabel={label}
-      style={[styles.base, { backgroundColor: colors.border }, style, animatedStyle]}
+      style={[styles.base, { backgroundColor: colors.border }, style]}
     />
   );
 }
@@ -116,4 +92,3 @@ const styles = StyleSheet.create({
   nearbySubtitle: { width: "76%", height: 12 },
   nearbyMeta: { width: "44%", height: 10 },
 });
-
