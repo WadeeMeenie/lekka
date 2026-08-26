@@ -16,6 +16,10 @@ declare
   v_area text;
   v_post public.posts;
 begin
+  if auth.uid() is null or auth.uid() <> p_author_id then
+    raise exception 'Not authorized to create this post';
+  end if;
+
   select area into v_area
   from public.communities
   where id = p_community_id;
