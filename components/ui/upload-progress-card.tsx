@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
-
 import { useColors } from "@/hooks/use-colors";
 import { getMediaUploadPresentation, type MediaUploadStage } from "@/lib/media-upload-state";
 
@@ -9,24 +8,23 @@ export function UploadProgressCard({ stage, onRetry }: { stage: MediaUploadStage
   const presentation = getMediaUploadPresentation(stage);
   const isActive = presentation.tone === "active";
   const [pulseOpacity, setPulseOpacity] = useState(0.55);
+  const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (!isActive) {
-      setPulseOpacity(1);
-      return;
-    }
+    setVisible(true);
+    if (stage !== "published") return;
+    const timeout = setTimeout(() => setVisible(false), 3500);
+    return () => clearTimeout(timeout);
+  }, [stage]);
+
+  useEffect(() => {
+    if (!isActive) { setPulseOpacity(1); return; }
     const interval = setInterval(() => setPulseOpacity((current) => (current === 0.55 ? 1 : 0.55)), 650);
     return () => clearInterval(interval);
   }, [isActive]);
 
-  useEffect(() => {
-    if (stage !== "published") return;
-    const timeout = setTimeout(() => {}, 3500);
-    return () => clearTimeout(timeout);
-  }, [stage]);
-
+  if (!visible) return null;
   const accent = presentation.tone === "error" ? colors.error : presentation.tone === "warning" ? colors.warning : presentation.tone === "success" ? colors.success : colors.primary;
-
   return (
     <View accessibilityLabel={`${presentation.label}. ${presentation.detail}`} style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}>
       <View style={styles.header}>
@@ -35,15 +33,9 @@ export function UploadProgressCard({ stage, onRetry }: { stage: MediaUploadStage
           <Text style={[styles.label, { color: colors.foreground }]}>{presentation.label}</Text>
           <Text style={[styles.detail, { color: colors.muted }]}>{presentation.detail}</Text>
         </View>
-        {onRetry && (
-          <Pressable onPress={onRetry} accessibilityRole="button" style={({ pressed }) => [styles.retry, { borderColor: accent, opacity: pressed ? 0.65 : 1 }]}>
-            <Text style={[styles.retryText, { color: accent }]}>Retry</Text>
-          </Pressable>
-        )}
+        {onRetry && <Pressable onPress={onRetry} accessibilityRole="button" style={({ pressed }) => [styles.retry, { borderColor: accent, opacity: pressed ? 0.65 : 1 }]}><Text style={[styles.retryText, { color: accent }]}>Retry</Text></Pressable>}
       </View>
-      <View style={[styles.track, { backgroundColor: colors.border }]}>
-        <View style={[styles.progress, { width: `${Math.round(presentation.progress * 100)}%`, backgroundColor: accent }]} />
-      </View>
+      <View style={[styles.track, { backgroundColor: colors.border }]}><View style={[styles.progress, { width: `${Math.round(presentation.progress * 100)}%`, backgroundColor: accent }]} /></View>
     </View>
   );
 }
