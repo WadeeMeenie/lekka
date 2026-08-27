@@ -15,17 +15,15 @@ export function UploadProgressCard({ stage, onRetry }: { stage: MediaUploadStage
       setPulseOpacity(1);
       return;
     }
-
-    const interval = setInterval(() => {
-      setPulseOpacity((current) => (current === 0.55 ? 1 : 0.55));
-    }, 650);
-
+    const interval = setInterval(() => setPulseOpacity((current) => (current === 0.55 ? 1 : 0.55)), 650);
     return () => clearInterval(interval);
   }, [isActive]);
 
-  // Publishing is a transient completion state. Once the post is successfully
-  // created, don't leave a stale "Published" card sitting above the composer.
-  if (stage === "published") return null;
+  useEffect(() => {
+    if (stage !== "published") return;
+    const timeout = setTimeout(() => {}, 3500);
+    return () => clearTimeout(timeout);
+  }, [stage]);
 
   const accent = presentation.tone === "error" ? colors.error : presentation.tone === "warning" ? colors.warning : presentation.tone === "success" ? colors.success : colors.primary;
 
