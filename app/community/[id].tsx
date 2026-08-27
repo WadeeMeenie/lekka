@@ -5,7 +5,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { useColors } from "@/hooks/use-colors";
-import { getCommunity, getCommunityMembershipState, joinCommunity, leaveCommunity, listCommunityMembers, subscribeToCommunityMembers, type CommunityMember } from "@/lib/local-directory";
+import { getCommunity, getCommunityMembershipState, joinCommunity, leaveCommunity, listCommunityMembers, type CommunityMember } from "@/lib/local-directory";
 import { supabase } from "@/lib/supabase";
 
 type Community = { id: string; name: string; description: string | null; area: string; category: string; visibility: "public" | "private"; rules: string[]; created_by: string; created_at: string };
@@ -41,7 +41,10 @@ export default function CommunityDetailScreen() {
     setLoading(false);
   }, [id]);
 
-  useEffect(() => { void load(); const stop = id ? subscribeToCommunityMembers(id, () => void load()) : () => undefined; return stop; }, [id, load]);
+  // Membership changes on this screen already trigger an explicit reload. Avoid a
+  // long-lived postgres_changes channel because Expo Router mount/unmount cycles can
+  // race channel subscription callbacks and crash the native client.
+  useEffect(() => { void load(); }, [load]);
 
   const membership = async () => {
     if (!id || !isAuthenticated) return Alert.alert("Sign in to join", "Create or sign in to join this community.");
