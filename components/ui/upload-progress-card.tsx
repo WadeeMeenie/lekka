@@ -23,6 +23,10 @@ export function UploadProgressCard({ stage, onRetry }: { stage: MediaUploadStage
     return () => clearInterval(interval);
   }, [isActive]);
 
+  // Publishing is a transient completion state. Once the post is successfully
+  // created, don't leave a stale "Published" card sitting above the composer.
+  if (stage === "published") return null;
+
   const accent = presentation.tone === "error" ? colors.error : presentation.tone === "warning" ? colors.warning : presentation.tone === "success" ? colors.success : colors.primary;
 
   return (
