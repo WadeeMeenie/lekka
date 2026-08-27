@@ -45,6 +45,11 @@ export async function fetchNearbyItems(location?: DeviceLocation, settings?: Loc
 }
 function radiusToMeters(radius: string) { if (radius.includes("500")) return 500; if (radius.includes("1 km")) return 1000; if (radius.includes("5 km")) return 5000; if (radius.includes("10 km")) return 10000; return 25000; }
 export async function uploadMedia(uri: string, path: string, contentType: string) { if (!supabase) throw new Error("Backend is not configured"); const file = new File(uri); const bytes = await file.bytes(); return supabase.storage.from("local-radar-media").upload(path, bytes, { contentType, upsert: false }); }
+
+// Local feed refresh is intentionally manual. The previous posts Realtime channel could race Expo Router lifecycle transitions.
+// Keep this API as a no-op for compatibility with the Home screen until a safer, centralized subscription model is introduced.
+export function subscribeToLocalChanges(_onChange: () => void) { return () => undefined; }
+
 export async function attachPostMedia(input: { postId: string; storagePath: string; mediaType: "image" | "video"; width?: number; height?: number }) { if (!supabase) return { data: null, error: new Error("Backend is not configured") }; return supabase.from("post_media").insert({ post_id: input.postId, storage_path: input.storagePath, media_type: input.mediaType, width: input.width ?? null, height: input.height ?? null, sort_order: 0 }).select().single(); }
 
 export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean };
