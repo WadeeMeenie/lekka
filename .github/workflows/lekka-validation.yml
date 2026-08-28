@@ -13,25 +13,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Expo SDK 54 requires Node >=20.19.x. Keep CI on the supported LTS
+      # runtime and use npm here because the repository does not contain a
+      # pnpm lockfile; npm is also the package manager used for local validation.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.12.0
-          run_install: false
+          node-version: 20.19.4
+          cache: npm
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: npm install --no-audit --no-fund
 
       - name: TypeScript
-        run: pnpm exec tsc --noEmit
+        run: npx tsc --noEmit
 
       - name: Expo config
-        run: pnpm exec expo config --json --full > /tmp/expo-config.json
+        run: npx expo config --json --full > /tmp/expo-config.json
 
       - name: Expo Doctor
-        run: pnpm exec expo-doctor
+        run: npx expo-doctor
