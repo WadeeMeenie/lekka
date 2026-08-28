@@ -13,14 +13,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Expo SDK 54 requires Node >=20.19.x. Use the supported Node 20
-      # runtime for project validation. Do not enable setup-node npm caching:
-      # this repository intentionally has no lockfile, so setup-node's cache
-      # precondition would fail before validation starts.
+      # Expo SDK 54 supports Node 20.19.x+, while the current Supabase JS
+      # release requires Node >=22. Use Node 22 to satisfy both toolchains.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20.19.4
+          node-version: 22
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
