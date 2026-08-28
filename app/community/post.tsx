@@ -17,9 +17,11 @@ export default function CommunityPostScreen() {
   const publish = async () => {
     if (!isAuthenticated || !user || !id) return Alert.alert("Sign in required", "Please sign in to post in a community.");
     if (!body.trim()) return Alert.alert("Add something", "Write a message before posting.");
+    const client = supabase;
+    if (!client) return Alert.alert("Backend unavailable", "Lekka cannot connect to its backend right now.");
     setBusy(true);
     try {
-      const { error } = await supabase.rpc("create_community_post", {
+      const { error } = await client.rpc("create_community_post", {
         p_community_id: id,
         p_author_id: user.id,
         p_body: body.trim(),
