@@ -14,12 +14,16 @@ export type ViewerProfile = {
 };
 
 export async function getProfileForViewer(ownerId: string) {
-  const { data, error } = await supabase.rpc('get_profile_for_viewer', { owner_id: ownerId });
+  const client = supabase;
+  if (!client) return { data: null as ViewerProfile | null, error: new Error('Supabase is not configured') };
+  const { data, error } = await client.rpc('get_profile_for_viewer', { owner_id: ownerId });
   return { data: (data?.[0] ?? null) as ViewerProfile | null, error };
 }
 
 export async function updateProfilePrivacy(isPrivate: boolean, friendsListVisibility: FriendsListVisibility) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const client = supabase;
+  if (!client) return { error: new Error('Supabase is not configured') };
+  const { data: { user } } = await client.auth.getUser();
   if (!user) return { error: new Error('Not authenticated') };
-  return supabase.from('profiles').update({ is_private: isPrivate, friends_list_visibility: friendsListVisibility }).eq('id', user.id);
+  return client.from('profiles').update({ is_private: isPrivate, friends_list_visibility: friendsListVisibility }).eq('id', user.id);
 }
