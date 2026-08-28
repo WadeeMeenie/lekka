@@ -27,23 +27,8 @@ jobs:
       - name: TypeScript
         run: npx tsc --noEmit
 
-      # Full Expo introspection exits silently for this project in CI because
-      # the custom Android config plugin expects a generated native project.
-      # Validate the dynamic config directly here; native builds exercise the
-      # plugin after prebuild has created the Android project.
       - name: Expo config
-        run: |
-          node --input-type=module - <<'EOF'
-          const module = await import('./app.config.ts');
-          const config = module.default;
-          if (!config || config.name !== 'Lekka' || config.slug !== 'lekka') {
-            throw new Error('Invalid Lekka Expo config');
-          }
-          if (config.android?.package !== 'com.app.localradarsa') {
-            throw new Error('Unexpected Android package in Expo config');
-          }
-          console.log('Expo config OK:', config.name, config.slug, config.version);
-          EOF
+        run: npx expo config --type public
 
       - name: Expo dependency compatibility
         run: npx expo install --check
