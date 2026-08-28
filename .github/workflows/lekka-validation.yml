@@ -21,6 +21,12 @@ jobs:
           node-version: 22
           # npm caching is intentionally disabled because this repo has no lockfile.
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
@@ -32,3 +38,23 @@ jobs:
 
       - name: Expo dependency compatibility
         run: npx expo install --check
+
+      # Generate the native Android project and execute all config-plugin mods.
+      # This is the first CI stage that proves the custom Android plugin can
+      # actually transform a real generated Android project.
+      - name: Expo prebuild
+        run: npx expo prebuild --no-install --non-interactive
+
+      # Build the custom internal-test variant created by the Lekka plugin.
+      # This validates the generated Gradle project and produces a device-
+      # installable debug-signed APK without requiring production signing.
+      - name: Android internal debug build
+        working-directory: android
+        run: ./gradlew :app:assembleInternalDebug --no-daemon
+
+      - name: Upload internal debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: lekka-internal-debug-apk
+          path: android/app/build/outputs/apk/internalDebug/*.apk
+          if-no-files-found: error
