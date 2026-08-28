@@ -4,7 +4,7 @@ import Animated, {
   interpolate,
   useAnimatedRef,
   useAnimatedStyle,
-  useScrollOffset,
+  useScrollViewOffset,
 } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -17,10 +17,6 @@ type Props = PropsWithChildren<{
   headerBackgroundColor?: string;
 }>;
 
-/**
- * A scroll view with parallax header effect.
- * Note: Animated components require style objects for dynamic animations.
- */
 export default function ParallaxScrollView({
   children,
   headerImage,
@@ -29,8 +25,7 @@ export default function ParallaxScrollView({
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
-  const scrollOffset = useScrollOffset(scrollRef);
-
+  const scrollOffset = useScrollViewOffset(scrollRef);
   const headerHeight = HEADER_HEIGHT + insets.top;
 
   const headerAnimatedStyle = useAnimatedStyle(() => ({
