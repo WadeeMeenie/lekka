@@ -73,7 +73,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
-    "./plugins/with-internal-debug-android",
+    "./plugins/with-internal-debug-android.cjs",
     ["expo-web-browser", { experimentalLauncherActivity: false }],
     "expo-mail-composer",
     ["expo-location", { locationWhenInUsePermission: "Allow Lekka to use your approximate location to show what is happening nearby." }],
