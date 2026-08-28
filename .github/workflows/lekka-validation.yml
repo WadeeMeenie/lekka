@@ -13,14 +13,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Expo SDK 54 requires Node >=20.19.x. Keep CI on the supported LTS
-      # runtime and use npm here because the repository does not contain a
-      # pnpm lockfile; npm is also the package manager used for local validation.
+      # Expo SDK 54 requires Node >=20.19.x. Use the supported Node 20
+      # runtime for project validation. Do not enable setup-node npm caching:
+      # this repository intentionally has no lockfile, so setup-node's cache
+      # precondition would fail before validation starts.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20.19.4
-          cache: npm
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
