@@ -4,7 +4,7 @@ import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { UploadProgressCard } from "@/components/ui/upload-progress-card";
-import { loadSettings } from "@/lib/local-radar";
+import { loadSettings, type RadarCategory } from "@/lib/local-radar";
 import { getGrantedLocationOrFallback, requestApproximateLocation, type DeviceLocation } from "@/lib/location";
 import { attachPostMedia, createPost, uploadMedia } from "@/lib/supabase-repository";
 import { useColors } from "@/hooks/use-colors";
@@ -17,7 +17,7 @@ import { defaultActiveIdentity, loadActiveIdentity, type ActiveIdentity } from "
 const types = [{ label: "Post", icon: "edit" as const }, { label: "Local alert", icon: "exclamationmark.triangle.fill" as const }, { label: "Event", icon: "calendar" as const }, { label: "Listing", icon: "cart.fill" as const }];
 const audiences = ["Nearby", "My community", "My followers", "Public"];
 const localCategories = ["General", "Business", "Deals", "Events", "Marketplace", "Jobs", "Services"] as const;
-const categoryToDb: Record<typeof localCategories[number], string> = { General: "general", Business: "business", Deals: "deal", Events: "event", Marketplace: "marketplace", Jobs: "job", Services: "service" };
+const categoryToDb: Record<typeof localCategories[number], RadarCategory> = { General: "general", Business: "business", Deals: "deal", Events: "event", Marketplace: "marketplace", Jobs: "job", Services: "service" };
 
 export default function CreateScreen() {
   const colors = useColors(); const { user, isAuthenticated, loading: authLoading } = useSupabaseAuth();
