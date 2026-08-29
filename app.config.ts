@@ -34,10 +34,8 @@ const config: ExpoConfig = {
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
 
-  // Expo SDK 54 supports legacy architecture. We deliberately use it for the
-  // CodeMagic Android build because the current New Architecture C++ link step
-  // fails inside react-native-safe-area-context codegen.
-  newArchEnabled: false,
+  // Reanimated and Worklets require the New Architecture for the Android build.
+  newArchEnabled: true,
 
   ios: {
     supportsTablet: true,
