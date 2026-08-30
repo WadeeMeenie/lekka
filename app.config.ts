@@ -34,8 +34,9 @@ const config: ExpoConfig = {
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
 
-  // Reanimated and Worklets require the New Architecture for the Android build.
-  newArchEnabled: true,
+  // Diagnostic build: SDK 54 supports opting out of the New Architecture.
+  // This isolates native startup compatibility from the current crash.
+  newArchEnabled: false,
 
   ios: {
     supportsTablet: true,
