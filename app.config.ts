@@ -34,9 +34,8 @@ const config: ExpoConfig = {
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
 
-  // Diagnostic build: SDK 54 supports opting out of the New Architecture.
-  // This isolates native startup compatibility from the current crash.
-  newArchEnabled: false,
+  // Keep the known-green Android configuration for the internal debug build.
+  newArchEnabled: true,
 
   ios: {
     supportsTablet: true,
