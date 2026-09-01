@@ -2,24 +2,24 @@ import { Redirect } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
-import { loadOnboardingState } from "@/lib/onboarding";
+import { loadOnboardingState, type OnboardingState } from "@/lib/onboarding";
 import { useEffect, useState } from "react";
 
 export default function IndexScreen() {
   const { loading: authLoading, isAuthenticated } = useSupabaseAuth();
   const [onboardingLoading, setOnboardingLoading] = useState(true);
-  const [completed, setCompleted] = useState(false);
+  const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
 
   useEffect(() => {
     let active = true;
     void loadOnboardingState()
       .then((state) => {
-        if (active) setCompleted(Boolean(state.completed));
+        if (active) setOnboardingState(state);
       })
       .catch(() => {
-        // A broken local onboarding record must not prevent the app from
-        // opening. Treat it as incomplete and let onboarding repair it.
-        if (active) setCompleted(false);
+        // Local onboarding storage is optional for returning authenticated users.
+        // Keep the app usable rather than trapping them on the welcome screen.
+        if (active) setOnboardingState(null);
       })
       .finally(() => {
         if (active) setOnboardingLoading(false);
@@ -39,8 +39,15 @@ export default function IndexScreen() {
   }
 
   if (!isAuthenticated) return <Redirect href="/auth" />;
-  if (!completed) return <Redirect href="/onboarding" />;
-  return <Redirect href="/(tabs)" />;
+
+  // A signed-in user must never be forced back through the first-run welcome
+  // screen just because the local onboarding record was lost/reset. An
+  // in-progress onboarding state (location/personalize/account) is preserved
+  // so a genuinely new account can still resume where it left off.
+  if (onboardingState?.completed) return <Redirect href="/(tabs)" />;
+  if (!onboardingState || onboardingState.step === "welcome") return <Redirect href="/(tabs)" />;
+
+  return <Redirect href="/onboarding" />;
 }
 
 const styles = StyleSheet.create({
