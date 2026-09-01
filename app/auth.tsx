@@ -13,6 +13,7 @@ import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFoot
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
+import { requestApproximateLocation } from "@/lib/location";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -36,16 +37,16 @@ export default function AuthScreen() {
   }, [resendCooldown]);
 
   useEffect(() => {
-    if (resetSuccess === "1") {
-      Alert.alert("Password updated", PASSWORD_UPDATED_LOGIN_MESSAGE);
-    }
+    if (resetSuccess === "1") Alert.alert("Password updated", PASSWORD_UPDATED_LOGIN_MESSAGE);
   }, [resetSuccess]);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const isSignIn = mode === "signIn";
 
-  // Existing users signing in should enter the main app directly. The onboarding
-  // resume flow is only for account creation/new-user setup, not returning users.
-  const continueToNext = () => {
+  const continueToNext = async () => {
+    // Ask for foreground location immediately after authentication so the core
+    // hyper-local experience is ready when the user enters Lekka. Denial never
+    // blocks sign-in; the app can fall back to a manually selected area.
+    await requestApproximateLocation();
     if (mode === "signIn") {
       router.replace("/(tabs)");
       return;
@@ -92,7 +93,7 @@ export default function AuthScreen() {
       } else if (mode === "signUp" && !hasAuthSession(result)) {
         Alert.alert(getConfirmationEmailSubject(), `${LEKKA_CONFIRMATION_MESSAGE}\n\n${getConfirmationEmailIntro()}\n\n${getConfirmationEmailBody()}\n\n${getConfirmationEmailFooter()}`);
       } else {
-        continueToNext();
+        await continueToNext();
       }
     } catch (error) {
       if (isAuthTimeout(error)) {
