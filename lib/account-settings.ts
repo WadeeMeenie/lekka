@@ -1,5 +1,6 @@
 import { USERNAME_CHANGE_COOLDOWN_DAYS } from "./username";
-import type { UsernameChange } from "./profile-settings";
+
+type UsernameChange = { username: string; changedAt: string };
 
 export function formatAccountDate(value: string) {
   const date = new Date(value);
