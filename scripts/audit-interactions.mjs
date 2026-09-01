@@ -30,14 +30,13 @@ for (const file of files) {
   const source = fs.readFileSync(file, "utf8");
   const rel = path.relative(process.cwd(), file);
 
-  // Every interactive React Native press target must declare an onPress handler.
+  // Inspect each individual opening tag. The previous greedy expression could
+  // accidentally combine multiple JSX elements and report a false positive.
   for (const tag of source.matchAll(/<(Pressable|TouchableOpacity|Button)\b[\s\S]*?>/g)) {
     const opening = tag[0];
-    if (!/\bonPress\s*=/.test(opening) && tag[1] !== "Button") {
-      errors.push(`${rel}: ${tag[1]} has no onPress handler`);
-    }
-    if (tag[1] === "Button" && !/\bonPress\s*=/.test(opening)) {
-      errors.push(`${rel}: Button has no onPress handler`);
+    const component = tag[1];
+    if (!/\bonPress\s*=/.test(opening)) {
+      errors.push(`${rel}: ${component} has no onPress handler`);
     }
   }
 
