@@ -30,8 +30,8 @@ for (const file of files) {
   const source = fs.readFileSync(file, "utf8");
   const rel = path.relative(process.cwd(), file);
 
-  // Inspect each individual opening tag. The previous greedy expression could
-  // accidentally combine multiple JSX elements and report a false positive.
+  // Inspect each individual opening JSX tag. Non-greedy matching prevents one
+  // component from consuming subsequent components in the same file.
   for (const tag of source.matchAll(/<(Pressable|TouchableOpacity|Button)\b[\s\S]*?>/g)) {
     const opening = tag[0];
     const component = tag[1];
