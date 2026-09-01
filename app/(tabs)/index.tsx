@@ -84,7 +84,7 @@ export default function HomeScreen() {
       if (active) { setPosts(firstPage.posts); setNextCursor(firstPage.nextCursor); setInitialLoading(false); }
     })().catch(() => { if (active) setInitialLoading(false); });
     return () => { active = false; };
-  }, [user?.id]);
+  }, [user]);
 
   useEffect(() => {
     let active = true;
@@ -102,7 +102,7 @@ export default function HomeScreen() {
     if (!user || posts.length === 0) { setFeedback({}); return () => { active = false; }; }
     void listPostFeedback(posts.map((post) => post.id)).then((result) => { if (active && !result.error) setFeedback(Object.fromEntries(result.data)); });
     return () => { active = false; };
-  }, [posts, user?.id]);
+  }, [posts, user]);
 
   useEffect(() => {
     let active = true;
