@@ -9,17 +9,15 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Expo SDK 54 supports Node 20.19.x+, while the current Supabase JS
-      # release requires Node >=22. Use Node 22 to satisfy both toolchains.
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          # npm caching is intentionally disabled because this repo has no lockfile.
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,7 +29,13 @@ jobs:
         run: npm install --no-audit --no-fund
 
       - name: TypeScript
-        run: npx tsc --noEmit
+        run: npm run check
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
 
       - name: Expo config
         run: npx expo config --type public
@@ -39,22 +43,46 @@ jobs:
       - name: Expo dependency compatibility
         run: npx expo install --check
 
-      # Generate the native Android project and execute all config-plugin mods.
-      # This is the first CI stage that proves the custom Android plugin can
-      # actually transform a real generated Android project.
-      - name: Expo prebuild
-        run: npx expo prebuild --no-install --non-interactive
+      - name: Expo doctor
+        run: npx expo-doctor
 
-      # Build the custom internal-test variant created by the Lekka plugin.
-      # This validates the generated Gradle project and produces a device-
-      # installable debug-signed APK without requiring production signing.
+      - name: Expo prebuild
+        env:
+          NODE_ENV: production
+        run: npx expo prebuild --no-install --non-interactive --clean
+
+      - name: Verify native configuration
+        working-directory: android
+        run: |
+          grep -q '^newArchEnabled=true' gradle.properties
+          grep -q 'compileSdkVersion' app/build.gradle || true
+          ./gradlew :app:tasks --all --no-daemon >/tmp/gradle-tasks.txt
+          grep -q 'assembleDebug' /tmp/gradle-tasks.txt
+          grep -q 'assembleInternalDebug' /tmp/gradle-tasks.txt
+
+      - name: Android debug build
+        working-directory: android
+        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+
       - name: Android internal debug build
         working-directory: android
-        run: ./gradlew :app:assembleInternalDebug --no-daemon
+        run: ./gradlew :app:assembleInternalDebug --no-daemon --stacktrace
 
-      - name: Upload internal debug APK
+      - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         with:
-          name: lekka-internal-debug-apk
-          path: android/app/build/outputs/apk/internalDebug/*.apk
+          name: lekka-android-debug-apks
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/internalDebug/*.apk
           if-no-files-found: error
+
+      - name: Upload Gradle reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lekka-gradle-reports
+          path: |
+            android/**/build/reports/**
+            android/**/build/outputs/logs/**
+          if-no-files-found: ignore
