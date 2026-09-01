@@ -6,16 +6,27 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Pressable, Text, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { InitialRouteGate } from "@/components/initial-route-gate";
 import { ThemeProvider } from "@/lib/theme-provider";
-import { trpc, createTRPCClient } from "@/lib/trpc";
 
 export const unstable_settings = { anchor: "(tabs)" };
+
+// Keep the native root deliberately boring. Authentication, onboarding and
+// route decisions belong to route screens, not to the provider tree. This
+// prevents a backend/local-storage failure from preventing Expo Router from
+// mounting the application at all.
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return (
@@ -36,19 +47,7 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 }
 
 export default function RootLayout() {
-  const [queryClient] = useState(
-    () =>
-      new QueryClient({
-        defaultOptions: {
-          queries: { refetchOnWindowFocus: false, retry: 1 },
-        },
-      }),
-  );
-  const [trpcClient] = useState(() => createTRPCClient());
-
   useEffect(() => {
-    // Do not let splash handling block React/Router startup. Native Android
-    // owns the splash lifecycle; this is only a best-effort hand-off.
     void SplashScreen.hideAsync().catch(() => undefined);
   }, []);
 
@@ -56,19 +55,17 @@ export default function RootLayout() {
     <ThemeProvider>
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <trpc.Provider client={trpcClient} queryClient={queryClient}>
-            <QueryClientProvider client={queryClient}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="(tabs)" />
-                <Stack.Screen name="auth" />
-                <Stack.Screen name="onboarding" />
-                <Stack.Screen name="oauth/callback" />
-                <Stack.Screen name="reset-password" />
-              </Stack>
-              <InitialRouteGate />
-              <StatusBar style="auto" />
-            </QueryClientProvider>
-          </trpc.Provider>
+          <QueryClientProvider client={queryClient}>
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="auth" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="oauth/callback" />
+              <Stack.Screen name="reset-password" />
+            </Stack>
+            <StatusBar style="auto" />
+          </QueryClientProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </ThemeProvider>
