@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { Appearance, View, useColorScheme as useSystemColorScheme } from "react-native";
 import { colorScheme as nativewindColorScheme, vars } from "nativewind";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 import { ThemePalettes, type ColorScheme, type ThemeId } from "@/constants/theme";
 
@@ -22,14 +22,27 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [themeId, setThemeIdState] = useState<ThemeId>("original");
 
   useEffect(() => {
-    void AsyncStorage.getItem(THEME_KEY).then((value) => {
-      if (value && value in ThemePalettes) setThemeIdState(value as ThemeId);
-    });
+    let active = true;
+    void AsyncStorage.getItem(THEME_KEY)
+      .then((value) => {
+        if (active && value && value in ThemePalettes) setThemeIdState(value as ThemeId);
+      })
+      .catch((error) => {
+        console.warn("[Theme] unable to restore theme", error);
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   const applyTheme = useCallback((scheme: ColorScheme, selectedTheme: ThemeId) => {
-    nativewindColorScheme.set(scheme);
-    Appearance.setColorScheme?.(scheme);
+    try {
+      nativewindColorScheme.set(scheme);
+      Appearance.setColorScheme?.(scheme);
+    } catch (error) {
+      console.warn("[Theme] native theme application failed", error);
+    }
+
     if (typeof document !== "undefined") {
       const root = document.documentElement;
       root.dataset.theme = scheme;
@@ -41,9 +54,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const setColorScheme = useCallback((scheme: ColorScheme) => setColorSchemeState(scheme), []);
+
   const setThemeId = useCallback((nextTheme: ThemeId) => {
     setThemeIdState(nextTheme);
-    void AsyncStorage.setItem(THEME_KEY, nextTheme);
+    void AsyncStorage.setItem(THEME_KEY, nextTheme).catch((error) => {
+      console.warn("[Theme] unable to persist theme", error);
+    });
   }, []);
 
   useEffect(() => {
@@ -67,7 +83,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => ({ colorScheme, setColorScheme, themeId, setThemeId }), [colorScheme, setColorScheme, setThemeId, themeId]);
 
-  return <ThemeContext.Provider value={value}><View style={[{ flex: 1 }, themeVariables]}>{children}</View></ThemeContext.Provider>;
+  return (
+    <ThemeContext.Provider value={value}>
+      <View style={[{ flex: 1 }, themeVariables]}>{children}</View>
+    </ThemeContext.Provider>
+  );
 }
 
 export function useThemeContext(): ThemeContextValue {
