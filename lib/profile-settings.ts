@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { USERNAME_CHANGE_COOLDOWN_DAYS, normalizeUsername } from "./username";
 
 const STORAGE_KEY = "lekka/profile-settings/v1";
 
@@ -34,8 +35,6 @@ export async function saveProfileSettings(settings: ProfileSettings): Promise<Pr
   await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   return next;
 }
-
-import { USERNAME_CHANGE_COOLDOWN_DAYS, normalizeUsername } from "./username";
 
 export type UsernameChange = { username: string; changedAt: string };
 
