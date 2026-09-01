@@ -14,23 +14,41 @@ export function InitialRouteGate() {
   useEffect(() => {
     if (authLoading) return;
     let active = true;
-    void loadOnboardingState().then((state) => {
-      if (!active) return;
-      setLoading(false);
-      if (!isAuthenticated && isEntryPath(pathname)) {
-        router.replace("/auth");
-        return;
+
+    const route = async () => {
+      try {
+        const state = await loadOnboardingState();
+        if (!active) return;
+
+        if (!isAuthenticated && isEntryPath(pathname)) {
+          router.replace("/auth");
+          return;
+        }
+
+        if (isOnboardingFlowPath(pathname)) return;
+
+        if (isAuthenticated && (pathname === "/" || pathname === "/index")) {
+          router.replace("/(tabs)");
+          return;
+        }
+
+        if (isAuthenticated && isEntryPath(pathname) && !state.completed) {
+          router.replace("/onboarding");
+        }
+      } catch (error) {
+        // Routing must never prevent the application from rendering. If local
+        // onboarding storage is unavailable/corrupt, leave the current route
+        // alone and let the screen handle recovery.
+        console.warn("[InitialRouteGate] route initialization failed", error);
+      } finally {
+        if (active) setLoading(false);
       }
-      if (isOnboardingFlowPath(pathname)) return;
-      if (isAuthenticated && (pathname === "/" || pathname === "/index")) {
-        router.replace("/(tabs)");
-        return;
-      }
-      if (isAuthenticated && isEntryPath(pathname) && !state.completed) {
-        router.replace("/onboarding");
-      }
-    });
-    return () => { active = false; };
+    };
+
+    void route();
+    return () => {
+      active = false;
+    };
   }, [authLoading, isAuthenticated, pathname, router]);
 
   return loading || authLoading ? null : null;
