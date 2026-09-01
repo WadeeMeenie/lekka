@@ -6,13 +6,56 @@ on:
   pull_request:
     branches: [main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: lekka-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+
 jobs:
-  validate:
+  code-quality:
+    name: Code / tests / integration
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    env:
-      EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript
+        run: npm run check
+
+      - name: Unit and integration tests
+        run: npm test
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Expo config
+        run: npx expo config --type public
+
+      - name: Expo dependency compatibility
+        run: npx expo install --check
+
+      - name: Expo doctor
+        run: npx expo-doctor
+
+  android:
+    name: Android native build
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,34 +74,19 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: TypeScript
-        run: npm run check
-
-      - name: Unit tests
-        run: npm test
-
-      - name: Lint
-        run: npm run lint
-
       - name: Expo config
         run: npx expo config --type public
-
-      - name: Expo dependency compatibility
-        run: npx expo install --check
-
-      - name: Expo doctor
-        run: npx expo-doctor
 
       - name: Expo prebuild
         env:
           NODE_ENV: production
         run: npx expo prebuild --no-install --non-interactive --clean
 
-      - name: Verify native configuration
+      - name: Verify generated native project
         working-directory: android
         run: |
+          test -f gradlew
           grep -q '^newArchEnabled=true' gradle.properties
-          grep -q 'compileSdkVersion' app/build.gradle || true
           ./gradlew :app:tasks --all --no-daemon >/tmp/gradle-tasks.txt
           grep -q 'assembleDebug' /tmp/gradle-tasks.txt
           grep -q 'assembleInternalDebug' /tmp/gradle-tasks.txt
@@ -80,12 +108,26 @@ jobs:
             android/app/build/outputs/apk/internalDebug/*.apk
           if-no-files-found: error
 
-      - name: Upload Gradle reports on failure
+      - name: Upload native reports on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: lekka-gradle-reports
+          name: lekka-native-build-reports
           path: |
             android/**/build/reports/**
             android/**/build/outputs/logs/**
+            android/**/build/outputs/mapping/**
           if-no-files-found: ignore
+
+  release-gate:
+    name: Release gate
+    if: always()
+    needs: [code-quality, android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every validation layer to pass
+        run: |
+          echo "code-quality=${{ needs.code-quality.result }}"
+          echo "android=${{ needs.android.result }}"
+          test "${{ needs.code-quality.result }}" = "success"
+          test "${{ needs.android.result }}" = "success"
