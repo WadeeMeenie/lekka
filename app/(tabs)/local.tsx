@@ -1,21 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { listLocalDirectory, type LocalDirectoryItem } from "@/lib/local-directory";
 
-type Category = { label: string; icon: "building.2.fill" | "tag.fill" | "calendar" | "cart.fill" | "briefcase.fill" | "wrench.and.screwdriver.fill"; caption: string; color: string };
+type Category = { label: string; icon: "building.2.fill" | "tag.fill" | "calendar" | "cart.fill" | "briefcase.fill" | "wrench.and.screwdriver.fill" };
+
 type Business = LocalDirectoryItem;
 
 const categories: Category[] = [
-  { label: "Businesses", icon: "building.2.fill", caption: "Find trusted local places", color: "#2F7D67" },
-  { label: "Deals", icon: "tag.fill", caption: "Good value, close by", color: "#E9A23B" },
-  { label: "Events", icon: "calendar", caption: "Plans for your area", color: "#5E6AD2" },
-  { label: "Marketplace", icon: "cart.fill", caption: "Buy and sell nearby", color: "#8A6A4A" },
-  { label: "Jobs", icon: "briefcase.fill", caption: "Work in your city", color: "#D95D4F" },
-  { label: "Services", icon: "wrench.and.screwdriver.fill", caption: "People who can help", color: "#4E8D8A" },
+  { label: "Businesses", icon: "building.2.fill" },
+  { label: "Deals", icon: "tag.fill" },
+  { label: "Events", icon: "calendar" },
+  { label: "Marketplace", icon: "cart.fill" },
+  { label: "Jobs", icon: "briefcase.fill" },
+  { label: "Services", icon: "wrench.and.screwdriver.fill" },
 ];
 
 export default function LocalScreen() {
@@ -25,12 +26,13 @@ export default function LocalScreen() {
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null);
 
   const loadDirectory = async (category: string) => {
     setLoading(true);
     const result = await listLocalDirectory(category);
     setBusinesses((result.data ?? []) as Business[]);
-    setError(result.error ? "We couldn’t load local listings. Check your connection and try again." : null);
+    setError(result.error ? "We couldn't load local listings. Check your connection and try again." : null);
     setLoading(false);
   };
 
@@ -42,9 +44,144 @@ export default function LocalScreen() {
     return businesses.filter((business) => `${business.name} ${business.description} ${business.area} ${business.category}`.toLowerCase().includes(query));
   }, [businesses, search]);
 
-  return <ScreenContainer><ScrollView contentContainerStyle={styles.content}><Text style={[styles.eyebrow, { color: colors.primary }]}>LOCAL LIFE</Text><Text style={[styles.title, { color: colors.foreground }]}>Useful around you</Text><Text style={[styles.subtitle, { color: colors.muted }]}>Discover verified local listings when businesses publish them.</Text><View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="magnifyingglass" size={19} color={colors.muted} /><TextInput value={search} onChangeText={setSearch} placeholder="Search live local listings…" placeholderTextColor={colors.muted} style={[styles.searchInput, { color: colors.foreground }]} /></View><Text style={[styles.filterLabel, { color: colors.muted }]}>EXPLORE BY CATEGORY</Text><View style={styles.grid}>{categories.map((item) => <Pressable key={item.label} accessibilityRole="button" accessibilityLabel={`Browse ${item.label}`} onPress={() => { setSelectedCategory(item.label); setSearch(""); }} style={[styles.category, { backgroundColor: selectedCategory === item.label ? `${item.color}20` : colors.surface, borderColor: selectedCategory === item.label ? item.color : colors.border }]}><View style={[styles.categoryIcon, { backgroundColor: `${item.color}20` }]}><IconSymbol name={item.icon} size={23} color={item.color} /></View><Text style={[styles.categoryLabel, { color: colors.foreground }]}>{item.label}</Text><Text style={[styles.categoryCaption, { color: colors.muted }]}>{item.caption}</Text></Pressable>)}</View><View style={styles.resultHeader}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>{selectedCategory}</Text><Text style={[styles.resultMeta, { color: colors.muted }]}>{filteredBusinesses.length} live listings</Text></View>{loading ? <View style={styles.status}><ActivityIndicator color={colors.primary} /><Text style={[styles.statusText, { color: colors.muted }]}>Loading local listings…</Text></View> : error ? <Text accessibilityRole="alert" style={[styles.statusText, { color: colors.error }]}>{error}</Text> : filteredBusinesses.length === 0 ? <View style={[styles.empty, { borderColor: colors.border }]}><IconSymbol name="building.2.fill" size={27} color={colors.muted} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>No live listings yet</Text><Text style={[styles.emptyText, { color: colors.muted }]}>{search ? "Try another search or category." : "This area will fill as local businesses publish their profiles."}</Text></View> : filteredBusinesses.map((business) => <Pressable key={business.id} onPress={() => Alert.alert(business.name, `${business.description || "Local listing"}\n\n${business.area}`)} style={[styles.listing, { backgroundColor: colors.surface, borderColor: colors.border }]}><View style={[styles.listingIcon, { backgroundColor: `${colors.primary}20` }]}><IconSymbol name={business.kind === "event" ? "calendar" : business.kind === "deal" ? "tag.fill" : business.kind === "post" ? "bubble.left.fill" : "building.2.fill"} size={21} color={colors.primary} /></View><View style={styles.listingCopy}><Text style={[styles.listingTitle, { color: colors.foreground }]}>{business.name}</Text><Text style={[styles.listingMeta, { color: colors.muted }]}>{business.category} · {business.area}</Text><Text style={[styles.listingDescription, { color: colors.muted }]} numberOfLines={2}>{business.description || "Local business listing"}</Text></View><IconSymbol name="chevron.right" size={18} color={colors.muted} /></Pressable>)}<View style={[styles.featured, { backgroundColor: colors.foreground }]}><View style={styles.featuredTop}><View style={styles.featuredBadge}><IconSymbol name="checkmark.seal.fill" size={16} color="#E9A23B" /><Text style={styles.featuredBadgeText}>TRUSTED LOCAL</Text></View><IconSymbol name="arrow.up.right" size={20} color="#E9A23B" /></View><Text style={[styles.featuredTitle, { color: colors.background }]}>Support the places that support your area.</Text><Text style={[styles.featuredText, { color: `${colors.background}AA` }]}>Verified businesses can share updates, offers, jobs, and events directly with nearby customers.</Text></View></ScrollView></ScreenContainer>;
+  return (
+    <ScreenContainer>
+      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerCopy}>
+            <Text style={[styles.eyebrow, { color: colors.muted }]}>LOCAL LIFE</Text>
+            <Text numberOfLines={1} style={[styles.title, { color: colors.foreground }]}>Useful around you</Text>
+          </View>
+        </View>
+
+        <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <IconSymbol name="magnifyingglass" size={19} color={colors.muted} />
+          <TextInput value={search} onChangeText={setSearch} placeholder="Search local listings" placeholderTextColor={colors.muted} style={[styles.searchInput, { color: colors.foreground }]} />
+        </View>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow}>
+          {categories.map((item) => {
+            const selected = selectedCategory === item.label;
+            return (
+              <Pressable
+                key={item.label}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`Browse ${item.label}`}
+                onPress={() => { setSelectedCategory(item.label); setSearch(""); }}
+                style={[styles.categoryChip, { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.border }]}
+              >
+                <IconSymbol name={item.icon} size={17} color={selected ? colors.background : colors.muted} />
+                <Text style={[styles.categoryText, { color: selected ? colors.background : colors.muted }]}>{item.label}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+
+        <View style={styles.resultHeader}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{selectedCategory}</Text>
+          <Text style={[styles.resultMeta, { color: colors.muted }]}>{filteredBusinesses.length} live listings</Text>
+        </View>
+
+        {loading ? (
+          <View style={styles.skeletonGroup}>
+            {[1, 2, 3].map((item) => <View key={item} style={[styles.skeleton, { backgroundColor: colors.surfaceAlt ?? colors.surface }]} />)}
+          </View>
+        ) : error ? (
+          <View style={[styles.empty, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt ?? colors.surface }]}><IconSymbol name="exclamationmark.triangle" size={19} color={colors.error} /></View>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Couldn't load listings</Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>{error}</Text>
+            <Pressable accessibilityRole="button" onPress={() => void loadDirectory(selectedCategory)} style={styles.ghostButton}>
+              <Text style={[styles.ghostText, { color: colors.primary }]}>Try again</Text>
+            </Pressable>
+          </View>
+        ) : filteredBusinesses.length === 0 ? (
+          <View style={[styles.empty, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceAlt ?? colors.surface }]}><IconSymbol name="building.2.fill" size={19} color={colors.muted} /></View>
+            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>No live listings yet</Text>
+            <Text style={[styles.emptyText, { color: colors.muted }]}>{search ? "Try another search or category." : "Local listings will appear here as businesses publish their profiles."}</Text>
+            <Pressable accessibilityRole="button" onPress={() => setSearch("")} style={styles.ghostButton}>
+              <Text style={[styles.ghostText, { color: colors.primary }]}>{search ? "Clear search" : "Browse another category"}</Text>
+            </Pressable>
+          </View>
+        ) : (
+          filteredBusinesses.map((business) => (
+            <Pressable
+              key={business.id}
+              accessibilityRole="button"
+              accessibilityLabel={`Open ${business.name}`}
+              onPress={() => setSelectedBusiness(business)}
+              style={({ pressed }) => [styles.listing, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}
+            >
+              <View style={[styles.listingIcon, { backgroundColor: `${colors.primary}18` }]}>
+                <IconSymbol name={business.kind === "event" ? "calendar" : business.kind === "deal" ? "tag.fill" : business.kind === "post" ? "bubble.left.fill" : "building.2.fill"} size={19} color={colors.primary} />
+              </View>
+              <View style={styles.listingCopy}>
+                <Text numberOfLines={1} style={[styles.listingTitle, { color: colors.foreground }]}>{business.name}</Text>
+                <Text numberOfLines={1} style={[styles.listingMeta, { color: colors.muted }]}>{business.category} · {business.area}</Text>
+                <Text numberOfLines={2} style={[styles.listingDescription, { color: colors.muted }]}>{business.description || "Local listing"}</Text>
+              </View>
+              <IconSymbol name="chevron.right" size={17} color={colors.muted} />
+            </Pressable>
+          ))
+        )}
+      </ScrollView>
+
+      <Modal visible={selectedBusiness !== null} transparent animationType="slide" onRequestClose={() => setSelectedBusiness(null)}>
+        <View style={styles.sheetOverlay}>
+          <Pressable style={styles.sheetDismiss} onPress={() => setSelectedBusiness(null)} accessibilityLabel="Close listing details" />
+          <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
+            <View style={[styles.grabber, { backgroundColor: colors.border }]} />
+            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>{selectedBusiness?.name}</Text>
+            <Text style={[styles.sheetMeta, { color: colors.muted }]}>{selectedBusiness?.category} · {selectedBusiness?.area}</Text>
+            <Text style={[styles.sheetBody, { color: colors.foreground }]}>{selectedBusiness?.description || "Local listing"}</Text>
+            <Pressable accessibilityRole="button" onPress={() => setSelectedBusiness(null)} style={[styles.sheetButton, { backgroundColor: colors.primary }]}>
+              <Text style={[styles.sheetButtonText, { color: colors.background }]}>Done</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+    </ScreenContainer>
+  );
 }
 
-const styles = StyleSheet.create({ content: { padding: 20, paddingBottom: 40 }, eyebrow: { fontSize: 11, fontWeight: "800", letterSpacing: 1.1 }, title: { fontSize: 28, fontWeight: "800", marginTop: 6 }, subtitle: { fontSize: 13, lineHeight: 18, marginTop: 5 }, search: { borderWidth: 1, borderRadius: 16, height: 48, marginTop: 19, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 9 }, searchInput: { flex: 1, fontSize: 14 }, filterLabel: { fontSize: 10, fontWeight: "800", letterSpacing: 1.1, marginTop: 21 }, grid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 10 }, category: { width: "48.3%", borderWidth: 1, borderRadius: 18, padding: 14, minHeight: 128 }, categoryIcon: { width: 42, height: 42, borderRadius: 14, alignItems: "center", justifyContent: "center", marginBottom: 13 }, categoryLabel: { fontSize: 14, fontWeight: "800" }, categoryCaption: { fontSize: 11, lineHeight: 15, marginTop: 4 }, resultHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 24, marginBottom: 11 }, sectionTitle: { fontSize: 18, fontWeight: "800" }, resultMeta: { fontSize: 12 }, status: { alignItems: "center", gap: 9, paddingVertical: 24 }, statusText: { fontSize: 13, lineHeight: 19, textAlign: "center" }, empty: { borderWidth: 1, borderStyle: "dashed", borderRadius: 18, padding: 22, alignItems: "center", gap: 7 }, emptyTitle: { fontSize: 14, fontWeight: "800" }, emptyText: { textAlign: "center", fontSize: 12, lineHeight: 17 }, listing: { flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 18, padding: 14, marginBottom: 10 }, listingIcon: { width: 46, height: 46, borderRadius: 15, alignItems: "center", justifyContent: "center", marginRight: 11 }, listingCopy: { flex: 1 }, listingTitle: { fontSize: 15, fontWeight: "800" }, listingMeta: { fontSize: 12, marginTop: 3 }, listingDescription: { fontSize: 12, lineHeight: 17, marginTop: 5 }, featured: { borderRadius: 20, padding: 17, marginTop: 20 }, featuredTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" }, featuredBadge: { flexDirection: "row", alignItems: "center", gap: 6 }, featuredBadgeText: { color: "#E9A23B", fontSize: 10, fontWeight: "800", letterSpacing: 0.8 }, featuredTitle: { fontSize: 18, lineHeight: 24, fontWeight: "800", marginTop: 18 }, featuredText: { fontSize: 12, lineHeight: 18, marginTop: 7 },
+const styles = StyleSheet.create({
+  content: { padding: 16, paddingBottom: 36 },
+  headerRow: { minHeight: 52, justifyContent: "center" },
+  headerCopy: { flex: 1 },
+  eyebrow: { fontSize: 11, fontWeight: "600", letterSpacing: 0.8, textTransform: "uppercase" },
+  title: { fontSize: 28, lineHeight: 34, fontWeight: "700", marginTop: 2 },
+  search: { borderWidth: 1, borderRadius: 14, height: 48, marginTop: 10, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 9 },
+  searchInput: { flex: 1, fontSize: 14 },
+  categoryRow: { gap: 8, paddingTop: 12, paddingRight: 16 },
+  categoryChip: { minHeight: 36, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 7 },
+  categoryText: { fontSize: 13, fontWeight: "500" },
+  resultHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 20, marginBottom: 10 },
+  sectionTitle: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
+  resultMeta: { fontSize: 12 },
+  skeletonGroup: { gap: 10 },
+  skeleton: { height: 88, borderRadius: 14 },
+  empty: { minHeight: 160, borderWidth: 1, borderRadius: 18, padding: 20, alignItems: "center", justifyContent: "center" },
+  emptyIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginBottom: 9 },
+  emptyTitle: { fontSize: 15, lineHeight: 20, fontWeight: "700", textAlign: "center" },
+  emptyText: { maxWidth: 300, fontSize: 12, lineHeight: 17, textAlign: "center", marginTop: 4 },
+  ghostButton: { minHeight: 44, justifyContent: "center", paddingHorizontal: 10 },
+  ghostText: { fontSize: 13, fontWeight: "600" },
+  listing: { minHeight: 76, flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 8 },
+  listingIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", marginRight: 11 },
+  listingCopy: { flex: 1, minWidth: 0 },
+  listingTitle: { fontSize: 15, lineHeight: 20, fontWeight: "700" },
+  listingMeta: { fontSize: 12, lineHeight: 16, marginTop: 2 },
+  listingDescription: { fontSize: 12, lineHeight: 17, marginTop: 2 },
+  pressed: { opacity: 0.8, transform: [{ scale: 0.99 }] },
+  sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.55)" },
+  sheetDismiss: { flex: 1 },
+  sheet: { borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 20, paddingBottom: 28 },
+  grabber: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 18 },
+  sheetTitle: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
+  sheetMeta: { fontSize: 12, marginTop: 4 },
+  sheetBody: { fontSize: 15, lineHeight: 22, marginTop: 16 },
+  sheetButton: { minHeight: 44, borderRadius: 12, alignItems: "center", justifyContent: "center", marginTop: 20 },
+  sheetButtonText: { fontSize: 14, fontWeight: "700" },
 });
-
