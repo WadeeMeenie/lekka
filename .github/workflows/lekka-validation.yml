@@ -14,8 +14,10 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
+  # These are Supabase client-side values. Keep secret overrides for environments
+  # that provide them, but never allow an empty GitHub secret to produce a broken APK.
+  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://vnitwsjidlurlwlpsmtf.supabase.co' }}
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_hy1yuUGTdhl8fEnR4jAIIg_kWJ3JQdX' }}
 
 jobs:
   code-quality:
@@ -30,6 +32,16 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Validate Supabase build configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_PUBLIC_SUPABASE_URL"
+          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+          [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
+          [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
+          echo "Supabase client configuration is present and valid."
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -73,6 +85,16 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+
+      - name: Validate Supabase build configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$EXPO_PUBLIC_SUPABASE_URL"
+          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
+          [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
+          [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
+          echo "Supabase client configuration is present and valid."
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
