@@ -37,6 +37,9 @@ jobs:
       - name: TypeScript
         run: npm run check
 
+      - name: Static interaction and route audit
+        run: npm run audit:interactions
+
       - name: Unit and integration tests
         run: npm test
 
