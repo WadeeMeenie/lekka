@@ -1,8 +1,10 @@
 import fs from "node:fs";
 import path from "node:path";
+import { parse } from "@babel/parser";
 
 const ROOT = path.resolve("app");
 const ROUTE_EXT = /\.(tsx|ts|jsx|js)$/;
+const INTERACTIVE = new Set(["Pressable", "TouchableOpacity", "Button"]);
 const files = [];
 
 function walk(dir) {
@@ -26,19 +28,51 @@ for (const file of files) {
 const errors = [];
 const warnings = [];
 
+function isInteractiveName(node) {
+  return node?.type === "JSXIdentifier" && INTERACTIVE.has(node.name);
+}
+
+function walkAst(node, visit) {
+  if (!node || typeof node !== "object") return;
+  visit(node);
+  for (const value of Object.values(node)) {
+    if (Array.isArray(value)) {
+      for (const child of value) walkAst(child, visit);
+    } else if (value && typeof value === "object" && value.type) {
+      walkAst(value, visit);
+    }
+  }
+}
+
 for (const file of files) {
   const source = fs.readFileSync(file, "utf8");
   const rel = path.relative(process.cwd(), file);
+  let ast;
 
-  // Inspect each individual opening JSX tag. Non-greedy matching prevents one
-  // component from consuming subsequent components in the same file.
-  for (const tag of source.matchAll(/<(Pressable|TouchableOpacity|Button)\b[\s\S]*?>/g)) {
-    const opening = tag[0];
-    const component = tag[1];
-    if (!/\bonPress\s*=/.test(opening)) {
-      errors.push(`${rel}: ${component} has no onPress handler`);
-    }
+  try {
+    ast = parse(source, {
+      sourceType: "module",
+      plugins: ["typescript", "jsx", "optionalChaining", "nullishCoalescingOperator"],
+    });
+  } catch (error) {
+    errors.push(`${rel}: could not parse source for interaction audit (${error.message})`);
+    continue;
   }
+
+  walkAst(ast, (node) => {
+    if (node.type !== "JSXOpeningElement" || !isInteractiveName(node.name)) return;
+    const hasOnPress = node.attributes.some(
+      (attribute) =>
+        attribute?.type === "JSXAttribute" &&
+        attribute.name?.type === "JSXIdentifier" &&
+        attribute.name.name === "onPress"
+    );
+
+    if (!hasOnPress) {
+      const line = node.loc?.start?.line ?? 0;
+      errors.push(`${rel}:${line}: ${node.name.name} has no onPress handler`);
+    }
+  });
 
   // Static navigation targets must exist. Dynamic routes are checked by their parent segment.
   for (const match of source.matchAll(/router\.(?:push|replace|navigate)\(\s*["']([^"']+)["']/g)) {
