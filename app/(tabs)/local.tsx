@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -30,7 +30,9 @@ export default function LocalScreen() {
     setLoading(true);
     setError(null);
     try {
-      setBusinesses(await listLocalDirectory(category));
+      const result = await listLocalDirectory(category);
+      if (result.error) throw result.error;
+      setBusinesses(result.data);
     } catch (err) {
       setBusinesses([]);
       setError(err instanceof Error ? err.message : "Please try again.");
@@ -39,8 +41,8 @@ export default function LocalScreen() {
     }
   };
 
-  useMemo(() => {
-    void loadDirectory();
+  useEffect(() => {
+    void loadDirectory(selectedCategory);
   }, [selectedCategory]);
 
   const filteredBusinesses = businesses.filter((business) => {
