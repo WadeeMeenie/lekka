@@ -11,18 +11,19 @@ export function useSupabaseAuth() {
   useEffect(() => {
     let mounted = true;
 
-    if (!supabase) {
+    const client = supabase;
+    if (!client) {
       setLoading(false);
       return () => {
         mounted = false;
       };
     }
 
-    let unsubscribe = () => undefined;
+    let unsubscribe: () => void = () => {};
 
     const bootstrap = async () => {
       try {
-        const { data, error } = await supabase.auth.getSession();
+        const { data, error } = await client.auth.getSession();
         if (error) console.warn("[SupabaseAuth] session restore failed", error.message);
         if (mounted) setSession(data.session ?? null);
       } catch (error) {
@@ -34,10 +35,12 @@ export function useSupabaseAuth() {
         if (mounted) setLoading(false);
       }
 
-      const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      const { data: listener } = client.auth.onAuthStateChange((_event, nextSession) => {
         if (mounted) setSession(nextSession ?? null);
       });
-      unsubscribe = () => listener.subscription.unsubscribe();
+      unsubscribe = () => {
+        listener.subscription.unsubscribe();
+      };
     };
 
     void bootstrap();
