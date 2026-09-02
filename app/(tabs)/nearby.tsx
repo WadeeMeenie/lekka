@@ -11,11 +11,7 @@ import { getFetchPresentation } from "@/lib/loading-state";
 
 const categories: Array<RadarCategory | "All"> = ["All", "Food", "Event", "Deal", "Job", "Marketplace", "Alert", "Service"];
 const radiusOptions = ["500 m", "1 km", "5 km", "10 km", "City"];
-const explorationAreas = [
-  { area: "Bellville", latitude: -33.883, longitude: 18.635 },
-  { area: "Stellenbosch", latitude: -33.9321, longitude: 18.8602 },
-  { area: "Johannesburg", latitude: -26.2041, longitude: 28.0473 },
-];
+const explorationAreas = [{ area: "Bellville", latitude: -33.883, longitude: 18.635 }, { area: "Stellenbosch", latitude: -33.9321, longitude: 18.8602 }, { area: "Johannesburg", latitude: -26.2041, longitude: 28.0473 }];
 
 export default function NearbyScreen() {
   const colors = useColors();
@@ -31,229 +27,26 @@ export default function NearbyScreen() {
   const [backgroundRefreshing, setBackgroundRefreshing] = useState(false);
   const [areaPickerOpen, setAreaPickerOpen] = useState(false);
 
-  const refreshFromLocation = async (location: DeviceLocation, background = false) => {
-    setCurrentLocation(location);
-    setManualOverride(null);
-    setActiveArea(location.area);
-    setLocationStatus("granted");
-    if (background) setBackgroundRefreshing(true);
-    try {
-      const settings = await loadSettings();
-      const remote = await fetchNearbyItems(location, { ...settings, radius });
-      setRadarItems(remote);
-    } finally {
-      if (background) setBackgroundRefreshing(false);
-    }
-  };
+  const refreshFromLocation = async (location: DeviceLocation, background = false) => { setCurrentLocation(location); setManualOverride(null); setActiveArea(location.area); setLocationStatus("granted"); if (background) setBackgroundRefreshing(true); try { const settings = await loadSettings(); setRadarItems(await fetchNearbyItems(location, { ...settings, radius })); } finally { if (background) setBackgroundRefreshing(false); } };
+  const useCurrentLocation = async () => { const result = await requestApproximateLocation(activeArea); if (result.status === "granted") await refreshFromLocation(result.location, true); else setLocationStatus("denied"); };
+  const chooseArea = (place: (typeof explorationAreas)[number]) => { const next = { ...place, capturedAt: Date.now() }; setAreaPickerOpen(false); setManualOverride(next); setCurrentLocation(null); setActiveArea(place.area); setLocationStatus("manual"); setBackgroundRefreshing(true); void loadSettings().then((settings) => fetchNearbyItems(next, settings, category)).then(setRadarItems).finally(() => setBackgroundRefreshing(false)); };
 
-  const useCurrentLocation = async () => {
-    const result = await requestApproximateLocation(activeArea);
-    if (result.status === "granted") await refreshFromLocation(result.location, true);
-    else setLocationStatus("denied");
-  };
-
-  const chooseArea = (place: (typeof explorationAreas)[number]) => {
-    const next = { ...place, capturedAt: Date.now() };
-    setAreaPickerOpen(false);
-    setManualOverride(next);
-    setCurrentLocation(null);
-    setActiveArea(place.area);
-    setLocationStatus("manual");
-    setBackgroundRefreshing(true);
-    void loadSettings()
-      .then((settings) => fetchNearbyItems(next, settings, category))
-      .then(setRadarItems)
-      .finally(() => setBackgroundRefreshing(false));
-  };
-
-  useEffect(() => {
-    let active = true;
-    let stopWatching: () => void = () => undefined;
-    void (async () => {
-      const settings = await loadSettings();
-      if (!active) return;
-      setRadius(settings.radius);
-      const result = await getLastKnownOrCurrentLocation(settings.area);
-      if (!active) return;
-      if (result.status === "granted") {
-        await refreshFromLocation(result.location);
-        if (active) setInitialLoading(false);
-        stopWatching = await watchMeaningfulForegroundLocation((next) => {
-          if (active) void refreshFromLocation(next, true);
-        }, result.location.area);
-      } else {
-        setLocationStatus("denied");
-        setActiveArea(settings.area);
-        const cached = await fetchNearbyItems(undefined, settings);
-        if (active) {
-          setRadarItems(cached);
-          setInitialLoading(false);
-        }
-      }
-    })().catch(() => {
-      if (active) {
-        setRadarItems([]);
-        setInitialLoading(false);
-      }
-    });
-    return () => {
-      active = false;
-      stopWatching();
-    };
-  }, []);
-
-  const setDiscoveryRadius = (nextRadius: string) => {
-    setRadius(nextRadius);
-    void loadSettings().then(async (settings) => {
-      const nextSettings = { ...settings, radius: nextRadius };
-      await saveSettings(nextSettings);
-      const queryLocation = currentLocation ?? manualOverride;
-      if (queryLocation) setRadarItems(await fetchNearbyItems(queryLocation, nextSettings, category));
-    });
-  };
-
+  useEffect(() => { let active = true; let stopWatching: () => void = () => undefined; void (async () => { const settings = await loadSettings(); if (!active) return; setRadius(settings.radius); const result = await getLastKnownOrCurrentLocation(settings.area); if (!active) return; if (result.status === "granted") { await refreshFromLocation(result.location); if (active) setInitialLoading(false); stopWatching = await watchMeaningfulForegroundLocation((next) => { if (active) void refreshFromLocation(next, true); }, result.location.area); } else { setLocationStatus("denied"); setActiveArea(settings.area); const cached = await fetchNearbyItems(undefined, settings); if (active) { setRadarItems(cached); setInitialLoading(false); } } })().catch(() => { if (active) { setRadarItems([]); setInitialLoading(false); } }); return () => { active = false; stopWatching(); }; }, []);
+  const setDiscoveryRadius = (nextRadius: string) => { setRadius(nextRadius); void loadSettings().then(async (settings) => { const nextSettings = { ...settings, radius: nextRadius }; await saveSettings(nextSettings); const queryLocation = currentLocation ?? manualOverride; if (queryLocation) setRadarItems(await fetchNearbyItems(queryLocation, nextSettings, category)); }); };
   const items = useMemo(() => category === "All" ? radarItems : radarItems.filter((item) => item.category === category), [category, radarItems]);
   const presentation = getFetchPresentation({ isInitialLoading: initialLoading, isRefreshing: backgroundRefreshing, hasData: items.length > 0 });
 
-  return (
-    <ScreenContainer>
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.content}
-        ListHeaderComponent={
-          <View>
-            <View style={styles.headerRow}>
-              <View style={styles.headerCopy}>
-                <Text style={[styles.eyebrow, { color: colors.primary }]}>LOCAL RADAR</Text>
-                <Text style={[styles.title, { color: colors.foreground }]}>Around {activeArea}</Text>
-                <View style={styles.locationLine}>
-                  <IconSymbol name="location.fill" size={14} color={colors.primary} />
-                  <Text style={[styles.locationText, { color: colors.muted }]}>{locationStatus === "granted" ? "Current location" : `Using ${activeArea} manually`}</Text>
-                  <Pressable accessibilityRole="button" onPress={() => setAreaPickerOpen(true)} hitSlop={8}>
-                    <Text style={[styles.changeText, { color: colors.primary }]}>Change</Text>
-                  </Pressable>
-                </View>
-              </View>
-              <Pressable accessibilityRole="button" accessibilityLabel={mapView ? "Show radar list" : "Show radar map"} onPress={() => setMapView((value) => !value)} style={[styles.viewToggle, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <IconSymbol name={mapView ? "list.bullet" : "map.fill"} size={17} color={colors.foreground} />
-                <Text style={[styles.toggleText, { color: colors.foreground }]}>{mapView ? "List" : "Map"}</Text>
-              </Pressable>
-            </View>
-
-            {mapView ? (
-              <View style={[styles.mapPreview, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-                <View style={styles.mapContent}>
-                  <View style={styles.mapRoadOne} />
-                  <View style={styles.mapRoadTwo} />
-                  <RadarPin x="26%" y="38%" color={colors.error} />
-                  <RadarPin x="56%" y="56%" color={colors.primary} />
-                  <RadarPin x="73%" y="27%" color={colors.success} />
-                  <Text style={[styles.mapLabel, { color: colors.muted }]}>Approximate local activity</Text>
-                </View>
-              </View>
-            ) : null}
-
-            <Text style={[styles.filterLabel, { color: colors.muted }]}>RADIUS</Text>
-            <FlatList data={radiusOptions} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow} keyExtractor={(item) => item} renderItem={({ item }) => (
-              <Pressable accessibilityRole="button" accessibilityState={{ selected: radius === item }} onPress={() => setDiscoveryRadius(item)} style={[styles.chip, { borderColor: radius === item ? colors.primary : colors.border, backgroundColor: radius === item ? `${colors.primary}18` : colors.surface }]}>
-                <Text style={[styles.chipText, { color: radius === item ? colors.primary : colors.muted }]}>{item}</Text>
-              </Pressable>
-            )} />
-
-            <Text style={[styles.filterLabel, { color: colors.muted }]}>CATEGORY</Text>
-            <FlatList data={categories} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow} keyExtractor={(item) => item} renderItem={({ item }) => (
-              <Pressable accessibilityRole="button" accessibilityState={{ selected: category === item }} onPress={() => setCategory(item)} style={[styles.chip, { backgroundColor: category === item ? colors.foreground : colors.surface, borderColor: category === item ? colors.foreground : colors.border }]}>
-                <Text style={[styles.chipText, { color: category === item ? colors.background : colors.muted }]}>{item}</Text>
-              </Pressable>
-            )} />
-
-            <View style={styles.resultRow}>
-              <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Nearby now</Text>
-              <Text style={[styles.resultMeta, { color: colors.muted }]}>{items.length} results</Text>
-            </View>
-            {presentation === "content-refreshing" ? <View style={[styles.syncPill, { backgroundColor: `${colors.primary}12` }]}><View style={[styles.syncDot, { backgroundColor: colors.primary }]} /><Text style={[styles.syncText, { color: colors.primary }]}>Updating nearby activity</Text></View> : null}
-          </View>
-        }
-        renderItem={({ item }) => <RadarCard item={item} colors={colors} />}
-        ListEmptyComponent={presentation === "skeleton" ? <NearbySkeletonList /> : <EmptyRadar colors={colors} />}
-      />
-
-      <Modal visible={areaPickerOpen} transparent animationType="slide" onRequestClose={() => setAreaPickerOpen(false)}>
-        <View style={styles.sheetOverlay}>
-          <Pressable style={styles.sheetDismiss} onPress={() => setAreaPickerOpen(false)} accessibilityLabel="Close area picker" />
-          <View style={[styles.sheet, { backgroundColor: colors.surface }]}>
-            <View style={[styles.grabber, { backgroundColor: colors.border }]} />
-            <Text style={[styles.sheetTitle, { color: colors.foreground }]}>Change area</Text>
-            <Text style={[styles.sheetSubtitle, { color: colors.muted }]}>Explore another area without changing your device location.</Text>
-            {explorationAreas.map((place) => <Pressable key={place.area} accessibilityRole="button" onPress={() => chooseArea(place)} style={[styles.areaRow, { borderBottomColor: colors.border }]}><View style={[styles.areaIcon, { backgroundColor: `${colors.primary}18` }]}><IconSymbol name="location.fill" size={18} color={colors.primary} /></View><Text style={[styles.areaText, { color: colors.foreground }]}>{place.area}</Text><IconSymbol name="chevron.right" size={18} color={colors.muted} /></Pressable>)}
-            <Pressable accessibilityRole="button" onPress={useCurrentLocation} style={[styles.currentButton, { backgroundColor: colors.primary }]}><Text style={[styles.currentButtonText, { color: colors.background }]}>Use current location</Text></Pressable>
-          </View>
-        </View>
-      </Modal>
-    </ScreenContainer>
-  );
+  return <ScreenContainer><FlatList data={items} keyExtractor={(item) => item.id} contentContainerStyle={styles.content} ListHeaderComponent={<View>
+    <View style={styles.headerRow}><View style={styles.headerCopy}><Text style={[styles.eyebrow, { color: colors.primary }]}>LOCAL RADAR</Text><Text style={[styles.title, { color: colors.foreground }]}>Around {activeArea}</Text><View style={styles.locationLine}><IconSymbol name="location.fill" size={14} color={colors.primary} /><Text style={[styles.locationText, { color: colors.muted }]}>{locationStatus === "granted" ? "Current location" : `Using ${activeArea} manually`}</Text><Pressable accessibilityRole="button" onPress={() => setAreaPickerOpen(true)} hitSlop={8}><Text style={[styles.changeText, { color: colors.primary }]}>Change</Text></Pressable></View></View><Pressable accessibilityRole="button" accessibilityLabel={mapView ? "Show radar list" : "Show radar map"} onPress={() => setMapView((value) => !value)} style={[styles.viewToggle, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name={mapView ? "list.bullet" : "map.fill"} size={17} color={colors.foreground} /><Text style={[styles.toggleText, { color: colors.foreground }]}>{mapView ? "List" : "Map"}</Text></Pressable></View>
+    {mapView ? <View style={[styles.mapPreview, { backgroundColor: colors.surface, borderColor: colors.border }]}><View style={styles.mapContent}><View style={styles.mapRoadOne} /><View style={styles.mapRoadTwo} /><RadarPin x="26%" y="38%" color={colors.error} /><RadarPin x="56%" y="56%" color={colors.primary} /><RadarPin x="73%" y="27%" color={colors.primary} /><Text style={[styles.mapLabel, { color: colors.muted }]}>Approximate local activity</Text></View></View> : null}
+    <Text style={[styles.filterLabel, { color: colors.muted }]}>RADIUS</Text><FlatList data={radiusOptions} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow} keyExtractor={(item) => item} renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityState={{ selected: radius === item }} onPress={() => setDiscoveryRadius(item)} style={[styles.chip, { borderColor: radius === item ? colors.primary : colors.border, backgroundColor: radius === item ? `${colors.primary}18` : colors.surface }]}><Text style={[styles.chipText, { color: radius === item ? colors.primary : colors.muted }]}>{item}</Text></Pressable>} />
+    <Text style={[styles.filterLabel, { color: colors.muted }]}>CATEGORY</Text><FlatList data={categories} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow} keyExtractor={(item) => item} renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityState={{ selected: category === item }} onPress={() => setCategory(item)} style={[styles.chip, { backgroundColor: category === item ? colors.foreground : colors.surface, borderColor: category === item ? colors.foreground : colors.border }]}><Text style={[styles.chipText, { color: category === item ? colors.background : colors.muted }]}>{item}</Text></Pressable>} />
+    <View style={styles.resultRow}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Nearby now</Text><Text style={[styles.resultMeta, { color: colors.muted }]}>{items.length} results</Text></View>{presentation === "content-refreshing" ? <View style={[styles.syncPill, { backgroundColor: `${colors.primary}12` }]}><View style={[styles.syncDot, { backgroundColor: colors.primary }]} /><Text style={[styles.syncText, { color: colors.primary }]}>Updating nearby activity</Text></View> : null}
+  </View>} renderItem={({ item }) => <RadarCard item={item} colors={colors} />} ListEmptyComponent={presentation === "skeleton" ? <NearbySkeletonList /> : <EmptyRadar colors={colors} />} />
+  <Modal visible={areaPickerOpen} transparent animationType="slide" onRequestClose={() => setAreaPickerOpen(false)}><View style={styles.sheetOverlay}><Pressable style={styles.sheetDismiss} onPress={() => setAreaPickerOpen(false)} accessibilityLabel="Close area picker" /><View style={[styles.sheet, { backgroundColor: colors.surface }]}><View style={[styles.grabber, { backgroundColor: colors.border }]} /><Text style={[styles.sheetTitle, { color: colors.foreground }]}>Change area</Text><Text style={[styles.sheetSubtitle, { color: colors.muted }]}>Explore another area without changing your device location.</Text>{explorationAreas.map((place) => <Pressable key={place.area} accessibilityRole="button" onPress={() => chooseArea(place)} style={[styles.areaRow, { borderBottomColor: colors.border }]}><View style={[styles.areaIcon, { backgroundColor: `${colors.primary}18` }]}><IconSymbol name="location.fill" size={18} color={colors.primary} /></View><Text style={[styles.areaText, { color: colors.foreground }]}>{place.area}</Text><IconSymbol name="chevron.right" size={18} color={colors.muted} /></Pressable>)}<Pressable accessibilityRole="button" onPress={useCurrentLocation} style={[styles.currentButton, { backgroundColor: colors.primary }]}><Text style={[styles.currentButtonText, { color: colors.background }]}>Use current location</Text></Pressable></View></View></Modal>
+  </ScreenContainer>;
 }
-
-function EmptyRadar({ colors }: { colors: ReturnType<typeof useColors> }) {
-  return <View style={[styles.empty, { borderColor: colors.border }]}><IconSymbol name="location.fill" size={26} color={colors.muted} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nothing nearby yet</Text><Text style={[styles.emptyText, { color: colors.muted }]}>Local posts, events, deals and alerts will appear here as they are published.</Text></View>;
-}
-
-function RadarPin({ x, y, color }: { x: DimensionValue; y: DimensionValue; color: string }) {
-  return <View style={[styles.pin, { left: x, top: y, backgroundColor: color }]}><IconSymbol name="location.fill" size={17} color="#FFF" /></View>;
-}
-
-function RadarCard({ item, colors }: { item: RadarItem; colors: ReturnType<typeof useColors> }) {
-  const icon = item.category === "Alert" ? "exclamationmark.triangle.fill" : item.category === "Event" ? "calendar" : item.category === "Job" ? "briefcase.fill" : item.category === "Marketplace" ? "cart.fill" : item.category === "Deal" ? "tag.fill" : item.category === "Service" ? "wrench.and.screwdriver.fill" : "building.2.fill";
-  return <Pressable accessibilityRole="button" onPress={() => undefined} style={({ pressed }) => [styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}><View style={[styles.itemIcon, { backgroundColor: `${item.accent}20` }]}><IconSymbol name={icon} size={20} color={item.accent} /></View><View style={styles.cardCopy}><Text numberOfLines={1} style={[styles.cardTitle, { color: colors.foreground }]}>{item.title}</Text><Text numberOfLines={1} style={[styles.cardSub, { color: colors.muted }]}>{item.category} · {item.distance} · {item.area}</Text><Text numberOfLines={1} style={[styles.cardMeta, { color: colors.muted }]}>{item.subtitle} · {item.time}</Text></View><IconSymbol name="chevron.right" size={18} color={colors.muted} /></Pressable>;
-}
-
-const styles = StyleSheet.create({
-  content: { padding: 16, paddingBottom: 30 },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 },
-  headerCopy: { flex: 1, paddingRight: 10 },
-  eyebrow: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8 },
-  title: { fontSize: 22, lineHeight: 28, fontWeight: "700", marginTop: 2 },
-  locationLine: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 },
-  locationText: { fontSize: 12 },
-  changeText: { fontSize: 12, fontWeight: "700", marginLeft: 4 },
-  viewToggle: { minHeight: 40, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10 },
-  toggleText: { fontSize: 12, fontWeight: "700" },
-  mapPreview: { height: 190, borderRadius: 18, borderWidth: 1, overflow: "hidden", marginBottom: 4 },
-  mapContent: { flex: 1, alignItems: "center", justifyContent: "center" },
-  mapRoadOne: { position: "absolute", width: "120%", height: 12, backgroundColor: "rgba(255,255,255,0.08)", transform: [{ rotate: "22deg" }] },
-  mapRoadTwo: { position: "absolute", width: "120%", height: 9, backgroundColor: "rgba(255,255,255,0.08)", transform: [{ rotate: "-34deg" }] },
-  mapLabel: { position: "absolute", bottom: 12, fontSize: 11, fontWeight: "600" },
-  pin: { position: "absolute", width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.9)" },
-  filterLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, marginTop: 12 },
-  chipRow: { gap: 7, paddingTop: 7, paddingRight: 16 },
-  chip: { minHeight: 36, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" },
-  chipText: { fontSize: 12, fontWeight: "600" },
-  resultRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 20, marginBottom: 9 },
-  sectionTitle: { fontSize: 18, fontWeight: "700" },
-  resultMeta: { fontSize: 12 },
-  syncPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 9 },
-  syncDot: { width: 7, height: 7, borderRadius: 4 },
-  syncText: { fontSize: 11, fontWeight: "600" },
-  card: { minHeight: 76, flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 8 },
-  itemIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", marginRight: 11 },
-  cardCopy: { flex: 1, minWidth: 0 },
-  cardTitle: { fontSize: 15, lineHeight: 20, fontWeight: "700" },
-  cardSub: { fontSize: 12, lineHeight: 16, marginTop: 2 },
-  cardMeta: { fontSize: 11, lineHeight: 15, marginTop: 2 },
-  pressed: { opacity: 0.75 },
-  empty: { borderWidth: 1, borderStyle: "dashed", borderRadius: 18, padding: 24, alignItems: "center", gap: 8, marginTop: 4 },
-  emptyTitle: { fontSize: 15, fontWeight: "700" },
-  emptyText: { fontSize: 12, lineHeight: 18, textAlign: "center" },
-  sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.62)" },
-  sheetDismiss: { flex: 1 },
-  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 28 },
-  grabber: { width: 32, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 18 },
-  sheetTitle: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
-  sheetSubtitle: { fontSize: 13, lineHeight: 19, marginTop: 4, marginBottom: 10 },
-  areaRow: { minHeight: 58, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth },
-  areaIcon: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", marginRight: 11 },
-  areaText: { flex: 1, fontSize: 15, fontWeight: "600" },
-  currentButton: { minHeight: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", marginTop: 16 },
-  currentButtonText: { fontSize: 14, fontWeight: "700" },
-});
+function EmptyRadar({ colors }: { colors: ReturnType<typeof useColors> }) { return <View style={[styles.empty, { borderColor: colors.border }]}><IconSymbol name="location.fill" size={26} color={colors.muted} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nothing nearby yet</Text><Text style={[styles.emptyText, { color: colors.muted }]}>Local posts, events, deals and alerts will appear here as they are published.</Text></View>; }
+function RadarPin({ x, y, color }: { x: DimensionValue; y: DimensionValue; color: string }) { return <View style={[styles.pin, { left: x, top: y, backgroundColor: color }]}><IconSymbol name="location.fill" size={17} color="#FFF" /></View>; }
+function RadarCard({ item, colors }: { item: RadarItem; colors: ReturnType<typeof useColors> }) { const icon = item.category === "Alert" ? "exclamationmark.triangle.fill" : item.category === "Event" ? "calendar" : item.category === "Job" ? "briefcase.fill" : item.category === "Marketplace" ? "cart.fill" : item.category === "Deal" ? "tag.fill" : item.category === "Service" ? "wrench.and.screwdriver.fill" : "building.2.fill"; return <Pressable accessibilityRole="button" onPress={() => undefined} style={({ pressed }) => [styles.card, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}><View style={[styles.itemIcon, { backgroundColor: `${item.accent}20` }]}><IconSymbol name={icon} size={20} color={item.accent} /></View><View style={styles.cardCopy}><Text numberOfLines={1} style={[styles.cardTitle, { color: colors.foreground }]}>{item.title}</Text><Text numberOfLines={1} style={[styles.cardSub, { color: colors.muted }]}>{item.category} · {item.distance} · {item.area}</Text><Text numberOfLines={1} style={[styles.cardMeta, { color: colors.muted }]}>{item.subtitle} · {item.time}</Text></View><IconSymbol name="chevron.right" size={18} color={colors.muted} /></Pressable>; }
+const styles = StyleSheet.create({ content: { padding: 16, paddingBottom: 30 }, headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 12 }, headerCopy: { flex: 1, paddingRight: 10 }, eyebrow: { fontSize: 11, fontWeight: "700", letterSpacing: 0.8 }, title: { fontSize: 22, lineHeight: 28, fontWeight: "700", marginTop: 2 }, locationLine: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 5 }, locationText: { fontSize: 12 }, changeText: { fontSize: 12, fontWeight: "700", marginLeft: 4 }, viewToggle: { minHeight: 40, flexDirection: "row", alignItems: "center", gap: 6, borderWidth: 1, borderRadius: 12, paddingHorizontal: 10 }, toggleText: { fontSize: 12, fontWeight: "700" }, mapPreview: { height: 190, borderRadius: 18, borderWidth: 1, overflow: "hidden", marginBottom: 4 }, mapContent: { flex: 1, alignItems: "center", justifyContent: "center" }, mapRoadOne: { position: "absolute", width: "120%", height: 12, backgroundColor: "rgba(255,255,255,0.08)", transform: [{ rotate: "22deg" }] }, mapRoadTwo: { position: "absolute", width: "120%", height: 9, backgroundColor: "rgba(255,255,255,0.08)", transform: [{ rotate: "-34deg" }] }, mapLabel: { position: "absolute", bottom: 12, fontSize: 11, fontWeight: "600" }, pin: { position: "absolute", width: 34, height: 34, borderRadius: 17, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.9)" }, filterLabel: { fontSize: 10, fontWeight: "700", letterSpacing: 0.8, marginTop: 12 }, chipRow: { gap: 7, paddingTop: 7, paddingRight: 16 }, chip: { minHeight: 36, borderWidth: 1, borderRadius: 999, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" }, chipText: { fontSize: 12, fontWeight: "600" }, resultRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 20, marginBottom: 9 }, sectionTitle: { fontSize: 18, fontWeight: "700" }, resultMeta: { fontSize: 12 }, syncPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, marginBottom: 9 }, syncDot: { width: 7, height: 7, borderRadius: 4 }, syncText: { fontSize: 11, fontWeight: "600" }, card: { minHeight: 76, flexDirection: "row", alignItems: "center", borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 8 }, itemIcon: { width: 40, height: 40, borderRadius: 12, alignItems: "center", justifyContent: "center", marginRight: 11 }, cardCopy: { flex: 1, minWidth: 0 }, cardTitle: { fontSize: 15, lineHeight: 20, fontWeight: "700" }, cardSub: { fontSize: 12, lineHeight: 16, marginTop: 2 }, cardMeta: { fontSize: 11, lineHeight: 15, marginTop: 2 }, pressed: { opacity: 0.75 }, empty: { borderWidth: 1, borderStyle: "dashed", borderRadius: 18, padding: 24, alignItems: "center", gap: 8, marginTop: 4 }, emptyTitle: { fontSize: 15, fontWeight: "700" }, emptyText: { fontSize: 12, lineHeight: 18, textAlign: "center" }, sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.62)" }, sheetDismiss: { flex: 1 }, sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 28 }, grabber: { width: 32, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 18 }, sheetTitle: { fontSize: 20, lineHeight: 26, fontWeight: "700" }, sheetSubtitle: { fontSize: 13, lineHeight: 19, marginTop: 4, marginBottom: 10 }, areaRow: { minHeight: 58, flexDirection: "row", alignItems: "center", borderBottomWidth: StyleSheet.hairlineWidth }, areaIcon: { width: 38, height: 38, borderRadius: 19, alignItems: "center", justifyContent: "center", marginRight: 11 }, areaText: { flex: 1, fontSize: 15, fontWeight: "600" }, currentButton: { minHeight: 46, borderRadius: 14, alignItems: "center", justifyContent: "center", marginTop: 16 }, currentButtonText: { fontSize: 14, fontWeight: "700" } });
