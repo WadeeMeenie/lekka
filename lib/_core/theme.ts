@@ -54,11 +54,11 @@ export const ThemePalettes: Record<ThemeId, SchemePalette> = {
 
 export const SchemeColors = ThemePalettes.original;
 
-type RuntimePalette = SchemePaletteItem & { text: string; background: string; tint: string; icon: string; tabIconDefault: string; tabIconSelected: string; border: string };
+type RuntimePalette = SchemePaletteItem & { text: string; background: string; tint: string; icon: string; tabIconDefault: string; tabIconSelected: string; border: string; accentText: string };
 
 function buildRuntimePalette(scheme: ColorScheme, themeId: ThemeId = "original"): RuntimePalette {
   const base = ThemePalettes[themeId][scheme];
-  return { ...base, text: base.foreground, background: base.background, tint: base.primary, icon: base.muted, tabIconDefault: base.muted, tabIconSelected: base.primary, border: base.border };
+  return { ...base, text: base.foreground, background: base.background, tint: base.primary, icon: base.muted, tabIconDefault: base.muted, tabIconSelected: base.primary, border: base.border, accentText: "#1A1206" };
 }
 
 export const Colors = { light: buildRuntimePalette("light"), dark: buildRuntimePalette("dark") } satisfies Record<ColorScheme, RuntimePalette>;
