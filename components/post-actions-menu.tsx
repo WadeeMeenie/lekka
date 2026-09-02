@@ -48,7 +48,7 @@ export function PostActionsMenu({
     : [
         { label: "Not interested", icon: "visibility-off", onPress: () => { setVisible(false); onNotInterested?.(); } },
         { label: "Report post", icon: "flag", destructive: true, onPress: () => setVisible(false) },
-        { label: "Share post", icon: "ios-share", onPress: () => { void Share.share({ message: `Check out this post on Lekka: ${postId}`); } },
+        { label: "Share post", icon: "ios-share", onPress: () => { setVisible(false); void Share.share({ message: `Check out this post on Lekka: ${postId}` }); } },
       ];
 
   return <>
