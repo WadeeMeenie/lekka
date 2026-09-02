@@ -4,8 +4,8 @@ import { OpaqueColorValue, type StyleProp, type TextStyle } from "react-native";
 
 type IconName =
   | "house.fill" | "location.fill" | "plus.circle.fill" | "person.2.fill" | "building.2.fill"
-  | "bell.fill" | "magnifyingglass" | "chevron.right" | "chevron.left" | "heart.fill" | "bubble.left.fill"
-  | "square.and.arrow.up" | "bookmark.fill" | "checkmark.seal.fill" | "map.fill" | "list.bullet"
+  | "bell.fill" | "magnifyingglass" | "chevron.right" | "chevron.left" | "chevron.down" | "heart.fill" | "bubble.left.fill"
+  | "square.and.arrow.up" | "bookmark.fill" | "checkmark.seal.fill" | "checkmark.circle.fill" | "map.fill" | "list.bullet"
   | "slider.horizontal.3" | "arrow.up.right" | "arrow.up.circle.fill" | "person.crop.circle.fill" | "gearshape.fill"
   | "photo.fill" | "exclamationmark.triangle.fill" | "calendar" | "tag.fill" | "briefcase.fill"
   | "cart.fill" | "wrench.and.screwdriver.fill" | "message.fill" | "person.3.fill" | "clock.fill"
@@ -15,8 +15,8 @@ type IconName =
 type MaterialName = ComponentProps<typeof MaterialIcons>["name"];
 const MAPPING: Record<IconName, MaterialName> = {
   "house.fill": "home", "location.fill": "radar", "plus.circle.fill": "add-circle", "person.2.fill": "people", "building.2.fill": "storefront",
-  "bell.fill": "notifications-none", magnifyingglass: "search", "chevron.right": "chevron-right", "chevron.left": "chevron-left", "heart.fill": "favorite-border", "bubble.left.fill": "chat-bubble-outline",
-  "square.and.arrow.up": "ios-share", "bookmark.fill": "bookmark-border", "checkmark.seal.fill": "verified", "map.fill": "map", "list.bullet": "view-list",
+  "bell.fill": "notifications-none", magnifyingglass: "search", "chevron.right": "chevron-right", "chevron.left": "chevron-left", "chevron.down": "keyboard-arrow-down", "heart.fill": "favorite-border", "bubble.left.fill": "chat-bubble-outline",
+  "square.and.arrow.up": "ios-share", "bookmark.fill": "bookmark-border", "checkmark.seal.fill": "verified", "checkmark.circle.fill": "check-circle", "map.fill": "map", "list.bullet": "view-list",
   "slider.horizontal.3": "tune", "arrow.up.right": "north-east", "arrow.up.circle.fill": "arrow-circle-up", "person.crop.circle.fill": "account-circle", "gearshape.fill": "settings",
   "photo.fill": "photo-library", "exclamationmark.triangle.fill": "warning-amber", calendar: "event", "tag.fill": "sell", "briefcase.fill": "work-outline",
   "cart.fill": "shopping-bag", "wrench.and.screwdriver.fill": "handyman", "message.fill": "forum", "person.3.fill": "groups", "clock.fill": "schedule",
