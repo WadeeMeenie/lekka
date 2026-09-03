@@ -1,13 +1,15 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { DeviceLocation } from "@/lib/location";
 
 export type FeedTab = "For You" | "Nearby" | "Trending" | "Following";
+export type DiscoveryContentType = "all" | "post" | "alert" | "business" | "event" | "deal" | "job" | "marketplace" | "service";
 export type RadarCategory = "Food" | "Event" | "Deal" | "Job" | "Marketplace" | "Alert" | "Service" | "business" | "deal" | "event" | "job" | "marketplace" | "service" | "general";
 export type PostKind = "post" | "alert";
 
 export type LocalPost = { id: string; authorId?: string | null; kind: PostKind; category?: RadarCategory; author: string; initials: string; profileImagePath?: string | null; mediaPath?: string | null; area: string; distance: string; time: string; title?: string; body: string; likes: number; comments: number; trusted: boolean; accent: string };
 export type RadarItem = { id: string; category: RadarCategory; title: string; subtitle: string; area: string; distance: string; time: string; accent: string; icon: string };
-export type LocalSettings = { area: string; radius: string; useLocation: boolean; approximateVisibility: boolean };
-export const defaultSettings: LocalSettings = { area: "your area", radius: "5 km", useLocation: true, approximateVisibility: true };
+export type LocalSettings = { area: string; radius: string; useLocation: boolean; approximateVisibility: boolean; selectedLocation: DeviceLocation | null };
+export const defaultSettings: LocalSettings = { area: "your area", radius: "5 km", useLocation: true, approximateVisibility: true, selectedLocation: null };
 
 export const seededPosts: LocalPost[] = [
   { id: "p1", kind: "post", author: "Bellville Neighbourhood Watch", initials: "BN", area: "Bellville", distance: "0.7 km", time: "12 min", title: "Water-wise garden swap this Saturday", body: "Bring cuttings, seedlings, and stories. Everyone in the northern suburbs is welcome at the community garden.", likes: 42, comments: 8, trusted: true, accent: "#2F7D67" },
@@ -25,8 +27,8 @@ export function rankPosts(posts: LocalPost[], tab: FeedTab): LocalPost[] { const
 export type FeedPreference = "interested" | "not_interested";
 export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>, currentUserPostIds: ReadonlySet<string> = new Set()): LocalPost[] { return rankPosts(posts.filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested"), tab).sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested")); }
 const POSTS_KEY = "local-radar/posts/v1";
-const SETTINGS_KEY = "local-radar/settings/v1";
+const SETTINGS_KEY = "local-radar/settings/v2";
 export async function loadPosts(): Promise<LocalPost[]> { const value = await AsyncStorage.getItem(POSTS_KEY); return value ? JSON.parse(value) : []; }
 export async function savePosts(posts: LocalPost[]) { await AsyncStorage.setItem(POSTS_KEY, JSON.stringify(posts)); }
-export async function loadSettings(): Promise<LocalSettings> { const value = await AsyncStorage.getItem(SETTINGS_KEY); return value ? { ...defaultSettings, ...JSON.parse(value) } : defaultSettings; }
+export async function loadSettings(): Promise<LocalSettings> { const value = await AsyncStorage.getItem(SETTINGS_KEY); if (!value) { const legacy = await AsyncStorage.getItem("local-radar/settings/v1"); return legacy ? { ...defaultSettings, ...JSON.parse(legacy), selectedLocation: null } : defaultSettings; } return { ...defaultSettings, ...JSON.parse(value) }; }
 export async function saveSettings(settings: LocalSettings) { await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
