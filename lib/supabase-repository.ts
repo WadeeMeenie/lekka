@@ -7,9 +7,22 @@ import type { SocialPost } from "@/lib/social-repository";
 function toLocalPost(row: any): LocalPost {
   const profile = row.profiles ?? null;
   const author = row.author_name || profile?.display_name || "Local neighbour";
-  return { id: row.id, authorId: row.author_id ?? null, kind: row.kind === "alert" ? "alert" : "post", category: row.category ?? undefined, author, initials: author.slice(0, 2).toUpperCase(), profileImagePath: profile?.profile_image_path ?? null, mediaPath: row.post_media?.[0]?.storage_path ?? row.media_path ?? null, area: row.area, distance: row.distance_label || "Nearby", time: formatRelativeTime(row.created_at), title: row.title ?? undefined, body: row.body, likes: row.reaction_count ?? 0, comments: row.comment_count ?? 0, trusted: Number(row.trust_score ?? 0) >= 0.8, accent: row.kind === "alert" ? "#D95D4F" : "#2F7D67" };
+  return { id: row.id, authorId: row.author_id ?? null, kind: row.kind === "alert" ? "alert" : "post", category: row.category ?? undefined, author, initials: author.slice(0, 2).toUpperCase(), profileImagePath: profile?.profile_image_path ?? null, mediaPath: row.post_media?.[0]?.storage_path ?? row.media_path ?? null, area: row.area, distance: formatDistanceLabel(row.distance_label), time: formatRelativeTime(row.created_at), title: row.title ?? undefined, body: row.body, likes: row.reaction_count ?? 0, comments: row.comment_count ?? 0, trusted: Number(row.trust_score ?? 0) >= 0.8, accent: row.kind === "alert" ? "#D95D4F" : "#2F7D67" };
 }
-function formatRelativeTime(value: string) { const minutes = Math.max(1, Math.round((Date.now() - new Date(value).getTime()) / 60000)); if (minutes < 60) return `${minutes} min`; return `${Math.round(minutes / 60)} hr`; }
+function formatRelativeTime(value: string) { const minutes = Math.max(1, Math.round((Date.now() - new Date(value).getTime()) / 60000)); if (minutes < 60) return `${minutes} min`; const hours = Math.round(minutes / 60); if (hours < 24) return `${hours} hr`; const days = Math.round(hours / 24); if (days < 30) return `${days} day${days === 1 ? "" : "s"}`; return `${Math.round(days / 7)} week${Math.round(days / 7) === 1 ? "" : "s"}`; }
+function formatDistanceLabel(value?: string | null) {
+  if (!value) return "Nearby";
+  const raw = value.trim();
+  const match = raw.match(/^(\d+(?:\.\d+)?)\s*(m|km)$/i);
+  if (!match) return raw;
+  const amount = Number(match[1]);
+  const meters = match[2].toLowerCase() === "km" ? amount * 1000 : amount;
+  if (!Number.isFinite(meters)) return "Nearby";
+  if (meters < 100) return "<100 m";
+  if (meters < 1000) return `${Math.round(meters / 10) * 10} m`;
+  const kilometres = meters / 1000;
+  return `${kilometres >= 10 ? Math.round(kilometres) : Number(kilometres.toFixed(1))} km`;
+}
 const PROFILE_SELECT = "profiles(display_name, profile_image_path)";
 
 async function hydratePostData(posts: LocalPost[]): Promise<LocalPost[]> {
