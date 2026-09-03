@@ -49,7 +49,7 @@ export default function BusinessProfilesScreen() {
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <View style={styles.content}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Go back" accessibilityHint="Navigates to your profile" onPress={() => router.back()} style={({ pressed }) => [styles.back, pressed && styles.pressed]}>
           <IconSymbol name="chevron.right" size={22} color={colors.foreground} style={styles.backIcon} />
           <Text style={[styles.backText, { color: colors.foreground }]}>Profile</Text>
         </Pressable>
@@ -57,7 +57,7 @@ export default function BusinessProfilesScreen() {
         <Text style={[styles.title, { color: colors.foreground }]}>One identity. More local presence.</Text>
         <Text style={[styles.subtitle, { color: colors.muted }]}>Switching changes your active posting identity locally. It never changes who can edit a business—Supabase still checks your membership.</Text>
 
-        <Pressable accessibilityRole="radio" accessibilityState={{ selected: activeIdentity.kind === "personal" }} onPress={() => void setPersonalIdentity()} style={[styles.personalCard, { backgroundColor: activeIdentity.kind === "personal" ? `${colors.primary}18` : colors.surface, borderColor: activeIdentity.kind === "personal" ? colors.primary : colors.border }]}>
+        <Pressable accessibilityRole="radio" accessibilityLabel="Personal profile" accessibilityHint="Post and interact as yourself" accessibilityState={{ selected: activeIdentity.kind === "personal" }} onPress={() => void setPersonalIdentity()} style={({ pressed }) => [styles.personalCard, { backgroundColor: activeIdentity.kind === "personal" ? `${colors.primary}18` : colors.surface, borderColor: activeIdentity.kind === "personal" ? colors.primary : colors.border }, pressed && styles.pressed]}>
           <IconSymbol name="person.crop.circle.fill" size={19} color={colors.primary} />
           <View style={styles.copy}><Text style={[styles.name, { color: colors.foreground }]}>Personal profile</Text><Text style={[styles.meta, { color: colors.muted }]}>Post and interact as yourself</Text></View>
           <Text style={[styles.currentText, { color: activeIdentity.kind === "personal" ? colors.primary : colors.muted }]}>{activeIdentity.kind === "personal" ? "Active" : "Use"}</Text>
@@ -80,9 +80,9 @@ export default function BusinessProfilesScreen() {
                 <Text style={[styles.meta, { color: colors.muted }]}>{business.category} · {business.area} · {verificationState === "verified" ? "Verified" : verificationState === "pending" ? "Verification pending" : "Unverified"}</Text>
                 <Text style={[styles.role, { color: colors.muted }]}>{item.role === "manager" ? "Manager" : item.role[0].toUpperCase() + item.role.slice(1)} access</Text>
               </View>
-              {canPublishAsBusiness ? <Pressable accessibilityRole="radio" accessibilityState={{ selected: isActive }} onPress={() => void setBusinessIdentity(business.id, business.name)} style={[styles.switchButton, { borderColor: colors.border }]}><Text style={[styles.switchText, { color: isActive ? colors.primary : colors.foreground }]}>{isActive ? "Active" : "Use"}</Text></Pressable> : null}
-              {canPublishAsBusiness && verificationState !== "verified" ? <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: "/business-verification", params: { businessId: business.id, businessName: business.name, state: verificationState } } as never)} style={[styles.editButton, { borderColor: colors.border }]}><Text style={[styles.editText, { color: colors.foreground }]}>{verificationState === "pending" ? "View" : "Verify"}</Text></Pressable> : null}
-              <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: "/business-setup", params: { businessId: business.id } } as never)} style={[styles.editButton, { borderColor: colors.border }]}><Text style={[styles.editText, { color: colors.foreground }]}>Edit</Text></Pressable>
+              {canPublishAsBusiness ? <Pressable accessibilityRole="radio" accessibilityLabel={`${isActive ? "Active" : "Use"} ${business.name}`} accessibilityHint={isActive ? "This is your active posting identity" : "Switch your active posting identity to this business"} accessibilityState={{ selected: isActive }} onPress={() => void setBusinessIdentity(business.id, business.name)} style={({ pressed }) => [styles.switchButton, { borderColor: colors.border }, pressed && styles.pressed]}><Text style={[styles.switchText, { color: isActive ? colors.primary : colors.foreground }]}>{isActive ? "Active" : "Use"}</Text></Pressable> : null}
+              {canPublishAsBusiness && verificationState !== "verified" ? <Pressable accessibilityRole="button" accessibilityLabel={`${verificationState === "pending" ? "View" : "Verify"} verification for ${business.name}`} accessibilityHint={verificationState === "pending" ? "View this business verification" : "Open business verification"} onPress={() => router.push({ pathname: "/business-verification", params: { businessId: business.id, businessName: business.name, state: verificationState } } as never)} style={({ pressed }) => [styles.editButton, { borderColor: colors.border }, pressed && styles.pressed]}><Text style={[styles.editText, { color: colors.foreground }]}>{verificationState === "pending" ? "View" : "Verify"}</Text></Pressable> : null}
+              <Pressable accessibilityRole="button" accessibilityLabel={`Edit ${business.name}`} accessibilityHint="Open business profile setup" onPress={() => router.push({ pathname: "/business-setup", params: { businessId: business.id } } as never)} style={({ pressed }) => [styles.editButton, { borderColor: colors.border }, pressed && styles.pressed]}><Text style={[styles.editText, { color: colors.foreground }]}>Edit</Text></Pressable>
             </View>;
           }}
         />}
@@ -95,13 +95,13 @@ export default function BusinessProfilesScreen() {
 
 const styles = StyleSheet.create({
   content: { flex: 1, padding: 24 },
-  back: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 26 },
+  back: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 26 },
   backIcon: { transform: [{ rotate: "180deg" }] },
   backText: { fontSize: 14, fontWeight: "700" },
   eyebrow: { fontSize: 11, letterSpacing: 1.2, fontWeight: "900" },
   title: { fontSize: 28, lineHeight: 34, fontWeight: "900", marginTop: 9 },
   subtitle: { fontSize: 13, lineHeight: 19, marginTop: 8, marginBottom: 18 },
-  personalCard: { borderWidth: 1, borderRadius: 16, padding: 12, flexDirection: "row", alignItems: "center", gap: 9, marginBottom: 9 },
+  personalCard: { minHeight: 52, borderWidth: 1, borderRadius: 16, padding: 12, flexDirection: "row", alignItems: "center", gap: 9, marginBottom: 9 },
   currentText: { fontSize: 11, fontWeight: "900" },
   loader: { marginTop: 28 },
   empty: { borderWidth: 1, borderRadius: 17, padding: 17 },
@@ -113,9 +113,9 @@ const styles = StyleSheet.create({
   name: { fontSize: 14, fontWeight: "900" },
   meta: { fontSize: 11, marginTop: 2 },
   role: { fontSize: 10, fontWeight: "700", marginTop: 4 },
-  switchButton: { borderWidth: 1, borderRadius: 11, paddingHorizontal: 10, paddingVertical: 7 },
+  switchButton: { minHeight: 44, minWidth: 64, borderWidth: 1, borderRadius: 11, paddingHorizontal: 10, paddingVertical: 7, alignItems: "center", justifyContent: "center" },
   switchText: { fontSize: 11, fontWeight: "900" },
-  editButton: { borderWidth: 1, borderRadius: 11, paddingHorizontal: 10, paddingVertical: 7 },
+  editButton: { minHeight: 44, minWidth: 64, borderWidth: 1, borderRadius: 11, paddingHorizontal: 10, paddingVertical: 7, alignItems: "center", justifyContent: "center" },
   editText: { fontSize: 11, fontWeight: "900" },
   error: { fontSize: 12, marginTop: 12, fontWeight: "700" },
   primary: { minHeight: 53, borderRadius: 16, alignItems: "center", justifyContent: "center", marginTop: 16 },
