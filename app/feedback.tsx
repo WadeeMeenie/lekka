@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   content: { padding: 24, paddingBottom: 48 },
   guestContent: { flex: 1, padding: 24, justifyContent: "center" },
-  back: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 24 },
+  back: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 24 },
   backIcon: { transform: [{ rotate: "180deg" }] },
   backText: { fontSize: 14, fontWeight: "700" },
   title: { fontSize: 28, lineHeight: 34, fontWeight: "800" },
