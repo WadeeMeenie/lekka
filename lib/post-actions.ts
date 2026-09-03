@@ -14,3 +14,20 @@ export async function deleteOwnPost(postId: string) {
     error,
   };
 }
+
+export async function reportPost(postId: string, reason: string) {
+  if (!supabase) return { reported: false, error: new Error('Backend is not configured') };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { reported: false, error: new Error('Please sign in') };
+
+  const { error } = await supabase.from('reports').insert({
+    reporter_id: user.id,
+    post_id: postId,
+    reason,
+  });
+
+  return {
+    reported: !error,
+    error,
+  };
+}
