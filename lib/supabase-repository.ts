@@ -1,4 +1,5 @@
 import { File } from "expo-file-system/next";
+import { AppState } from "react-native";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DeviceLocation } from "@/lib/location";
 import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";
@@ -49,20 +50,43 @@ export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPo
 const localFeedListeners = new Set<() => void>();
 let localFeedChannel: ReturnType<NonNullable<typeof supabase>["channel"]> | null = null;
 let localFeedChannelStarting = false;
+let localFeedAppStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
 function notifyLocalFeedListeners() { localFeedListeners.forEach((listener) => listener()); }
 
+function removeLocalFeedChannel(channel = localFeedChannel) {
+  if (!channel || !supabase) return;
+  if (localFeedChannel === channel) {
+    localFeedChannel = null;
+    localFeedChannelStarting = false;
+  }
+  void supabase.removeChannel(channel).catch(() => undefined);
+}
+
+function ensureLocalFeedAppStateListener() {
+  if (localFeedAppStateSubscription) return;
+  localFeedAppStateSubscription = AppState.addEventListener("change", (nextState) => {
+    if (nextState === "active") {
+      ensureLocalFeedChannel();
+      return;
+    }
+    removeLocalFeedChannel();
+  });
+}
+
 function ensureLocalFeedChannel() {
-  if (!supabase || localFeedChannel || localFeedChannelStarting) return;
+  if (!supabase || localFeedListeners.size === 0 || localFeedChannel || localFeedChannelStarting) return;
   localFeedChannelStarting = true;
   const channel = supabase.channel("local-radar-live")
     .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, notifyLocalFeedListeners)
     .on("postgres_changes", { event: "*", schema: "public", table: "post_media" }, notifyLocalFeedListeners);
   localFeedChannel = channel;
   channel.subscribe((status) => {
-    localFeedChannelStarting = false;
-    if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+    if (localFeedChannel === channel) localFeedChannelStarting = false;
+    if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
       if (localFeedChannel === channel) localFeedChannel = null;
+      void supabase?.removeChannel(channel).catch(() => undefined);
+      if (localFeedListeners.size > 0 && AppState.currentState === "active") ensureLocalFeedChannel();
     }
   });
 }
@@ -70,8 +94,16 @@ function ensureLocalFeedChannel() {
 export function subscribeToLocalChanges(onChange: () => void) {
   if (!supabase) return () => undefined;
   localFeedListeners.add(onChange);
+  ensureLocalFeedAppStateListener();
   ensureLocalFeedChannel();
-  return () => { localFeedListeners.delete(onChange); };
+  return () => {
+    localFeedListeners.delete(onChange);
+    if (localFeedListeners.size === 0) {
+      removeLocalFeedChannel();
+      localFeedAppStateSubscription?.remove();
+      localFeedAppStateSubscription = null;
+    }
+  };
 }
 
 export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
