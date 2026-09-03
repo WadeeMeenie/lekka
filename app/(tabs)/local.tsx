@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { listLocalDirectory, type LocalDirectoryItem } from "@/lib/local-directory";
@@ -19,6 +20,7 @@ const categories: Category[] = [
 
 export default function LocalScreen() {
   const colors = useColors();
+  const insets = useSafeAreaInsets();
   const [selectedCategory, setSelectedCategory] = useState("Businesses");
   const [search, setSearch] = useState("");
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -82,7 +84,7 @@ export default function LocalScreen() {
         {loading ? <View style={styles.skeletonGroup}>{[1, 2, 3].map((item) => <View key={item} style={[styles.skeleton, { backgroundColor: colors.surface }]} />)}</View> : error ? <View style={[styles.empty, { backgroundColor: colors.surface, borderColor: colors.border }]}><View style={[styles.emptyIcon, { backgroundColor: colors.background }]}><IconSymbol name="exclamationmark.triangle.fill" size={19} color={colors.error} /></View><Text style={[styles.emptyTitle, { color: colors.foreground }]}>Couldn&apos;t load listings</Text><Text style={[styles.emptyText, { color: colors.muted }]}>{error}</Text><Pressable accessibilityRole="button" onPress={() => void loadDirectory(selectedCategory)} style={styles.ghostButton}><Text style={[styles.ghostText, { color: colors.primary }]}>Try again</Text></Pressable></View> : filteredBusinesses.length === 0 ? <View style={[styles.empty, { backgroundColor: colors.surface, borderColor: colors.border }]}><View style={[styles.emptyIcon, { backgroundColor: colors.background }]}><IconSymbol name="building.2.fill" size={19} color={colors.muted} /></View><Text style={[styles.emptyTitle, { color: colors.foreground }]}>No listings yet</Text><Text style={[styles.emptyText, { color: colors.muted }]}>{search ? "Try another search or category." : "Local listings will appear here as businesses publish their profiles."}</Text><Pressable accessibilityRole="button" onPress={() => setSearch("")} style={styles.ghostButton}><Text style={[styles.ghostText, { color: colors.primary }]}>{search ? "Clear search" : "Browse another category"}</Text></Pressable></View> : filteredBusinesses.map((business) => <Pressable key={business.id} accessibilityRole="button" accessibilityLabel={`Open ${business.name}`} onPress={() => setSelectedBusiness(business)} style={({ pressed }) => [styles.listing, { backgroundColor: colors.surface, borderColor: colors.border }, pressed && styles.pressed]}><View style={[styles.listingIcon, { backgroundColor: `${colors.primary}18` }]}><IconSymbol name={business.kind === "event" ? "calendar" : business.kind === "deal" ? "tag.fill" : business.kind === "post" ? "bubble.left.fill" : "building.2.fill"} size={19} color={colors.primary} /></View><View style={styles.listingCopy}><Text numberOfLines={1} style={[styles.listingTitle, { color: colors.foreground }]}>{business.name}</Text><Text numberOfLines={1} style={[styles.listingMeta, { color: colors.muted }]}>{business.category} · {business.area}</Text><Text numberOfLines={1} style={[styles.listingDescription, { color: colors.muted }]}>{business.description || "Local listing"}</Text></View><IconSymbol name="chevron.right" size={17} color={colors.muted} /></Pressable>)}
       </ScrollView>
 
-      <Modal visible={selectedBusiness !== null} transparent animationType="slide" onRequestClose={() => setSelectedBusiness(null)}><View style={styles.sheetOverlay}><Pressable style={styles.sheetDismiss} onPress={() => setSelectedBusiness(null)} accessibilityLabel="Close listing details" /><View style={[styles.sheet, { backgroundColor: colors.surface }]}><View style={[styles.grabber, { backgroundColor: colors.border }]} /><Text style={[styles.sheetTitle, { color: colors.foreground }]}>{selectedBusiness?.name}</Text><Text style={[styles.sheetMeta, { color: colors.muted }]}>{selectedBusiness?.category} · {selectedBusiness?.area}</Text><Text style={[styles.sheetBody, { color: colors.foreground }]}>{selectedBusiness?.description || "Local listing"}</Text><Pressable accessibilityRole="button" onPress={() => setSelectedBusiness(null)} style={[styles.sheetButton, { backgroundColor: colors.primary }]}><Text style={[styles.sheetButtonText, { color: colors.background }]}>Done</Text></Pressable></View></View></Modal>
+      <Modal visible={selectedBusiness !== null} transparent animationType="slide" onRequestClose={() => setSelectedBusiness(null)}><View style={styles.sheetOverlay}><Pressable style={styles.sheetDismiss} onPress={() => setSelectedBusiness(null)} accessibilityLabel="Close listing details" /><View style={[styles.sheet, { backgroundColor: colors.surface, paddingBottom: Math.max(28, insets.bottom + 20) }]}><View style={[styles.grabber, { backgroundColor: colors.border }]} /><Text style={[styles.sheetTitle, { color: colors.foreground }]}>{selectedBusiness?.name}</Text><Text style={[styles.sheetMeta, { color: colors.muted }]}>{selectedBusiness?.category} · {selectedBusiness?.area}</Text><Text style={[styles.sheetBody, { color: colors.foreground }]}>{selectedBusiness?.description || "Local listing"}</Text><Pressable accessibilityRole="button" onPress={() => setSelectedBusiness(null)} style={[styles.sheetButton, { backgroundColor: colors.primary }]}><Text style={[styles.sheetButtonText, { color: colors.background }]}>Done</Text></Pressable></View></View></Modal>
     </ScreenContainer>
   );
 }
@@ -120,7 +122,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.78 },
   sheetOverlay: { flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.62)" },
   sheetDismiss: { flex: 1 },
-  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 28 },
+  sheet: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 },
   grabber: { width: 32, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 18 },
   sheetTitle: { fontSize: 20, lineHeight: 26, fontWeight: "700" },
   sheetMeta: { fontSize: 12, marginTop: 4 },
