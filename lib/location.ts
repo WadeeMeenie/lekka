@@ -34,7 +34,15 @@ export async function searchLocation(query: string, fallbackArea = "your area"):
     const matches = await Location.geocodeAsync(trimmed);
     const first = matches[0];
     if (!first) return { status: "unavailable", area: fallbackArea };
-    const area = [first.district, first.city, first.subregion, first.region].find(Boolean) || trimmed;
+
+    let area = trimmed;
+    try {
+      const [place] = await Location.reverseGeocodeAsync({ latitude: first.latitude, longitude: first.longitude });
+      area = place?.district || place?.city || place?.subregion || place?.region || trimmed;
+    } catch {
+      // Reverse geocoding is best-effort; coordinates remain valid for discovery.
+    }
+
     return { status: "granted", location: { latitude: first.latitude, longitude: first.longitude, area, capturedAt: Date.now() } };
   } catch {
     return { status: "unavailable", area: fallbackArea };
