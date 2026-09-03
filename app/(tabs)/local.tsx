@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   search: { borderWidth: 1, borderRadius: 14, height: 46, marginTop: 10, paddingHorizontal: 13, flexDirection: "row", alignItems: "center", gap: 9 },
   searchInput: { flex: 1, fontSize: 14 },
   categoryRow: { gap: 8, paddingTop: 11, paddingRight: 16 },
-  categoryChip: { minHeight: 36, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, flexDirection: "row", alignItems: "center", gap: 7 },
+  categoryChip: { minHeight: 44, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7 },
   categoryText: { fontSize: 13, fontWeight: "600" },
   resultHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 19, marginBottom: 9 },
   sectionTitle: { fontSize: 18, lineHeight: 24, fontWeight: "700" },
