@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -134,7 +134,6 @@ export default function NearbyScreen() {
 }
 
 function radiusToMeters(radius: string) { if (radius.includes("500")) return 500; if (radius.includes("1 km")) return 1000; if (radius.includes("5 km")) return 5000; if (radius.includes("10 km")) return 10000; return 25000; }
-
 function DiscoveryCard({ item, colors }: { item: DiscoveryItem; colors: ReturnType<typeof useColors> }) { const icon = item.sourceType === "alert" ? "exclamationmark.triangle.fill" : item.sourceType === "event" ? "calendar" : item.sourceType === "deal" ? "tag.fill" : item.sourceType === "business" ? "building.2.fill" : item.sourceType === "post" ? "bubble.left.fill" : "wrench.and.screwdriver.fill"; const label = item.sourceType === "post" ? "Post" : item.sourceType[0].toUpperCase() + item.sourceType.slice(1); return <View style={[styles.card, { backgroundColor: colors.surface, borderColor: colors.border }]}><View style={[styles.itemIcon, { backgroundColor: `${colors.primary}18` }]}><IconSymbol name={icon} size={20} color={colors.primary} /></View><View style={styles.cardCopy}><Text numberOfLines={1} style={[styles.cardTitle, { color: colors.foreground }]}>{item.title}</Text><Text numberOfLines={1} style={[styles.cardSub, { color: colors.muted }]}>{label} · {discoveryDistanceLabel(item.distanceMeters)} · {item.area}{item.verified ? " · Verified" : ""}</Text><Text numberOfLines={2} style={[styles.cardMeta, { color: colors.muted }]}>{item.description}</Text></View></View>; }
 function EmptyDiscovery({ colors }: { colors: ReturnType<typeof useColors> }) { return <View style={[styles.empty, { borderColor: colors.border }]}><IconSymbol name="location.fill" size={26} color={colors.muted} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nothing here yet</Text><Text style={[styles.emptyText, { color: colors.muted }]}>Lekka will show local posts, businesses, events, deals, jobs, marketplace listings, services and alerts in this discovery area.</Text></View>; }
 
