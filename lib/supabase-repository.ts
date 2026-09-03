@@ -50,31 +50,39 @@ export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPo
 const localFeedListeners = new Set<() => void>();
 let localFeedChannel: ReturnType<NonNullable<typeof supabase>["channel"]> | null = null;
 let localFeedChannelStarting = false;
+let localFeedChannelRemoving: Promise<void> | null = null;
 let localFeedAppStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
 
 function notifyLocalFeedListeners() { localFeedListeners.forEach((listener) => listener()); }
 
 function removeLocalFeedChannel(channel = localFeedChannel) {
-  if (!channel || !supabase) return;
+  if (!channel || !supabase) return localFeedChannelRemoving ?? Promise.resolve();
   if (localFeedChannel === channel) {
     localFeedChannel = null;
     localFeedChannelStarting = false;
   }
-  void supabase.removeChannel(channel).catch(() => undefined);
+  const removal = supabase.removeChannel(channel).then(() => undefined).catch(() => undefined);
+  localFeedChannelRemoving = removal;
+  void removal.finally(() => {
+    if (localFeedChannelRemoving === removal) localFeedChannelRemoving = null;
+  });
+  return removal;
 }
 
 function ensureLocalFeedAppStateListener() {
   if (localFeedAppStateSubscription) return;
   localFeedAppStateSubscription = AppState.addEventListener("change", (nextState) => {
     if (nextState === "active") {
-      ensureLocalFeedChannel();
+      void ensureLocalFeedChannel();
       return;
     }
-    removeLocalFeedChannel();
+    void removeLocalFeedChannel();
   });
 }
 
-function ensureLocalFeedChannel() {
+async function ensureLocalFeedChannel() {
+  if (!supabase || localFeedListeners.size === 0 || localFeedChannel || localFeedChannelStarting) return;
+  if (localFeedChannelRemoving) await localFeedChannelRemoving;
   if (!supabase || localFeedListeners.size === 0 || localFeedChannel || localFeedChannelStarting) return;
   localFeedChannelStarting = true;
   const channel = supabase.channel("local-radar-live")
@@ -84,9 +92,9 @@ function ensureLocalFeedChannel() {
   channel.subscribe((status) => {
     if (localFeedChannel === channel) localFeedChannelStarting = false;
     if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-      if (localFeedChannel === channel) localFeedChannel = null;
-      void supabase?.removeChannel(channel).catch(() => undefined);
-      if (localFeedListeners.size > 0 && AppState.currentState === "active") ensureLocalFeedChannel();
+      if (localFeedChannel === channel) void removeLocalFeedChannel(channel).then(() => {
+        if (localFeedListeners.size > 0 && AppState.currentState === "active") void ensureLocalFeedChannel();
+      });
     }
   });
 }
@@ -95,11 +103,11 @@ export function subscribeToLocalChanges(onChange: () => void) {
   if (!supabase) return () => undefined;
   localFeedListeners.add(onChange);
   ensureLocalFeedAppStateListener();
-  ensureLocalFeedChannel();
+  void ensureLocalFeedChannel();
   return () => {
     localFeedListeners.delete(onChange);
     if (localFeedListeners.size === 0) {
-      removeLocalFeedChannel();
+      void removeLocalFeedChannel();
       localFeedAppStateSubscription?.remove();
       localFeedAppStateSubscription = null;
     }
