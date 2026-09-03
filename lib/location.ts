@@ -55,7 +55,6 @@ export async function getGrantedLocationOrFallback(fallbackArea = "your area"): 
   }
 }
 
-/** Returns the persisted exploration location when one is active, otherwise the device location. */
 export async function getLastKnownOrCurrentLocation(fallbackArea = "your area"): Promise<LocationResult> {
   try {
     const raw = await AsyncStorage.getItem(DISCOVERY_SETTINGS_KEY);
@@ -78,7 +77,13 @@ export async function watchMeaningfulForegroundLocation(
   if (permission.status !== Location.PermissionStatus.GRANTED) return () => undefined;
   const subscription = await Location.watchPositionAsync(
     { accuracy: Location.Accuracy.Balanced, distanceInterval: MOVEMENT_REFRESH_METERS, timeInterval: LOCATION_REFRESH_INTERVAL_MS, mayShowUserSettingsDialog: false },
-    (position) => { void toDeviceLocation(position, fallbackArea).then(onLocation); },
+    (position) => {
+      void AsyncStorage.getItem(DISCOVERY_SETTINGS_KEY).then(async (raw) => {
+        const selectedLocation = raw ? JSON.parse(raw)?.selectedLocation : null;
+        if (selectedLocation) return;
+        onLocation(await toDeviceLocation(position, fallbackArea));
+      }).catch(() => undefined);
+    },
   );
   return () => subscription.remove();
 }
