@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Location from "expo-location";
 import { Platform } from "react-native";
 
@@ -14,6 +15,7 @@ export type LocationResult =
 
 const MOVEMENT_REFRESH_METERS = 500;
 const LOCATION_REFRESH_INTERVAL_MS = 120_000;
+const DISCOVERY_SETTINGS_KEY = "local-radar/settings/v2";
 
 export async function requestApproximateLocation(fallbackArea = "your area"): Promise<LocationResult> {
   if (Platform.OS === "web") return { status: "unavailable", area: fallbackArea };
@@ -23,6 +25,20 @@ export async function requestApproximateLocation(fallbackArea = "your area"): Pr
   if (permission.status !== Location.PermissionStatus.GRANTED) return { status: "denied", area: fallbackArea };
   const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced, mayShowUserSettingsDialog: true });
   return { status: "granted", location: await toDeviceLocation(position, fallbackArea) };
+}
+
+export async function searchLocation(query: string, fallbackArea = "your area"): Promise<LocationResult> {
+  const trimmed = query.trim();
+  if (!trimmed) return { status: "unavailable", area: fallbackArea };
+  try {
+    const matches = await Location.geocodeAsync(trimmed);
+    const first = matches[0];
+    if (!first) return { status: "unavailable", area: fallbackArea };
+    const area = [first.district, first.city, first.subregion, first.region].find(Boolean) || trimmed;
+    return { status: "granted", location: { latitude: first.latitude, longitude: first.longitude, area, capturedAt: Date.now() } };
+  } catch {
+    return { status: "unavailable", area: fallbackArea };
+  }
 }
 
 export async function getGrantedLocationOrFallback(fallbackArea = "your area"): Promise<LocationResult> {
@@ -39,8 +55,17 @@ export async function getGrantedLocationOrFallback(fallbackArea = "your area"): 
   }
 }
 
-/** Passive location read. It never asks the user for permission. */
+/** Returns the persisted exploration location when one is active, otherwise the device location. */
 export async function getLastKnownOrCurrentLocation(fallbackArea = "your area"): Promise<LocationResult> {
+  try {
+    const raw = await AsyncStorage.getItem(DISCOVERY_SETTINGS_KEY);
+    const selectedLocation = raw ? JSON.parse(raw)?.selectedLocation : null;
+    if (selectedLocation && Number.isFinite(selectedLocation.latitude) && Number.isFinite(selectedLocation.longitude)) {
+      return { status: "granted", location: selectedLocation as DeviceLocation };
+    }
+  } catch {
+    // Fall through to the passive device location lookup.
+  }
   return getGrantedLocationOrFallback(fallbackArea);
 }
 
