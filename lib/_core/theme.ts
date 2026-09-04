@@ -64,6 +64,7 @@ type RuntimePalette = SchemePaletteItem & {
   border: string;
   accentText: string;
   surfaceAlt: string;
+  danger: string;
 };
 
 function buildRuntimePalette(scheme: ColorScheme, themeId: ThemeId = "original"): RuntimePalette {
@@ -79,6 +80,7 @@ function buildRuntimePalette(scheme: ColorScheme, themeId: ThemeId = "original")
     border: base.border,
     accentText: "#1A1206",
     surfaceAlt: scheme === "dark" ? "#1F2523" : "#F3F5F4",
+    danger: "#E5484D",
   };
 }
 
