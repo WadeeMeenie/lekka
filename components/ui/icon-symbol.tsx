@@ -10,7 +10,7 @@ type IconName =
   | "photo.fill" | "exclamationmark.triangle.fill" | "calendar" | "tag.fill" | "briefcase.fill"
   | "cart.fill" | "wrench.and.screwdriver.fill" | "message.fill" | "person.3.fill" | "clock.fill"
   | "shield.fill" | "location" | "plus" | "close" | "arrow.right" | "ellipsis" | "trash.fill" | "bubble.left.and.bubble.right.fill"
-  | "pin.fill" | "pin.slash.fill";
+  | "pin.fill" | "pin.slash.fill" | "xmark.circle" | "flag.fill";
 
 type MaterialName = ComponentProps<typeof MaterialIcons>["name"];
 const MAPPING: Record<IconName, MaterialName> = {
@@ -21,7 +21,7 @@ const MAPPING: Record<IconName, MaterialName> = {
   "photo.fill": "photo-library", "exclamationmark.triangle.fill": "warning-amber", calendar: "event", "tag.fill": "sell", "briefcase.fill": "work-outline",
   "cart.fill": "shopping-bag", "wrench.and.screwdriver.fill": "handyman", "message.fill": "forum", "person.3.fill": "groups", "clock.fill": "schedule",
   "shield.fill": "shield", location: "location-on", plus: "add", close: "close", "arrow.right": "arrow-forward", ellipsis: "more-horiz", "trash.fill": "delete-outline", "bubble.left.and.bubble.right.fill": "feedback",
-  "pin.fill": "push-pin", "pin.slash.fill": "push-pin",
+  "pin.fill": "push-pin", "pin.slash.fill": "push-pin", "xmark.circle": "cancel", "flag.fill": "flag",
 };
 
 export function IconSymbol({ name, size = 24, color, style, weight: _weight }: { name: IconName; size?: number; color: string | OpaqueColorValue; style?: StyleProp<TextStyle>; weight?: string }) {
