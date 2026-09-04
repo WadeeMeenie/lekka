@@ -2,7 +2,7 @@ import { File } from "expo-file-system/next";
 import { AppState } from "react-native";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DeviceLocation } from "@/lib/location";
-import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";
+import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";
 import type { SocialPost } from "@/lib/social-repository";
 
 function toLocalPost(row: any): LocalPost {
@@ -126,7 +126,7 @@ export async function fetchNearbyItems(location?: DeviceLocation, settings?: Loc
   const activeSettings = settings ?? await loadSettings(); if (!isSupabaseConfigured || !supabase || !location) return [];
   const { data, error } = await supabase.rpc("nearby_radar", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusToMeters(activeSettings.radius), category_filter: category && category !== "All" ? category : null }); if (error || !data) return []; return data as RadarItem[];
 }
-function radiusToMeters(radius: string) { if (radius.includes("500")) return 500; if (radius.includes("1 km")) return 1000; if (radius.includes("5 km")) return 5000; if (radius.includes("10 km")) return 10000; return 25000; }
+const radiusToMeters = discoveryRadiusToMeters;
 export async function uploadMedia(uri: string, path: string, contentType: string) { if (!supabase) throw new Error("Backend is not configured"); const file = new File(uri); const bytes = await file.bytes(); return supabase.storage.from("local-radar-media").upload(path, bytes, { contentType, upsert: false }); }
 
 export async function attachPostMedia(input: { postId: string; storagePath: string; mediaType: "image" | "video"; width?: number; height?: number }) {
