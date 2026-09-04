@@ -9,6 +9,13 @@ export type PostKind = "post" | "alert";
 export type LocalPost = { id: string; authorId?: string | null; kind: PostKind; category?: RadarCategory; author: string; initials: string; profileImagePath?: string | null; mediaPath?: string | null; area: string; distance: string; time: string; title?: string; body: string; likes: number; comments: number; trusted: boolean; accent: string };
 export type RadarItem = { id: string; category: RadarCategory; title: string; subtitle: string; area: string; distance: string; time: string; accent: string; icon: string };
 export type LocalSettings = { area: string; radius: string; useLocation: boolean; approximateVisibility: boolean; selectedLocation: DeviceLocation | null };
+export function discoveryRadiusToMeters(radius: string): number {
+  if (radius.includes("500")) return 500;
+  if (radius.includes("1 km")) return 1000;
+  if (radius.includes("5 km")) return 5000;
+  if (radius.includes("10 km")) return 10000;
+  return 25000;
+}
 export const defaultSettings: LocalSettings = { area: "your area", radius: "5 km", useLocation: true, approximateVisibility: true, selectedLocation: null };
 
 export const seededPosts: LocalPost[] = [

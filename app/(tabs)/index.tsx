@@ -5,7 +5,8 @@ import * as Clipboard from "expo-clipboard";
 import { Image } from "expo-image";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { FeedTab, FeedPreference, LocalPost, loadSettings, personalizeFeed } from "@/lib/local-radar";
+import { FeedTab, FeedPreference, LocalPost, discoveryRadiusToMeters, loadSettings, personalizeFeed } from "@/lib/local-radar";
+import { formatPostTime } from "@/lib/post-format";
 import { DeviceLocation, getLastKnownOrCurrentLocation } from "@/lib/location";
 import { createPost, fetchFeedPage, subscribeToLocalChanges } from "@/lib/supabase-repository";
 import { createSignedMediaUrl, getUnreadNotificationCount, listPostFeedback, setPostFeedback } from "@/lib/social-repository";
@@ -22,31 +23,6 @@ import { getAvatarInitials } from "@/lib/profile-avatar";
 
 const tabs: FeedTab[] = ["For You", "Nearby", "Trending", "Following"];
 
-function formatPostTime(value: string): string {
-  if (!value) return "now";
-  const raw = value.trim();
-  const iso = Date.parse(raw);
-  if (!Number.isNaN(iso)) {
-    const seconds = Math.max(0, (Date.now() - iso) / 1000);
-    if (seconds < 45) return "now";
-    if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
-    if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
-    if (seconds < 604800) return `${Math.round(seconds / 86400)}d`;
-    if (seconds < 2592000) return `${Math.round(seconds / 604800)}w`;
-    const date = new Date(iso);
-    return date.toLocaleDateString("en-ZA", { day: "numeric", month: "short", ...(date.getFullYear() === new Date().getFullYear() ? {} : { year: "numeric" }) });
-  }
-  const match = raw.match(/^(\d+(?:\.\d+)?)\s*(min|mins|minute|minutes|hr|hrs|hour|hours|day|days|week|weeks)$/i);
-  if (match) {
-    const amount = Math.max(1, Math.round(Number(match[1])));
-    const unit = match[2].toLowerCase();
-    if (unit.startsWith("min")) return `${amount}m`;
-    if (unit.startsWith("hr") || unit.startsWith("hour")) return `${amount}h`;
-    if (unit.startsWith("day")) return `${amount}d`;
-    return `${amount}w`;
-  }
-  return raw;
-}
 
 export default function HomeScreen() {
   const colors = useColors();
@@ -56,6 +32,7 @@ export default function HomeScreen() {
   const [posts, setPosts] = useState<LocalPost[]>([]);
   const [area, setArea] = useState("");
   const [deviceLocation, setDeviceLocation] = useState<DeviceLocation | null>(null);
+  const [radiusMeters, setRadiusMeters] = useState(5000);
   const [query, setQuery] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -113,9 +90,10 @@ export default function HomeScreen() {
       const location = await getLastKnownOrCurrentLocation(settings.area);
       if (!active) return;
       const liveLocation = location.status === "granted" ? location.location : undefined;
+      setRadiusMeters(discoveryRadiusToMeters(settings.radius));
       if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); }
       else setArea(settings.area || "your area");
-      const firstPage = await fetchFeedPage(liveLocation, null);
+      const firstPage = await fetchFeedPage(liveLocation, null, 20, discoveryRadiusToMeters(settings.radius));
       if (active) { setPosts(firstPage.posts); setNextCursor(firstPage.nextCursor); setInitialLoading(false); }
     })().catch(() => { if (active) { setInitialLoading(false); setToast("We couldn't refresh your local feed. Try again."); } });
     return () => { active = false; };
@@ -125,12 +103,12 @@ export default function HomeScreen() {
     let active = true;
     const unsubscribe = subscribeToLocalChanges(() => {
       setBackgroundRefreshing(true);
-      void fetchFeedPage(deviceLocation ?? undefined, null).then((next) => {
+      void fetchFeedPage(deviceLocation ?? undefined, null, 20, radiusMeters).then((next) => {
         if (active) { setPosts(next.posts); setNextCursor(next.nextCursor); }
       }).finally(() => { if (active) setBackgroundRefreshing(false); });
     });
     return () => { active = false; unsubscribe(); };
-  }, [deviceLocation]);
+  }, [deviceLocation, radiusMeters]);
 
   useEffect(() => {
     let active = true;
@@ -217,8 +195,8 @@ export default function HomeScreen() {
 
   const retryOutbox = async () => { if (!user || outboxStatus === "syncing") return; setOutboxStatus("syncing"); try { const sync = await syncPendingPostDrafts(user.id); const remaining = sync.remaining ?? (await listPendingPostDrafts(user.id)).length; setPendingDrafts(remaining); setOutboxStatus(remaining > 0 ? "queued" : "idle"); } catch { setOutboxStatus("error"); } };
   const visiblePosts = useMemo(() => personalizeFeed(posts, activeTab, feedback).filter((post) => `${post.title ?? ""} ${post.body} ${post.author}`.toLowerCase().includes(query.toLowerCase())), [posts, activeTab, feedback, query]);
-  const refresh = async () => { setRefreshing(true); try { const settings = await loadSettings(); const location = await getLastKnownOrCurrentLocation(settings.area); const liveLocation = location.status === "granted" ? location.location : undefined; if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); } else setArea(settings.area || "your area"); const page = await fetchFeedPage(liveLocation, null); setPosts(page.posts); setNextCursor(page.nextCursor); } catch { setToast("Couldn't refresh your feed. Please try again."); } finally { setRefreshing(false); } };
-  const loadMore = async () => { if (!nextCursor || loadingMore) return; setLoadingMore(true); try { const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor); setPosts((current) => { const seen = new Set(current.map((post) => post.id)); return [...current, ...page.posts.filter((post) => !seen.has(post.id))]; }); setNextCursor(page.nextCursor); } finally { setLoadingMore(false); } };
+  const refresh = async () => { setRefreshing(true); try { const settings = await loadSettings(); const location = await getLastKnownOrCurrentLocation(settings.area); const liveLocation = location.status === "granted" ? location.location : undefined; if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); } else setArea(settings.area || "your area"); const nextRadius = discoveryRadiusToMeters(settings.radius); setRadiusMeters(nextRadius); const page = await fetchFeedPage(liveLocation, null, 20, nextRadius); setPosts(page.posts); setNextCursor(page.nextCursor); } catch { setToast("Couldn't refresh your feed. Please try again."); } finally { setRefreshing(false); } };
+  const loadMore = async () => { if (!nextCursor || loadingMore) return; setLoadingMore(true); try { const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor, 20, radiusMeters); setPosts((current) => { const seen = new Set(current.map((post) => post.id)); return [...current, ...page.posts.filter((post) => !seen.has(post.id))]; }); setNextCursor(page.nextCursor); } finally { setLoadingMore(false); } };
   const presentation = getFetchPresentation({ isInitialLoading: initialLoading, isRefreshing: refreshing || backgroundRefreshing, hasData: posts.length > 0 });
 
   return <ScreenContainer containerClassName="bg-background">

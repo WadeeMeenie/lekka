@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import type { DeviceLocation } from "@/lib/location";
-import { loadSettings, type DiscoveryContentType, type RadarCategory } from "@/lib/local-radar";
+import { discoveryRadiusToMeters, loadSettings, type DiscoveryContentType, type RadarCategory } from "@/lib/local-radar";
 
 export type DiscoveryItem = {
   sourceType: "post" | "alert" | "business" | "event" | "deal";
@@ -26,18 +26,10 @@ export type DiscoveryFilters = {
   limit?: number;
 };
 
-function radiusToMeters(radius: string) {
-  if (radius.includes("500")) return 500;
-  if (radius.includes("1 km")) return 1000;
-  if (radius.includes("5 km")) return 5000;
-  if (radius.includes("10 km")) return 10000;
-  return 25000;
-}
-
 export async function discoverNearby(filters: DiscoveryFilters): Promise<{ data: DiscoveryItem[]; error: Error | null }> {
   if (!supabase) return { data: [], error: new Error("Backend is not configured") };
   const settings = await loadSettings();
-  const radiusMeters = filters.radiusMeters ?? radiusToMeters(settings.radius);
+  const radiusMeters = filters.radiusMeters ?? discoveryRadiusToMeters(settings.radius);
   const { data, error } = await supabase.rpc("discover_nearby", {
     latitude: filters.location.latitude,
     longitude: filters.location.longitude,
