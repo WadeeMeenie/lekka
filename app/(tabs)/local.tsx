@@ -48,7 +48,10 @@ export default function LocalScreen() {
     }
   }, [search, selectedCategory]);
 
-  useEffect(() => { void loadDirectory(); }, [loadDirectory]);
+  useEffect(() => {
+    const timeout = setTimeout(() => { void loadDirectory(); }, 350);
+    return () => clearTimeout(timeout);
+  }, [loadDirectory]);
 
   return <ScreenContainer>
     <FlatList data={items} keyExtractor={(item) => `${item.sourceType}:${item.id}`} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" ListHeaderComponent={<View>
