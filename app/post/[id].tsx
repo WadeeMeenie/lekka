@@ -58,7 +58,7 @@ export default function PostDetailScreen() {
       const [stateResult, commentsResult] = await Promise.all([getPostInteractionState(id), listCommentsSafe(id)]);
       if (!mounted) return;
       if (stateResult.error) setFeedback("Couldn't load post activity. Please try again.");
-      else if (stateResult.data) { setReaction(stateResult.data.reaction ?? null); setSaved(stateResult.data.saved); setReactionCount(stateResult.data.reactions); setCommentCount(stateResult.data.comments); }
+      else if (stateResult.data) { setReaction(stateResult.data.liked ? "👍" : null); setSaved(stateResult.data.saved); setReactionCount(stateResult.data.reactions); setCommentCount(stateResult.data.comments); }
       if (commentsResult.error) setFeedback((current) => current ?? "Couldn't load comments. Please try again.");
       else setComments(commentsResult.data);
       const paths = (postResult.data.post_media ?? []).filter((m) => m.media_type === "image").map((m) => m.storage_path);
@@ -82,13 +82,13 @@ export default function PostDetailScreen() {
   const runProtected = (action: string, callback: () => Promise<void>) => { if (!isAuthenticated) { setAuthGateAction(action); return; } void callback(); };
   const applyReaction = (nextReaction: ReactionType = "👍") => runProtected("react to posts", async () => {
     if (reactionBusy) return; setReactionBusy(true); setReactionPicker(false); setFeedback(null);
-    try { const result = await toggleReactionAtomic(id, nextReaction); if (result.error) { setFeedback("Couldn't update your reaction. Please try again."); return; } setReaction(result.reaction); const refreshed = await getPostInteractionState(id); if (!refreshed.error && refreshed.data) { setReactionCount(refreshed.data.reactions); setSaved(refreshed.data.saved); setReaction(refreshed.data.reaction ?? null); } }
+    try { const result = await toggleReactionAtomic(id, nextReaction); if (result.error) { setFeedback("Couldn't update your reaction. Please try again."); return; } setReaction(result.reaction); const refreshed = await getPostInteractionState(id); if (!refreshed.error && refreshed.data) { setReactionCount(refreshed.data.reactions); setSaved(refreshed.data.saved); setReaction(refreshed.data.liked ? "👍" : null); } }
     finally { setReactionBusy(false); }
   });
   const save = () => runProtected("save posts", async () => { if (saveBusy) return; setSaveBusy(true); setFeedback(null); try { const result = await toggleSavedPostAtomic(id); if (result.error) { setFeedback("Couldn't update saved posts. Please try again."); return; } setSaved(result.saved); } finally { setSaveBusy(false); } });
   const submitComment = async () => { if (!isAuthenticated) { setAuthGateAction("comment on posts"); return; } if (commentBusy || !commentText.trim()) return; setCommentBusy(true); setFeedback(null); try { const result = await createCommentSafe(id, commentText); if (result.error || !result.data) { setFeedback(result.error?.message || "Couldn't comment. Please try again."); return; } setComments((current) => [result.data!, ...current]); setCommentCount((current) => current + 1); setCommentText(""); } finally { setCommentBusy(false); } };
-  const sharePost = async () => { const title = post?.title ?? "Lekka post"; await Share.share({ message: `${title}\n\n${post?.body ?? ""}\n\nOpen in Lekka: lekka://post/${id}` }); };
-  const copyLink = async () => { try { await Clipboard.setStringAsync(`lekka://post/${id}`); setOptionsOpen(false); setFeedback("Post link copied."); } catch { setActionError("Couldn't copy the post link."); } };
+  const sharePost = async () => { const title = post?.title ?? "Lekka post"; await Share.share({ message: `${title}\n\n${post?.body ?? ""}\n\nOpen in Lekka: manus${""}://post/${id}` }); };
+  const copyLink = async () => { try { await Clipboard.setStringAsync(`manus${""}://post/${id}`); setOptionsOpen(false); setFeedback("Post link copied."); } catch { setActionError("Couldn't copy the post link."); } };
   const openOptions = () => { setActionError(null); setOptionsOpen(true); };
   const reportPost = async () => { if (!isAuthenticated) { setOptionsOpen(false); setAuthGateAction("report posts"); return; } setActionBusy(true); setActionError(null); try { const result = await reportContent({ postId: id, reason: "User report" }); if (result.error) { setActionError("Couldn't submit the report. Please try again."); return; } setOptionsOpen(false); setFeedback("Report submitted. Thanks for helping keep Lekka safe."); } finally { setActionBusy(false); } };
   const deletePost = async () => { if (!isAuthenticated) { setDeleteOpen(false); setAuthGateAction("delete your post"); return; } setActionBusy(true); setActionError(null); try { const result = await deleteOwnPost(id); if (result.error || !result.deleted) { setActionError(result.error?.message || "Couldn't delete this post. Please try again."); return; } setDeleteOpen(false); setOptionsOpen(false); router.back(); } finally { setActionBusy(false); } };
@@ -124,7 +124,7 @@ export default function PostDetailScreen() {
     <View style={styles.modalBackdrop}><View style={[styles.sheet, { backgroundColor: colors.surface }]}>
       <View style={styles.handle} /><Text style={[styles.sheetTitle, { color: colors.foreground }]}>Post options</Text>
       {actionError && <Text style={[styles.sheetError, { color: colors.danger }]}>{actionError}</Text>}
-      <Pressable onPress={copyLink} disabled={actionBusy} style={styles.sheetRow} accessibilityRole="button"><IconSymbol name="doc.on.doc" size={20} color={colors.muted} /><Text style={[styles.sheetText, { color: colors.foreground }]}>Copy link</Text></Pressable>
+      <Pressable onPress={copyLink} disabled={actionBusy} style={styles.sheetRow} accessibilityRole="button"><IconSymbol name="square.and.arrow.up" size={20} color={colors.muted} /><Text style={[styles.sheetText, { color: colors.foreground }]}>Copy link</Text></Pressable>
       <Pressable onPress={reportPost} disabled={actionBusy} style={styles.sheetRow} accessibilityRole="button"><IconSymbol name="flag.fill" size={20} color={colors.muted} /><Text style={[styles.sheetText, { color: colors.foreground }]}>{actionBusy ? "Working…" : "Report post"}</Text></Pressable>
       {isOwner && <Pressable onPress={() => { setOptionsOpen(false); setDeleteOpen(true); setActionError(null); }} disabled={actionBusy} style={styles.sheetRow} accessibilityRole="button" accessibilityLabel="Delete post"><IconSymbol name="trash.fill" size={20} color={colors.danger} /><Text style={[styles.sheetText, { color: colors.danger }]}>Delete post</Text></Pressable>}
       <Pressable onPress={() => setOptionsOpen(false)} disabled={actionBusy} style={styles.sheetRow} accessibilityRole="button"><IconSymbol name="chevron.down" size={20} color={colors.muted} /><Text style={[styles.sheetText, { color: colors.foreground }]}>Cancel</Text></Pressable>
