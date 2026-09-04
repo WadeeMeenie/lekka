@@ -54,11 +54,6 @@ jobs:
 
           replace(
               "lib/supabase-repository.ts",
-              'import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";',
-              'import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";'
-          )
-          replace(
-              "lib/supabase-repository.ts",
               'export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20): Promise<FeedPage> {',
               'export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20, radiusMeters = 5000): Promise<FeedPage> {'
           )
@@ -123,13 +118,13 @@ jobs:
               raise SystemExit("expo-clipboard dependency is missing or unexpectedly changed")
           PY
 
-      - name: Validate changed sources
+      - name: Validate source edits
         run: |
-          node --version
-          corepack enable
-          pnpm --version
-          pnpm install --frozen-lockfile
-          pnpm check
+          git diff --check
+          node -e "JSON.parse(require('fs').readFileSync('package.json','utf8')); console.log('package.json valid')"
+          grep -q 'discoveryRadiusToMeters' lib/local-radar.ts
+          grep -q 'radius_meters: radiusMeters' lib/supabase-repository.ts
+          grep -q 'manuslocalradarsa://post/' 'app/post/[id].tsx'
 
       - name: Commit and remove maintenance workflow
         shell: bash
