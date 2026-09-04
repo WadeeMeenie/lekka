@@ -1,0 +1,46 @@
+name: One-time discovery cleanup
+
+on:
+  push:
+    paths:
+      - .github/workflows/one-time-discovery-cleanup.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Apply cleanup
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('lib/supabase-repository.ts')
+          text = p.read_text()
+          old_import = 'import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";'
+          new_import = 'import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";'
+          if old_import not in text:
+              raise SystemExit('supabase repository import anchor not found')
+          text = text.replace(old_import, new_import, 1)
+          old_fn = 'function radiusToMeters(radius: string) { if (radius.includes("500")) return 500; if (radius.includes("1 km")) return 1000; if (radius.includes("5 km")) return 5000; if (radius.includes("10 km")) return 10000; return 25000; }'
+          if old_fn not in text:
+              raise SystemExit('supabase repository radius function anchor not found')
+          text = text.replace(old_fn, 'const radiusToMeters = discoveryRadiusToMeters;', 1)
+          p.write_text(text)
+          PY
+          git diff --check
+      - name: Commit and remove workflow
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/one-time-discovery-cleanup.yml
+          git add lib/supabase-repository.ts
+          git commit -m "Reuse canonical discovery radius"
+          git push
