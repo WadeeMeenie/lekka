@@ -74,6 +74,11 @@ for (const file of files) {
     }
   });
 
+  // Catch accidental placeholder/dead deep-link schemes before they reach a build.
+  if (source.includes('manus${""}://') || source.includes("manus://")) {
+    errors.push(`${rel}: contains a malformed Lekka deep-link scheme; use the canonical app scheme from app.config.ts`);
+  }
+
   // Static navigation targets must exist. Dynamic routes are checked by their parent segment.
   for (const match of source.matchAll(/router\.(?:push|replace|navigate)\(\s*["']([^"']+)["']/g)) {
     const target = match[1].split("?")[0];
