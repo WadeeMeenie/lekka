@@ -30,14 +30,12 @@ jobs:
                   raise SystemExit(f"Expected text not found in {path}: {old[:120]!r}")
               p.write_text(text.replace(old, new, 1))
 
-          # One canonical radius mapping shared by Home, Radar and Local.
           replace(
               "lib/local-radar.ts",
               'export type LocalSettings = { area: string; radius: string; useLocation: boolean; approximateVisibility: boolean; selectedLocation: DeviceLocation | null };\nexport const defaultSettings:',
               'export type LocalSettings = { area: string; radius: string; useLocation: boolean; approximateVisibility: boolean; selectedLocation: DeviceLocation | null };\nexport function discoveryRadiusToMeters(radius: string): number {\n  if (radius.includes("500")) return 500;\n  if (radius.includes("1 km")) return 1000;\n  if (radius.includes("5 km")) return 5000;\n  if (radius.includes("10 km")) return 10000;\n  return 25000;\n}\nexport const defaultSettings:'
           )
 
-          # Discovery and feed APIs use the same radius semantics.
           replace(
               "lib/discovery.ts",
               'import { loadSettings, type DiscoveryContentType, type RadarCategory } from "@/lib/local-radar";',
@@ -57,7 +55,7 @@ jobs:
           replace(
               "lib/supabase-repository.ts",
               'import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";',
-              'import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";'
+              'import { LocalPost, LocalSettings, RadarCategory, RadarItem, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";'
           )
           replace(
               "lib/supabase-repository.ts",
@@ -70,7 +68,6 @@ jobs:
               'radius_meters: radiusMeters, cursor_created_at: cursorCreatedAt, cursor_id: cursorId, page_size: pageSize'
           )
 
-          # Home consumes the same persisted radius as Radar/Local, and its post time display is canonical.
           replace(
               "app/(tabs)/index.tsx",
               'import { FeedTab, FeedPreference, LocalPost, loadSettings, personalizeFeed } from "@/lib/local-radar";',
@@ -119,10 +116,8 @@ jobs:
               'const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor, 20, radiusMeters);'
           )
 
-          # Canonical app deep-link scheme; app.config derives manuslocalradarsa from the package.
           replace("app/post/[id].tsx", 'manus${""}://post/${id}', 'manuslocalradarsa://post/${id}')
 
-          # The package already pins the Expo-compatible clipboard dependency; fail loudly if it disappears.
           package = Path("package.json").read_text()
           if '"expo-clipboard": "~8.0.7"' not in package:
               raise SystemExit("expo-clipboard dependency is missing or unexpectedly changed")
@@ -142,6 +137,6 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/one-time-discovery-sync.yml
-          git add app/(tabs)/index.tsx app/post/[id].tsx lib/local-radar.ts lib/discovery.ts lib/supabase-repository.ts
+          git add 'app/(tabs)/index.tsx' 'app/post/[id].tsx' lib/local-radar.ts lib/discovery.ts lib/supabase-repository.ts
           git commit -m "Unify Home feed with discovery context"
           git push
