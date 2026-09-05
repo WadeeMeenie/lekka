@@ -69,7 +69,7 @@ export default function PersonalDetailsScreen() {
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Pressable accessibilityRole="button" accessibilityLabel="Go back" onPress={() => router.back()} style={styles.back}>
+        <Pressable accessibilityRole="button" accessibilityLabel="Go back" accessibilityHint="Returns to the previous account screen" onPress={() => router.back()} style={styles.back}>
           <IconSymbol name="chevron.right" size={22} color={colors.foreground} style={styles.backIcon} />
           <Text style={[styles.backText, { color: colors.foreground }]}>Account</Text>
         </Pressable>
@@ -77,9 +77,9 @@ export default function PersonalDetailsScreen() {
         <Text style={[styles.title, { color: colors.foreground }]}>Make your profile yours.</Text>
         <Text style={[styles.subtitle, { color: colors.muted }]}>Your date of birth and gender stay private. They are never shown on your public Lekka profile.</Text>
         <Text style={[styles.label, { color: colors.muted }]}>FIRST NAME</Text>
-        <TextInput value={firstName} onChangeText={setFirstName} placeholder="First name" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />
+        <TextInput accessibilityLabel="First name" value={firstName} onChangeText={setFirstName} placeholder="First name" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />
         <Text style={[styles.label, { color: colors.muted }]}>SURNAME</Text>
-        <TextInput value={surname} onChangeText={setSurname} placeholder="Surname" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />
+        <TextInput accessibilityLabel="Surname" value={surname} onChangeText={setSurname} placeholder="Surname" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />
         <Text style={[styles.label, { color: colors.muted }]}>DATE OF BIRTH</Text>
         <View style={styles.dateRow}>
           <DateButton label={dateParts.year?.toString() ?? "Year"} accessibilityLabel="Choose birth year" onPress={() => setOpenSelector("year")} colors={colors} wide />
@@ -90,12 +90,12 @@ export default function PersonalDetailsScreen() {
         <Text style={[styles.label, { color: colors.muted }]}>GENDER (OPTIONAL)</Text>
         <FlatList horizontal data={GENDER_OPTIONS} keyExtractor={(option) => option} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.genderRow} renderItem={({ item: option }) => <Pressable accessibilityRole="radio" accessibilityState={{ selected: gender === option }} onPress={() => setGender(gender === option ? null : option)} style={[styles.gender, { backgroundColor: gender === option ? colors.foreground : colors.surface, borderColor: gender === option ? colors.foreground : colors.border }]}><Text style={[styles.genderText, { color: gender === option ? colors.background : colors.muted }]}>{option === "prefer_not_to_say" ? "Prefer not to say" : option[0].toUpperCase() + option.slice(1)}</Text></Pressable>} />
         {error ? <Text accessibilityRole="alert" style={[styles.error, { color: colors.error }]}>{error}</Text> : null}
-        <Pressable accessibilityRole="button" disabled={busy} onPress={() => void save()} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.55 : pressed ? 0.8 : 1 }]}>{busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>{onboarding === "1" ? "Enter Lekka" : "Save personal details"}</Text>}</Pressable>
+        <Pressable accessibilityRole="button" accessibilityLabel={busy ? "Saving personal details" : onboarding === "1" ? "Enter Lekka" : "Save personal details"} accessibilityState={{ disabled: busy }} disabled={busy} onPress={() => void save()} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.55 : pressed ? 0.8 : 1 }]}>{busy ? <ActivityIndicator color="#10211D" /> : <Text style={styles.primaryText}>{onboarding === "1" ? "Enter Lekka" : "Save personal details"}</Text>}</Pressable>
       </ScrollView>
       <Modal visible={openSelector !== null} transparent animationType="slide" onRequestClose={() => setOpenSelector(null)}>
         <View style={styles.modalBackdrop}>
           <View style={[styles.modalCard, { backgroundColor: colors.surface }]}>
-            <View style={styles.modalHeader}><Text style={[styles.modalTitle, { color: colors.foreground }]}>{selectorTitle}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close date selector" onPress={() => setOpenSelector(null)}><Text style={[styles.closeText, { color: colors.primary }]}>Done</Text></Pressable></View>
+            <View style={styles.modalHeader}><Text style={[styles.modalTitle, { color: colors.foreground }]}>{selectorTitle}</Text><Pressable accessibilityRole="button" accessibilityLabel="Close date selector" onPress={() => setOpenSelector(null)} style={styles.closeButton}><Text style={[styles.closeText, { color: colors.primary }]}>Done</Text></Pressable></View>
             <FlatList data={options} keyExtractor={(item) => item.toString()} initialNumToRender={20} renderItem={({ item }) => <Pressable accessibilityRole="button" accessibilityState={{ selected: (openSelector === "year" ? dateParts.year : openSelector === "month" ? dateParts.month : dateParts.day) === item }} onPress={() => selectDatePart(item)} style={({ pressed }) => [styles.option, { borderBottomColor: colors.border, backgroundColor: pressed ? colors.background : colors.surface }]}><Text style={[styles.optionText, { color: colors.foreground }]}>{openSelector === "month" ? displayMonth(item) : item}</Text></Pressable>} />
           </View>
         </View>
@@ -110,7 +110,7 @@ function DateButton({ label, accessibilityLabel, onPress, colors, wide = false }
 
 const styles = StyleSheet.create({
   content: { padding: 24, paddingBottom: 44 },
-  back: { flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 28 },
+  back: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 28 },
   backIcon: { transform: [{ rotate: "180deg" }] },
   backText: { fontSize: 14, fontWeight: "700" },
   eyebrow: { fontSize: 11, letterSpacing: 1.2, fontWeight: "900" },
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   chevron: { fontSize: 17, marginLeft: 3, marginTop: -4 },
   dateHint: { fontSize: 11, marginTop: 7 },
   genderRow: { flexDirection: "row", gap: 7 },
-  gender: { borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, paddingVertical: 9 },
+  gender: { minHeight: 44, borderWidth: 1, borderRadius: 13, paddingHorizontal: 11, alignItems: "center", justifyContent: "center" },
   genderText: { fontSize: 11, fontWeight: "800" },
   error: { fontSize: 13, lineHeight: 18, fontWeight: "700", marginTop: 16 },
   primary: { minHeight: 54, borderRadius: 16, alignItems: "center", justifyContent: "center", marginTop: 22 },
@@ -134,6 +134,7 @@ const styles = StyleSheet.create({
   modalCard: { maxHeight: "72%", borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20 },
   modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 8 },
   modalTitle: { fontSize: 18, fontWeight: "900" },
+  closeButton: { minHeight: 44, minWidth: 64, justifyContent: "center", alignItems: "center", paddingHorizontal: 8 },
   closeText: { fontSize: 14, fontWeight: "800" },
   option: { minHeight: 48, borderBottomWidth: StyleSheet.hairlineWidth, justifyContent: "center", paddingHorizontal: 12, borderRadius: 10 },
   optionText: { fontSize: 16, fontWeight: "700" },
