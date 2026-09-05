@@ -11,6 +11,7 @@ const rpcPrivilegeMigration = readMigration("20260905173000_lock_down_client_rpc
 const businessLogoLifecycleMigration = readMigration("20260905180000_business_logo_media_lifecycle.sql");
 const messagingSecurityMigration = readMigration("20260905181000_harden_direct_message_updates.sql");
 const profileRoleSecurityMigration = readMigration("20260905182000_protect_profile_role.sql");
+const businessFunctionSecurityMigration = readMigration("20260905183000_harden_business_security_definers.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -102,5 +103,15 @@ describe("profile authorization metadata", () => {
   it("prevents client roles from inserting or updating profiles.role", () => {
     expect(profileRoleSecurityMigration).toContain("revoke insert (role) on table public.profiles from anon, authenticated");
     expect(profileRoleSecurityMigration).toContain("revoke update (role) on table public.profiles from anon, authenticated");
+  });
+});
+
+describe("business security-definer functions", () => {
+  it("pins privileged business and payment functions to an empty search_path", () => {
+    expect(businessFunctionSecurityMigration).toContain("set search_path = ''");
+    expect(businessFunctionSecurityMigration).toContain("public.business_members");
+    expect(businessFunctionSecurityMigration).toContain("public.payment_orders");
+    expect(businessFunctionSecurityMigration).toContain("extensions.gen_random_uuid");
+    expect(businessFunctionSecurityMigration).toContain("auth.uid()");
   });
 });
