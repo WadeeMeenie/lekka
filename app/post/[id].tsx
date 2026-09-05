@@ -64,7 +64,8 @@ export default function PostDetailScreen() {
       if (commentsResult.error) setFeedback((current) => current ?? "Couldn't load comments. Please try again.");
       else setComments(commentsResult.data);
       const paths = (postResult.data.post_media ?? []).filter((m) => m.media_type === "image").map((m) => m.storage_path);
-      const urls = await Promise.all(paths.map(async (path) => (await createSignedMediaUrl(path)).data?.signedUrl ?? null));
+      const authorizedMediaUrls = postResult.authorizedMediaUrls ?? {};
+      const urls = await Promise.all(paths.map(async (path) => authorizedMediaUrls[path] ?? (await createSignedMediaUrl(path)).data?.signedUrl ?? null));
       if (mounted) { setMediaUrls(urls.filter((u): u is string => Boolean(u))); setLoading(false); }
     })();
     return () => { mounted = false; };
