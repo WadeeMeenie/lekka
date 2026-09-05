@@ -5,7 +5,21 @@ const BATCH_SIZE = 100;
 const MAX_ATTEMPTS = 20;
 
 export default {
-  fetch: withSupabase({ auth: "publishable" }, async (_req, ctx) => {
+  fetch: withSupabase({ auth: "publishable" }, async (req, ctx) => {
+    const token = req.headers.get("x-media-cleanup-token");
+    if (!token) {
+      return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { data: authorized, error: authorizationError } = await ctx.supabaseAdmin.rpc(
+      "authorize_media_cleanup",
+      { p_token: token },
+    );
+
+    if (authorizationError || authorized !== true) {
+      return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const { data: jobs, error: loadError } = await ctx.supabaseAdmin
       .from("media_cleanup_queue")
       .select("id, bucket_id, storage_path, attempts")
