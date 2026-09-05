@@ -6,6 +6,7 @@ const readMigration = (name: string) => readFileSync(resolve(process.cwd(), `sup
 const mediaHardeningMigration = readMigration("20260905150000_media_access_hardening.sql");
 const mediaLifecycleMigration = readMigration("20260905160000_media_lifecycle_cleanup.sql");
 const mediaCleanupSecurityMigration = readMigration("20260905171500_secure_media_cleanup_invocation.sql");
+const mediaCleanupCronFixMigration = readMigration("20260905172000_fix_media_cleanup_cron_routing.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -29,7 +30,9 @@ describe("media lifecycle cleanup", () => {
   });
 
   it("uses the Storage API from a server-side function and retries failures", () => {
-    expect(mediaCleanupFunction).toContain("ctx.supabaseAdmin.storage");
+    expect(mediaCleanupFunction).toContain("SUPABASE_SERVICE_ROLE_KEY");
+    expect(mediaCleanupFunction).toContain("createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY");
+    expect(mediaCleanupFunction).toContain("service.storage");
     expect(mediaCleanupFunction).toContain(".remove([job.storage_path])");
     expect(mediaCleanupFunction).toContain("MAX_ATTEMPTS");
     expect(mediaCleanupFunction).toContain("next_attempt_at");
@@ -42,5 +45,11 @@ describe("media lifecycle cleanup", () => {
     expect(mediaCleanupSecurityMigration).toContain("grant execute on function public.authorize_media_cleanup(text) to service_role");
     expect(mediaCleanupFunction).toContain("x-media-cleanup-token");
     expect(mediaCleanupFunction).toContain("authorize_media_cleanup");
+  });
+
+  it("routes the scheduled worker through pg_net and never sends the cleanup token as the API key", () => {
+    expect(mediaCleanupCronFixMigration).toContain("net.http_post");
+    expect(mediaCleanupCronFixMigration).toContain("'apikey', 'sb_publishable_");
+    expect(mediaCleanupCronFixMigration).toContain("'x-media-cleanup-token'");
   });
 });
