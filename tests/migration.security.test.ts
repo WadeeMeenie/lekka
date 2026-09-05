@@ -12,6 +12,7 @@ const businessLogoLifecycleMigration = readMigration("20260905180000_business_lo
 const messagingSecurityMigration = readMigration("20260905181000_harden_direct_message_updates.sql");
 const profileRoleSecurityMigration = readMigration("20260905182000_protect_profile_role.sql");
 const businessFunctionSecurityMigration = readMigration("20260905183000_harden_business_security_definers.sql");
+const crossAccountHardeningMigration = readMigration("20260905190000_cross_account_business_community_storage_hardening.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -113,5 +114,31 @@ describe("business security-definer functions", () => {
     expect(businessFunctionSecurityMigration).toContain("public.payment_orders");
     expect(businessFunctionSecurityMigration).toContain("extensions.gen_random_uuid");
     expect(businessFunctionSecurityMigration).toContain("auth.uid()");
+  });
+});
+
+describe("cross-account community and storage hardening", () => {
+  it("pins remaining application SECURITY DEFINER functions to an empty search_path", () => {
+    expect(crossAccountHardeningMigration).toContain("create or replace function public.is_community_member");
+    expect(crossAccountHardeningMigration).toContain("create or replace function public.is_community_owner");
+    expect(crossAccountHardeningMigration).toContain("create or replace function public.set_payment_order_status_from_yoco");
+    expect(crossAccountHardeningMigration.match(/set search_path = ''/g)?.length).toBeGreaterThanOrEqual(13);
+    expect(crossAccountHardeningMigration).toContain("public.community_members");
+    expect(crossAccountHardeningMigration).toContain("public.communities");
+  });
+
+  it("does not expose private-community membership to unrelated users", () => {
+    expect(crossAccountHardeningMigration).toContain("community_members_read");
+    expect(crossAccountHardeningMigration).toContain("c.visibility = 'public'");
+    expect(crossAccountHardeningMigration).toContain("public.is_community_member");
+    expect(crossAccountHardeningMigration).toContain("public.is_community_owner");
+  });
+
+  it("authorizes community branding reads by community visibility or membership", () => {
+    expect(crossAccountHardeningMigration).toContain("community.logo_path = objects.name");
+    expect(crossAccountHardeningMigration).toContain("community.cover_path = objects.name");
+    expect(crossAccountHardeningMigration).toContain("community.visibility = 'public'");
+    expect(crossAccountHardeningMigration).toContain("community.created_by = (select auth.uid())");
+    expect(crossAccountHardeningMigration).toContain("public.is_community_member(community.id");
   });
 });
