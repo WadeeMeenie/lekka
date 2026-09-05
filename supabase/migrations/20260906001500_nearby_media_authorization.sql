@@ -54,6 +54,38 @@ $$;
 revoke execute on function public.can_access_nearby_post_media(uuid, uuid, double precision, double precision, integer) from public, anon, authenticated;
 grant execute on function public.can_access_nearby_post_media(uuid, uuid, double precision, double precision, integer) to service_role;
 
+drop policy if exists post_media_public_read on public.post_media;
+create policy post_media_public_read
+on public.post_media
+for select
+to public
+using (
+  exists (
+    select 1
+    from public.posts p
+    where p.id = post_media.post_id
+      and (
+        p.author_id = (select auth.uid())
+        or (
+          p.visibility = 'public'::public.visibility_scope
+          and (
+            p.community_id is null
+            or exists (
+              select 1
+              from public.communities c
+              where c.id = p.community_id
+                and (
+                  c.visibility = 'public'
+                  or c.created_by = (select auth.uid())
+                  or (select public.is_community_member(c.id, (select auth.uid())))
+                )
+            )
+          )
+        )
+      )
+  )
+);
+
 drop policy if exists media_authenticated_read on storage.objects;
 create policy media_authenticated_read
 on storage.objects
