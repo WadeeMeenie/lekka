@@ -31,33 +31,23 @@ function requireFile(file, reason) {
   if (!fs.existsSync(file)) errors.push(`${reason}: missing ${path.relative(root, file)}`);
 }
 
-// 1. UI interaction/accessibility guard: the dedicated interaction audit owns
-// handler/route checks; this layer catches explicit undersized controls and
-// icon-like controls with no accessible name without rejecting legitimate
-// composite cards whose size is inherited from their parent.
+// 1. UI interaction/accessibility guard.
 const routeFiles = walk(appDir);
 for (const file of routeFiles) {
   const source = read(file);
   const rel = path.relative(root, file);
-
   for (const match of source.matchAll(/<(Pressable|TouchableOpacity|Button)\b([^>]*)>/g)) {
     const attrs = match[2];
     const minHeight = attrs.match(/minHeight\s*:\s*(\d+(?:\.\d+)?)/)?.[1];
     const minWidth = attrs.match(/minWidth\s*:\s*(\d+(?:\.\d+)?)/)?.[1];
     if (minHeight && Number(minHeight) < 44) errors.push(`${rel}: ${match[1]} has explicit minHeight ${minHeight}; interactive controls must not be smaller than 44dp.`);
     if (minWidth && Number(minWidth) < 44) errors.push(`${rel}: ${match[1]} has explicit minWidth ${minWidth}; interactive controls must not be smaller than 44dp.`);
-
-    const hasLabel = /\baccessibilityLabel\s*=/.test(attrs);
-    const hasRole = /\baccessibilityRole\s*=/.test(attrs);
-    const looksIconOnly = /(?:Icon|Symbol|icon|symbol|name=)/.test(attrs) && !/accessibilityLabel\s*=/.test(attrs);
-    if (looksIconOnly && (hasRole || /onPress=/.test(attrs))) {
-      warnings.push(`${rel}: icon-like interactive control has no accessibilityLabel; verify it has an accessible name.`);
-    }
+    const looksIconLike = /(?:Icon|Symbol|icon|symbol|name=)/.test(attrs) && !/accessibilityLabel\s*=/.test(attrs);
+    if (looksIconLike && /onPress\s*=/.test(attrs)) warnings.push(`${rel}: icon-like interactive control has no accessibilityLabel; verify it has an accessible name.`);
   }
 }
 
-// 2. Authentication/session architecture: client must persist native sessions
-// and must never contain a privileged service-role key.
+// 2. Authentication/session architecture.
 requireFile(supabasePath, "Supabase auth client");
 const supabaseSource = read(supabasePath);
 if (!/persistSession\s*:\s*true/.test(supabaseSource)) errors.push("Supabase auth client must persist sessions.");
@@ -67,30 +57,25 @@ requireFile(path.join(root, "hooks", "use-supabase-auth.ts"), "Supabase auth hoo
 requireFile(path.join(appDir, "auth.tsx"), "Authentication route");
 requireFile(path.join(appDir, "oauth", "callback.tsx"), "OAuth callback route");
 
-// 3. Social/discovery correctness: keep one canonical nearby-discovery path.
+// 3. Social/discovery correctness: one canonical nearby-discovery path.
 for (const file of ["lib/discovery.ts", "lib/local-radar.ts", "lib/location.ts", "lib/supabase-repository.ts"]) requireFile(path.join(root, file), "Canonical discovery architecture");
 const discoveryFiles = ["lib/discovery.ts", "lib/local-radar.ts", "lib/supabase-repository.ts"].map((file) => read(path.join(root, file))).join("\n");
 if (!/discover_nearby/.test(discoveryFiles)) errors.push("Canonical discovery RPC discover_nearby is not referenced by the discovery/repository layer.");
-if (!fs.existsSync(path.join(appDir, "(tabs)", "nearby.tsx"))) errors.push("Local Radar route is missing.");
+requireFile(path.join(appDir, "(tabs)", "nearby.tsx"), "Local Radar route");
 
-// 4. Communities/business flows: route inventory must retain the implemented
-// community/business surfaces instead of silently regressing them.
+// 4. Communities/business flows. The settings screen is a dynamic child route.
 for (const file of [
   "community/create.tsx",
-  "community/[id]/settings.tsx",
+  "community/[id].tsx",
+  "community/settings/[id].tsx",
   "community/post.tsx",
   "business-setup.tsx",
-]) {
-  requireFile(path.join(appDir, file), "Community/business flow");
-}
+]) requireFile(path.join(appDir, file), "Community/business flow");
 
-// 5. Offline/retry behavior: keep the retry primitives and persisted local
-// onboarding state in the app architecture.
+// 5. Offline/retry behavior.
 for (const file of ["lib/async-error.ts", "lib/auth-retry.ts", "lib/onboarding.ts"]) requireFile(path.join(root, file), "Offline/retry foundation");
 
-// 6. Supabase/RLS/storage contract guard: migrations must exist and client
-// source must not introduce privileged access. Do not alter extension-owned
-// spatial_ref_sys policy from this static check.
+// 6. Supabase/RLS/storage contract guard.
 const migrationsDir = path.join(root, "supabase", "migrations");
 requireFile(migrationsDir, "Supabase migrations directory");
 if (fs.existsSync(migrationsDir)) {
@@ -98,8 +83,7 @@ if (fs.existsSync(migrationsDir)) {
   if (!migrationFiles.some((name) => /delete_own_posts|own_posts/i.test(name))) warnings.push("No own-post deletion migration filename was found; verify the authenticated own-post DELETE policy remains present.");
 }
 
-// 7. Android invariants: preserve New Architecture, arm64 and the canonical
-// package/scheme generation. This intentionally does not disable New Arch.
+// 7. Android invariants: preserve New Architecture, arm64 and canonical package/scheme.
 const configSource = read(configPath);
 requireFile(configPath, "Expo Android configuration");
 if (!/newArchEnabled\s*:\s*true/.test(configSource)) errors.push("Expo New Architecture must remain enabled.");
@@ -107,22 +91,16 @@ if (!/buildArchs\s*:\s*\[\s*[\"']arm64-v8a[\"']\s*\]/.test(configSource)) errors
 if (!/androidPackage:\s*bundleId/.test(configSource)) errors.push("Android package must derive from the canonical bundle id.");
 if (/manus\$\{\"\"\}:\/\/|manus:\/\//.test(configSource)) errors.push("Malformed Lekka deep-link scheme detected in app.config.ts.");
 
-// 8. Test/CI blind-spot guard: the validation workflow must continue to run
-// typecheck, interaction audit, tests, lint, Expo compatibility/doctor, and
-// both Android debug variants.
+// 8. Test/CI blind-spot guard.
 requireFile(path.join(workflowDir, "lekka-validation.yml"), "GitHub validation workflow");
 const workflowFiles = fs.existsSync(workflowDir) ? fs.readdirSync(workflowDir).filter((name) => name.endsWith(".yml") || name.endsWith(".yaml")) : [];
-if (workflowFiles.length !== 1 || workflowFiles[0] !== "lekka-validation.yml") {
-  errors.push(`Expected exactly one canonical validation workflow; found ${workflowFiles.join(", ") || "none"}.`);
-}
+if (workflowFiles.length !== 1 || workflowFiles[0] !== "lekka-validation.yml") errors.push(`Expected exactly one canonical validation workflow; found ${workflowFiles.join(", ") || "none"}.`);
 const workflow = read(path.join(workflowDir, "lekka-validation.yml"));
 for (const required of ["npm run check", "npm run audit:interactions", "npm test", "npm run lint", "npx expo install --check", "npx expo-doctor", ":app:assembleDebug", ":app:assembleInternalDebug"]) {
   if (!workflow.includes(required)) errors.push(`Validation workflow is missing required gate: ${required}`);
 }
 
-// 9. Release/architecture integrity: preserve the five-tab surface, YOCO
-// integration, and typed-route setup while keeping privileged keys out of the
-// client bundle.
+// 9. Release/architecture integrity.
 const tabDir = path.join(appDir, "(tabs)");
 for (const tab of ["index.tsx", "nearby.tsx", "create.tsx", "social.tsx", "local.tsx"]) requireFile(path.join(tabDir, tab), "Five-tab navigation");
 const allSource = [...walk(appDir), ...walk(libDir)].map(read).join("\n");
