@@ -17,24 +17,51 @@ const migration = normalizeSql(
 const nearbyMediaFunction = readFileSync(resolve(process.cwd(), "supabase/functions/nearby-media/index.ts"), "utf8");
 const nearbyPostDetailFunction = readFileSync(resolve(process.cwd(), "supabase/functions/nearby-post-detail/index.ts"), "utf8");
 
+const sectionBetween = (source: string, start: string, end: string) => {
+  const startIndex = source.indexOf(start);
+  const endIndex = source.indexOf(end, startIndex + start.length);
+  expect(startIndex).toBeGreaterThanOrEqual(0);
+  expect(endIndex).toBeGreaterThan(startIndex);
+  return source.slice(startIndex, endIndex);
+};
+
 describe("nearby media authorization", () => {
   it("removes nearby visibility from direct Storage authorization", () => {
-    expect(migration).toContain("p.visibility = 'public'");
-    expect(migration).not.toMatch(/p\.visibility\s*=\s*'nearby'/);
-    expect(migration).toContain("drop policy if exists post_media_public_read");
-    expect(migration).toContain("drop policy if exists media_authenticated_read");
+    const storagePolicy = sectionBetween(
+      migration,
+      "create policy media_authenticated_read",
+      ");",
+    );
+
+    expect(storagePolicy).toContain("bucket_id = 'local-radar-media'");
+    expect(storagePolicy).toContain("p.visibility = 'public'");
+    expect(storagePolicy).not.toContain("p.visibility = 'nearby'");
+    expect(migration).toContain("drop policy if exists media_authenticated_read on storage.objects");
   });
 
-  it("removes the public post_media metadata bypass", () => {
-    expect(migration).toContain("create policy post_media_public_read");
-    expect(migration).toContain("p.author_id = (select auth.uid())");
-    expect(migration).toContain("p.visibility = 'public'::public.visibility_scope");
-    expect(migration).not.toContain("using (true)");
+  it("removes the nearby bypass from direct post_media metadata access", () => {
+    const postMediaPolicy = sectionBetween(
+      migration,
+      "create policy post_media_public_read",
+      "drop policy if exists media_authenticated_read on storage.objects",
+    );
+
+    expect(postMediaPolicy).toContain("p.author_id = (select auth.uid())");
+    expect(postMediaPolicy).toContain("p.visibility = 'public'::public.visibility_scope");
+    expect(postMediaPolicy).not.toContain("'nearby'::public.visibility_scope");
+    expect(postMediaPolicy).not.toContain("using (true)");
   });
 
-  it("keeps the location authorization helper server-only", () => {
-    expect(migration).toContain("create or replace function public.can_access_nearby_post_media");
-    expect(migration).toMatch(/security definer\s+set search_path = ''/);
+  it("keeps nearby authorization exclusively inside the server-only helper", () => {
+    const helper = sectionBetween(
+      migration,
+      "create or replace function public.can_access_nearby_post_media",
+      "revoke execute on function public.can_access_nearby_post_media",
+    );
+
+    expect(helper).toContain("p.visibility = 'nearby'::public.visibility_scope");
+    expect(helper).toContain("security definer");
+    expect(helper).toContain("set search_path = ''");
     expect(migration).toContain("revoke execute on function public.can_access_nearby_post_media");
     expect(migration).toContain("grant execute on function public.can_access_nearby_post_media");
   });
