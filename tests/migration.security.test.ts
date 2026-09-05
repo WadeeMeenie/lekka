@@ -9,6 +9,7 @@ const mediaCleanupSecurityMigration = readMigration("20260905171500_secure_media
 const mediaCleanupCronFixMigration = readMigration("20260905172000_fix_media_cleanup_cron_routing.sql");
 const rpcPrivilegeMigration = readMigration("20260905173000_lock_down_client_rpc_execute_privileges.sql");
 const businessLogoLifecycleMigration = readMigration("20260905180000_business_logo_media_lifecycle.sql");
+const messagingSecurityMigration = readMigration("20260905181000_harden_direct_message_updates.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -82,5 +83,16 @@ describe("client RPC execution privileges", () => {
     ]) {
       expect(rpcPrivilegeMigration).toContain(`revoke execute on function public.${functionName}`);
     }
+  });
+});
+
+describe("direct messaging update security", () => {
+  it("makes conversation participants and message ownership immutable during client updates", () => {
+    expect(messagingSecurityMigration).toContain("enforce_direct_conversation_update");
+    expect(messagingSecurityMigration).toContain("Conversation participants and requester are immutable");
+    expect(messagingSecurityMigration).toContain("enforce_direct_message_update");
+    expect(messagingSecurityMigration).toContain("Message content and ownership are immutable");
+    expect(messagingSecurityMigration).toContain("Only the message recipient can update read status");
+    expect(messagingSecurityMigration).toContain("to authenticated");
   });
 });
