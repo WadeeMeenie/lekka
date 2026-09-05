@@ -14,8 +14,6 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  # These are Supabase client-side values. Keep secret overrides for environments
-  # that provide them, but never allow an empty GitHub secret to produce a broken APK.
   EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://vnitwsjidlurlwlpsmtf.supabase.co' }}
   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_hy1yuUGTdhl8fEnR4jAIIg_kWJ3JQdX' }}
 
@@ -27,12 +25,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Validate Supabase build configuration
         shell: bash
         run: |
@@ -41,29 +37,22 @@ jobs:
           test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
           [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
           [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
-          echo "Supabase client configuration is present and valid."
-
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-
       - name: TypeScript
         run: npm run check
-
       - name: Static interaction and route audit
         run: npm run audit:interactions
-
+      - name: Production architecture and release invariant audit
+        run: npm run audit:production
       - name: Unit and integration tests
         run: npm test
-
       - name: Lint
         run: npm run lint
-
       - name: Expo config
         run: npx expo config --type public
-
       - name: Expo dependency compatibility
         run: npx expo install --check
-
       - name: Expo doctor
         run: npx expo-doctor
 
@@ -74,18 +63,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Validate Supabase build configuration
         shell: bash
         run: |
@@ -94,19 +80,14 @@ jobs:
           test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
           [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
           [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
-          echo "Supabase client configuration is present and valid."
-
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-
       - name: Expo config
         run: npx expo config --type public
-
       - name: Expo prebuild
         env:
           NODE_ENV: production
         run: npx expo prebuild --no-install --non-interactive --clean
-
       - name: Verify generated native project
         working-directory: android
         run: |
@@ -115,15 +96,12 @@ jobs:
           ./gradlew :app:tasks --all --no-daemon >/tmp/gradle-tasks.txt
           grep -q 'assembleDebug' /tmp/gradle-tasks.txt
           grep -q 'assembleInternalDebug' /tmp/gradle-tasks.txt
-
       - name: Android debug build
         working-directory: android
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
-
       - name: Android internal debug build
         working-directory: android
         run: ./gradlew :app:assembleInternalDebug --no-daemon --stacktrace
-
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         with:
@@ -132,7 +110,6 @@ jobs:
             android/app/build/outputs/apk/debug/*.apk
             android/app/build/outputs/apk/internalDebug/*.apk
           if-no-files-found: error
-
       - name: Upload native reports on failure
         if: failure()
         uses: actions/upload-artifact@v4
