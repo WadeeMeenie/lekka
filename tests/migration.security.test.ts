@@ -8,6 +8,7 @@ const mediaLifecycleMigration = readMigration("20260905160000_media_lifecycle_cl
 const mediaCleanupSecurityMigration = readMigration("20260905171500_secure_media_cleanup_invocation.sql");
 const mediaCleanupCronFixMigration = readMigration("20260905172000_fix_media_cleanup_cron_routing.sql");
 const rpcPrivilegeMigration = readMigration("20260905173000_lock_down_client_rpc_execute_privileges.sql");
+const businessLogoLifecycleMigration = readMigration("20260905180000_business_logo_media_lifecycle.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -28,6 +29,13 @@ describe("media lifecycle cleanup", () => {
     expect(mediaLifecycleMigration).toContain("after delete on public.profiles");
     expect(mediaLifecycleMigration).toContain("after update of profile_image_path on public.profiles");
     expect(mediaLifecycleMigration).toContain("lekka-media-cleanup");
+  });
+
+  it("cleans up business logo replacement and deletion paths", () => {
+    expect(businessLogoLifecycleMigration).toContain("enqueue_business_logo_media_cleanup");
+    expect(businessLogoLifecycleMigration).toContain("after delete on public.businesses");
+    expect(businessLogoLifecycleMigration).toContain("after update of logo_path on public.businesses");
+    expect(businessLogoLifecycleMigration).toContain("where business.logo_path = objects.name");
   });
 
   it("uses the Storage API from a server-side function and retries failures", () => {
