@@ -87,12 +87,12 @@ describe("client RPC execution privileges", () => {
 });
 
 describe("direct messaging update security", () => {
-  it("makes conversation participants and message ownership immutable during client updates", () => {
-    expect(messagingSecurityMigration).toContain("enforce_direct_conversation_update");
-    expect(messagingSecurityMigration).toContain("Conversation participants and requester are immutable");
-    expect(messagingSecurityMigration).toContain("enforce_direct_message_update");
-    expect(messagingSecurityMigration).toContain("Message content and ownership are immutable");
-    expect(messagingSecurityMigration).toContain("Only the message recipient can update read status");
+  it("limits conversation and message updates to their intended columns and actor", () => {
+    expect(messagingSecurityMigration).toContain("revoke update on table public.direct_conversations from authenticated");
+    expect(messagingSecurityMigration).toContain("grant update (request_status) on table public.direct_conversations to authenticated");
+    expect(messagingSecurityMigration).toContain("revoke update on table public.direct_messages from authenticated");
+    expect(messagingSecurityMigration).toContain("grant update (read_at) on table public.direct_messages to authenticated");
     expect(messagingSecurityMigration).toContain("to authenticated");
+    expect(messagingSecurityMigration).toContain("(select auth.uid()) <> sender_id");
   });
 });
