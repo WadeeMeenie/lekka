@@ -7,6 +7,7 @@ const mediaHardeningMigration = readMigration("20260905150000_media_access_harde
 const mediaLifecycleMigration = readMigration("20260905160000_media_lifecycle_cleanup.sql");
 const mediaCleanupSecurityMigration = readMigration("20260905171500_secure_media_cleanup_invocation.sql");
 const mediaCleanupCronFixMigration = readMigration("20260905172000_fix_media_cleanup_cron_routing.sql");
+const rpcPrivilegeMigration = readMigration("20260905173000_lock_down_client_rpc_execute_privileges.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -51,5 +52,27 @@ describe("media lifecycle cleanup", () => {
     expect(mediaCleanupCronFixMigration).toContain("net.http_post");
     expect(mediaCleanupCronFixMigration).toContain("'apikey', 'sb_publishable_");
     expect(mediaCleanupCronFixMigration).toContain("'x-media-cleanup-token'");
+  });
+});
+
+describe("client RPC execution privileges", () => {
+  it("keeps privileged Yoco status mutation server-only", () => {
+    expect(rpcPrivilegeMigration).toContain("revoke execute on function public.set_payment_order_status_from_yoco");
+    expect(rpcPrivilegeMigration).toContain("grant execute on function public.set_payment_order_status_from_yoco");
+    expect(rpcPrivilegeMigration).toContain("to service_role");
+  });
+
+  it("removes anonymous RPC access from authenticated-only social and business operations", () => {
+    for (const functionName of [
+      "is_business_manager",
+      "get_or_create_direct_conversation",
+      "create_community_post",
+      "delete_own_post",
+      "toggle_follow",
+      "toggle_reaction",
+      "toggle_saved_post",
+    ]) {
+      expect(rpcPrivilegeMigration).toContain(`revoke execute on function public.${functionName}`);
+    }
   });
 });
