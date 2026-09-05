@@ -82,6 +82,7 @@ if (fs.existsSync(migrationsDir)) {
   const migrationFiles = fs.readdirSync(migrationsDir).filter((name) => name.endsWith(".sql"));
   if (!migrationFiles.some((name) => /delete_own_posts|own_posts/i.test(name))) warnings.push("No own-post deletion migration filename was found; verify the authenticated own-post DELETE policy remains present.");
   if (!migrationFiles.some((name) => /media_lifecycle_cleanup/i.test(name))) errors.push("Media lifecycle cleanup migration is missing; deleted media must be queued for Storage deletion.");
+  if (!migrationFiles.some((name) => /business_logo_media_lifecycle/i.test(name))) errors.push("Business logo media lifecycle migration is missing; replaced/deleted business logos must be queued for Storage deletion.");
 }
 requireFile(path.join(root, "supabase", "functions", "cleanup-media", "index.ts"), "Media cleanup Edge Function");
 requireFile(path.join(root, "supabase", "config.toml"), "Supabase function configuration");
