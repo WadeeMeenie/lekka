@@ -1,3 +1,5 @@
+import { randomUUID } from "expo-crypto";
+
 import { type BusinessProfileInput, type PersonalIdentityInput, validateBusinessProfile, validatePersonalIdentity } from "@/lib/account";
 import { supabase } from "@/lib/supabase";
 import { uploadMedia } from "@/lib/supabase-repository";
@@ -76,9 +78,15 @@ export async function saveBusinessLogo(businessId: string, uri: string, contentT
   if (!supabase) return { error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: new Error("Please sign in") };
-  const path = `${user.id}/businesses/${businessId}/logo`;
+  // Each replacement gets a unique object path. The DB trigger queues the previous
+  // logo for server-side Storage deletion after the business row is updated.
+  const path = `${user.id}/businesses/${businessId}/logo-${randomUUID()}`;
   const upload = await uploadMedia(uri, path, contentType);
   if (upload.error) return { error: upload.error };
   const update = await supabase.from("businesses").update({ logo_path: path, updated_at: new Date().toISOString() }).eq("id", businessId);
-  return { error: update.error };
+  if (update.error) {
+    await supabase.storage.from("local-radar-media").remove([path]);
+    return { error: update.error };
+  }
+  return { error: null };
 }
