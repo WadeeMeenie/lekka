@@ -11,6 +11,7 @@ const businessPostAuthorizationMigration = readMigration("202608210007_business_
 const businessMembershipRolesMigration = readMigration("202608210008_business_membership_roles.sql");
 const businessInvitationsMigration = readMigration("202608210009_business_invitations.sql");
 const preferencesAndBuddiesMigration = readMigration("202608220007_feed_preferences_buddies.sql");
+const mediaHardeningMigration = readMigration("20260905150000_media_access_hardening.sql");
 
 describe("Supabase security migration", () => {
   it("defines the primary product tables", () => {
@@ -31,6 +32,15 @@ describe("Supabase security migration", () => {
     expect(coreMigration).toContain("values ('local-radar-media', 'local-radar-media', false)");
     expect(coreMigration).toContain("create policy media_user_upload");
     expect(coreMigration).toContain("storage.foldername(name)");
+  });
+
+  it("hardens media reads and binds post media to its author's storage namespace", () => {
+    expect(mediaHardeningMigration).toContain("on storage.objects");
+    expect(mediaHardeningMigration).toContain("to authenticated");
+    expect(mediaHardeningMigration).toContain("owner_id = (select auth.uid()::text)");
+    expect(mediaHardeningMigration).toContain("create or replace function private.validate_post_media_storage_path()");
+    expect(mediaHardeningMigration).toContain("Post media must belong to the post author storage namespace");
+    expect(mediaHardeningMigration).toContain("create trigger validate_post_media_storage_path");
   });
 
   it("uses current coordinates and PostGIS for nearby discovery", () => {
