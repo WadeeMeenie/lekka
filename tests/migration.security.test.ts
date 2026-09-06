@@ -13,6 +13,7 @@ const messagingSecurityMigration = readMigration("20260905181000_harden_direct_m
 const profileRoleSecurityMigration = readMigration("20260905182000_protect_profile_role.sql");
 const businessFunctionSecurityMigration = readMigration("20260905183000_harden_business_security_definers.sql");
 const crossAccountHardeningMigration = readMigration("20260905190000_cross_account_business_community_storage_hardening.sql");
+const communityRlsRecursionMigration = readMigration("20260906071000_fix_community_rls_recursion.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -140,5 +141,15 @@ describe("cross-account community and storage hardening", () => {
     expect(crossAccountHardeningMigration).toContain("community.visibility = 'public'");
     expect(crossAccountHardeningMigration).toContain("community.created_by = (select auth.uid())");
     expect(crossAccountHardeningMigration).toContain("public.is_community_member(community.id");
+  });
+});
+
+describe("community RLS recursion hardening", () => {
+  it("separates public discovery from member-only access", () => {
+    expect(communityRlsRecursionMigration).toContain("create policy communities_public_read");
+    expect(communityRlsRecursionMigration).toContain("using (visibility = 'public')");
+    expect(communityRlsRecursionMigration).toContain("create policy communities_member_read");
+    expect(communityRlsRecursionMigration).toContain("public.is_community_member(id, (select auth.uid()))");
+    expect(communityRlsRecursionMigration).not.toContain("from public.community_members");
   });
 });
