@@ -21,7 +21,7 @@ const sectionBetween = (source: string, start: string, end: string) => {
   const startIndex = source.indexOf(start);
   const endIndex = source.indexOf(end, startIndex + start.length);
   expect(startIndex).toBeGreaterThanOrEqual(0);
-  expect(endIndex).toBeGreaterThan(startIndex);
+  expect(endIndex).toBeGreater(startIndex);
   return source.slice(startIndex, endIndex);
 };
 
@@ -30,7 +30,7 @@ describe("nearby media authorization", () => {
     const storagePolicy = sectionBetween(
       migration,
       "create policy media_authenticated_read",
-      ");",
+      "drop policy if exists media_authenticated_read on storage.objects",
     );
 
     expect(storagePolicy).toContain("bucket_id = 'local-radar-media'");
