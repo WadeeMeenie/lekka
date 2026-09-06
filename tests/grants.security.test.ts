@@ -6,6 +6,10 @@ const migration = readFileSync(
   resolve(process.cwd(), "supabase/migrations/20260905200000_tighten_sensitive_table_grants.sql"),
   "utf8",
 );
+const postgisMigration = readFileSync(
+  resolve(process.cwd(), "supabase/migrations/20260906070000_revoke_public_postgis_extent_execute.sql"),
+  "utf8",
+);
 
 describe("sensitive table grants", () => {
   it("removes anonymous reachability from sensitive tables", () => {
@@ -35,5 +39,19 @@ describe("sensitive table grants", () => {
     expect(migration).toContain("revoke insert, update, delete on table public.platform_admins from authenticated");
     expect(migration).toContain("revoke insert, update, delete on table public.yoco_webhook_subscriptions from authenticated");
     expect(migration).toContain("revoke delete on table public.reports from authenticated");
+  });
+});
+
+describe("PostGIS API exposure", () => {
+  it("removes client execution of the unused SECURITY DEFINER ST_EstimatedExtent overloads", () => {
+    for (const signature of [
+      "public.st_estimatedextent(text, text)",
+      "public.st_estimatedextent(text, text, text)",
+      "public.st_estimatedextent(text, text, text, boolean)",
+    ]) {
+      expect(postgisMigration).toContain(
+        `revoke execute on function ${signature} from anon, authenticated, public;`,
+      );
+    }
   });
 });
