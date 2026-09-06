@@ -25,13 +25,15 @@ const sectionBetween = (source: string, start: string, end: string) => {
   return source.slice(startIndex, endIndex);
 };
 
+const sectionAfter = (source: string, start: string) => {
+  const startIndex = source.indexOf(start);
+  expect(startIndex).toBeGreaterThanOrEqual(0);
+  return source.slice(startIndex);
+};
+
 describe("nearby media authorization", () => {
   it("removes nearby visibility from direct Storage authorization", () => {
-    const storagePolicy = sectionBetween(
-      migration,
-      "create policy media_authenticated_read",
-      "drop policy if exists media_authenticated_read on storage.objects",
-    );
+    const storagePolicy = sectionAfter(migration, "create policy media_authenticated_read");
 
     expect(storagePolicy).toContain("bucket_id = 'local-radar-media'");
     expect(storagePolicy).toContain("p.visibility = 'public'");
