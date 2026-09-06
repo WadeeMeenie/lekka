@@ -21,7 +21,7 @@ const sectionBetween = (source: string, start: string, end: string) => {
   const startIndex = source.indexOf(start);
   const endIndex = source.indexOf(end, startIndex + start.length);
   expect(startIndex).toBeGreaterThanOrEqual(0);
-  expect(endIndex).toBeGreater(startIndex);
+  expect(endIndex).toBeGreaterThan(startIndex);
   return source.slice(startIndex, endIndex);
 };
 
