@@ -30,14 +30,17 @@ const sectionBetween = (source: string, start: string, end: string) => {
 };
 
 describe("location-scoped post read hardening", () => {
-  it("removes direct nearby visibility from the posts RLS policy", () => {
+  it("removes the previous direct nearby-read policy before defining its replacement", () => {
+    expect(migration).toContain("drop policy if exists posts_public_read on public.posts;");
+  });
+
+  it("keeps nearby visibility out of the direct posts RLS policy", () => {
     const directReadPolicy = sectionBetween(
       migration,
       "create policy posts_public_read",
       "create or replace function public.nearby_feed_posts",
     );
 
-    expect(directReadPolicy).toContain("drop policy if exists posts_public_read on public.posts;");
     expect(directReadPolicy).toContain("visibility = 'public'::public.visibility_scope");
     expect(directReadPolicy).not.toContain("'nearby'::public.visibility_scope");
   });
@@ -70,7 +73,7 @@ describe("location-scoped post read hardening", () => {
     expect(detailMigration).toContain("create or replace function public.nearby_post_detail");
     expect(detailMigration).toContain("security definer");
     expect(detailMigration).toContain("set search_path = ''");
-    expect(detailMigration).toContain("extensions.st_dwithin");
+    expect(detailMigration).toContain("public.st_dwithin");
     expect(detailMigration).toContain("p.visibility in ('public'::public.visibility_scope, 'nearby'::public.visibility_scope)");
     expect(detailMigration).toContain("revoke execute on function public.nearby_post_detail");
     expect(detailMigration).toMatch(
