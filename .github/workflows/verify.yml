@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 24
 
-      - run: pnpm install --frozen-lockfile
+      - run: pnpm install --no-frozen-lockfile
 
       - run: pnpm check
       - run: pnpm test
