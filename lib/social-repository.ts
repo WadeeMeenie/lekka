@@ -52,7 +52,7 @@ export async function getPostDetail(postId: string) {
   if (profile.error) return { data: null, error: profile.error };
   return {
     data: {
-      ...(data as SocialPost),
+      ...(data as unknown as SocialPost),
       profiles: profile.data as SocialProfile | null,
     },
     error: null,
