@@ -78,9 +78,9 @@ language sql
 stable
 security definer
 set search_path = ''
-as $
+as $function$
   select coalesce((select p.is_private from public.profiles p where p.id = owner_id), false);
-$;
+$function$;
 
 revoke all on function public.is_profile_private(uuid) from public, anon;
 grant execute on function public.is_profile_private(uuid) to authenticated;
