@@ -198,6 +198,6 @@ describe("production hardening", () => {
     expect(localRadarSource).toContain("local-radar/posts/v2");
     expect(localRadarSource).toContain('POSTS_KEY + "/" + userId');
     expect(activeIdentitySource).toContain("lekka/active-identity/v2");
-    expect(activeIdentitySource).toContain("ACTIVE_IDENTITY_KEY + "/" + user.id");
+    expect(activeIdentitySource).toContain('ACTIVE_IDENTITY_KEY + "/" + user.id');
   });
 });
