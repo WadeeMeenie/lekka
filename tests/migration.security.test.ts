@@ -14,6 +14,10 @@ const profileRoleSecurityMigration = readMigration("20260905182000_protect_profi
 const businessFunctionSecurityMigration = readMigration("20260905183000_harden_business_security_definers.sql");
 const crossAccountHardeningMigration = readMigration("20260905190000_cross_account_business_community_storage_hardening.sql");
 const communityRlsRecursionMigration = readMigration("20260906071000_fix_community_rls_recursion.sql");
+const productionHardeningMigration = readMigration("20260921230000_production_hardening.sql");
+const profileRpcFieldsMigration = readMigration("20260921232000_profile_rpc_fields.sql");
+const localRadarSource = readFileSync(resolve(process.cwd(), "lib/local-radar.ts"), "utf8");
+const activeIdentitySource = readFileSync(resolve(process.cwd(), "lib/active-identity.ts"), "utf8");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -151,5 +155,41 @@ describe("community RLS recursion hardening", () => {
     expect(communityRlsRecursionMigration).toContain("create policy communities_member_read");
     expect(communityRlsRecursionMigration).toContain("public.is_community_member(id, (select auth.uid()))");
     expect(communityRlsRecursionMigration).not.toContain("from public.community_members");
+  });
+});
+
+
+describe("production hardening", () => {
+  it("restores caller-owned block RLS and blocks cross-account reads/writes", () => {
+    expect(productionHardeningMigration).toContain("create policy blocks_self_access");
+    expect(productionHardeningMigration).toContain("using (blocker_id = auth.uid())");
+    expect(productionHardeningMigration).toContain("with check (blocker_id = auth.uid())");
+  });
+
+  it("creates a single viewer-aware profile boundary and removes sensitive column SELECT grants", () => {
+    expect(productionHardeningMigration).toContain("create or replace function public.get_profile_for_viewer");
+    expect(productionHardeningMigration).toContain("create or replace function public.get_my_profile");
+    expect(productionHardeningMigration).toContain("create or replace function public.update_my_profile");
+    expect(productionHardeningMigration).toContain("revoke select on public.profiles from anon, authenticated");
+    expect(productionHardeningMigration).toContain("grant select (id, display_name, username, profile_image_path)");
+  });
+
+  it("makes private-profile post visibility depend on owner or accepted buddy access", () => {
+    expect(productionHardeningMigration).toContain("public.is_profile_private(author_id)");
+    expect(productionHardeningMigration).toContain("public.can_view_full_profile(auth.uid(), author_id)");
+    expect(productionHardeningMigration).toContain("drop policy if exists posts_public_read");
+  });
+
+  it("returns the private profile fields only through the viewer-aware RPC", () => {
+    expect(profileRpcFieldsMigration).toContain("interests text[]");
+    expect(profileRpcFieldsMigration).toContain("home_area text");
+    expect(profileRpcFieldsMigration).toContain("public.can_view_full_profile(auth.uid(), p.id)");
+  });
+
+  it("scopes offline feed and active identity storage to the authenticated account", () => {
+    expect(localRadarSource).toContain("local-radar/posts/v2");
+    expect(localRadarSource).toContain('POSTS_KEY + "/" + userId');
+    expect(activeIdentitySource).toContain("lekka/active-identity/v2");
+    expect(activeIdentitySource).toContain("ACTIVE_IDENTITY_KEY + "/" + user.id");
   });
 });
