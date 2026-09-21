@@ -42,9 +42,16 @@ async function hydratePostData(posts: LocalPost[]): Promise<LocalPost[]> {
 }
 
 export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPost[]> {
-  const cached = await loadPosts(); if (!isSupabaseConfigured || !supabase) return cached;
+  if (!isSupabaseConfigured || !supabase) return loadPosts();
+  const { data: { user } } = await supabase.auth.getUser();
+  const cached = await loadPosts(user?.id);
+  if (!user) return cached;
   const result = location ? await supabase.rpc("nearby_feed_posts", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000 }) : await supabase.from("posts").select(`id, author_id, kind, category, title, body, area, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).limit(50);
-  const { data, error } = result; if (error || !data) return cached; const posts = await hydratePostData(data.map(toLocalPost)); await savePosts(posts); return posts;
+  const { data, error } = result;
+  if (error || !data) return cached;
+  const posts = await hydratePostData(data.map(toLocalPost));
+  await savePosts(posts, user.id);
+  return posts;
 }
 
 const localFeedListeners = new Set<() => void>();
@@ -138,7 +145,10 @@ export async function attachPostMedia(input: { postId: string; storagePath: stri
 
 export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean };
 export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20, radiusMeters = 5000): Promise<FeedPage> {
-  const cached = await loadPosts(); if (!isSupabaseConfigured || !supabase) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
+  if (!isSupabaseConfigured || !supabase) return { posts: [], nextCursor: null, hasMore: false };
+  const { data: { user } } = await supabase.auth.getUser();
+  const cached = await loadPosts(user?.id);
+  if (!user) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
   const cursorParts = cursor ? cursor.split("|") : []; const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null; const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null; let result: any;
   if (location) result = await supabase.rpc("nearby_feed_posts_page", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusMeters, cursor_created_at: cursorCreatedAt, cursor_id: cursorId, page_size: pageSize });
   else { let query = supabase.from("posts").select(`id, author_id, kind, category, title, body, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize); if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`); result = await query; }
@@ -148,6 +158,6 @@ export async function fetchFeedPage(location: DeviceLocation | undefined, cursor
 export async function listPublicProfilePosts(profileId: string, cursor: string | null, pageSize = 20) {
   if (!supabase) return { data: [] as SocialPost[], nextCursor: null as string | null, hasMore: false, error: new Error("Backend is not configured") };
   const cursorParts = cursor ? cursor.split("|") : []; const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null; const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null;
-  let query = supabase.from("posts").select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, bio, profile_image_path, interests, home_area), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)").eq("author_id", profileId).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
+  let query = supabase.from("posts").select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)").eq("author_id", profileId).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
   if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`); const { data, error } = await query; const rows = (data ?? []) as unknown as SocialPost[]; const last = rows[rows.length - 1]; const nextCursor = rows.length === pageSize && last ? `${last.created_at}|${last.id}` : null; return { data: rows, nextCursor, hasMore: Boolean(nextCursor), error };
 }
