@@ -72,6 +72,19 @@ $$;
 revoke all on function public.can_view_full_profile(uuid, uuid) from public, anon;
 grant execute on function public.can_view_full_profile(uuid, uuid) to authenticated;
 
+create or replace function public.is_profile_private(owner_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select coalesce((select p.is_private from public.profiles p where p.id = owner_id), false);
+$;
+
+revoke all on function public.is_profile_private(uuid) from public, anon;
+grant execute on function public.is_profile_private(uuid) to authenticated;
+
 create or replace function public.get_profile_for_viewer(owner_id uuid)
 returns table (
   id uuid,
@@ -243,10 +256,7 @@ create policy posts_public_read
       visibility = 'public'
       and not public.is_blocked_between(auth.uid(), author_id)
       and (
-        not coalesce(
-          (select p.is_private from public.profiles p where p.id = posts.author_id),
-          false
-        )
+        not public.is_profile_private(author_id)
         or public.can_view_full_profile(auth.uid(), author_id)
       )
       and (
