@@ -18,6 +18,7 @@ const productionHardeningMigration = readMigration("20260921230000_production_ha
 const profileRpcFieldsMigration = readMigration("20260921232000_profile_rpc_fields.sql");
 const localRadarSource = readFileSync(resolve(process.cwd(), "lib/local-radar.ts"), "utf8");
 const activeIdentitySource = readFileSync(resolve(process.cwd(), "lib/active-identity.ts"), "utf8");
+const radarRpcMigration = readMigration("20260921235000_lock_down_radar_rpc.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -184,6 +185,13 @@ describe("production hardening", () => {
     expect(profileRpcFieldsMigration).toContain("interests text[]");
     expect(profileRpcFieldsMigration).toContain("home_area text");
     expect(profileRpcFieldsMigration).toContain("public.can_view_full_profile(auth.uid(), p.id)");
+  });
+
+  it("locks location-sensitive Radar RPC execution to authenticated callers", () => {
+    expect(radarRpcMigration).toContain("revoke execute on function public.nearby_radar");
+    expect(radarRpcMigration).toContain("from public, anon");
+    expect(radarRpcMigration).toContain("grant execute on function public.nearby_radar");
+    expect(radarRpcMigration).toContain("to authenticated");
   });
 
   it("scopes offline feed and active identity storage to the authenticated account", () => {
