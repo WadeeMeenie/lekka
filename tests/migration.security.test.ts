@@ -20,6 +20,7 @@ const localRadarSource = readFileSync(resolve(process.cwd(), "lib/local-radar.ts
 const activeIdentitySource = readFileSync(resolve(process.cwd(), "lib/active-identity.ts"), "utf8");
 const radarRpcMigration = readMigration("20260921235000_lock_down_radar_rpc.sql");
 const excessiveClientPrivilegesMigration = readMigration("20260924200000_revoke_excessive_client_table_privileges.sql");
+const defaultClientPrivilegesMigration = readMigration("20260924200500_harden_public_default_client_privileges.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -198,6 +199,11 @@ describe("production hardening", () => {
     expect(excessiveClientPrivilegesMigration).toContain("revoke truncate, references, trigger on table");
     expect(excessiveClientPrivilegesMigration).toContain("from anon, authenticated");
     expect(excessiveClientPrivilegesMigration).toContain("c.relkind = 'r'");
+  });
+
+  it("removes dangerous client privileges from future public functions and tables", () => {
+    expect(defaultClientPrivilegesMigration).toContain("alter default privileges in schema public revoke truncate, references, trigger on tables from anon, authenticated");
+    expect(defaultClientPrivilegesMigration).toContain("alter default privileges in schema public revoke execute on functions from anon, authenticated");
   });
 
   it("scopes offline feed and active identity storage to the authenticated account", () => {
