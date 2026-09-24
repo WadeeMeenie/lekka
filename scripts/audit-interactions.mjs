@@ -81,7 +81,7 @@ for (const file of files) {
 
     const onPressAttr = attrs.find((attribute) => attribute.name?.type === "JSXIdentifier" && attribute.name.name === "onPress");
     const onPressText = onPressAttr ? source.slice(onPressAttr.value?.start ?? 0, onPressAttr.value?.end ?? 0) : "";
-    if (/=>\s*\\{\\s*\\}/.test(onPressText) || /=>\s*null/.test(onPressText) || /=>\s*undefined/.test(onPressText)) {
+    if (/=>\s*\{\s*\}/.test(onPressText) || /=>\s*null/.test(onPressText) || /=>\s*undefined/.test(onPressText)) {
       errors.push(`${rel}:${line}: ${node.name.name} has a no-op onPress handler`);
     }
 
