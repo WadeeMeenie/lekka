@@ -27,9 +27,7 @@ Deno.serve(async (req) => {
   const { data: { user }, error: userError } = await authClient.auth.getUser();
   if (userError || !user) return json({ error: "unauthorized" }, 401);
 
-  const { data: isAdmin, error: adminError } = await authClient.rpc("is_platform_admin", {
-    target_user: user.id,
-  });
+  const { data: isAdmin, error: adminError } = await authClient.rpc("is_platform_admin");
   if (adminError || !isAdmin) return json({ error: "admin_required" }, 403);
 
   const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
