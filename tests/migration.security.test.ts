@@ -209,7 +209,7 @@ describe("production hardening", () => {
 
   it("enforces monotonic provider payment transitions and keeps the status RPC server-only", () => {
     expect(yocoTransitionMigration).toContain("status = p_status");
-    expect(yocoTransitionMigration).toContain("status = 'pending' and p_status in ('paid','failed')");
+    expect(yocoTransitionMigration).toContain("status = 'pending' and p_status in ('paid', 'failed')");
     expect(yocoTransitionMigration).toContain("status = 'paid' and p_status = 'refunded'");
     expect(yocoTransitionMigration).toContain("invalid_payment_transition");
     expect(yocoTransitionMigration).toContain("from public, anon, authenticated");
