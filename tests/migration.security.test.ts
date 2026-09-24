@@ -20,6 +20,8 @@ const localRadarSource = readFileSync(resolve(process.cwd(), "lib/local-radar.ts
 const activeIdentitySource = readFileSync(resolve(process.cwd(), "lib/active-identity.ts"), "utf8");
 const radarRpcMigration = readMigration("20260921235000_lock_down_radar_rpc.sql");
 const excessiveClientPrivilegesMigration = readMigration("20260924200000_revoke_excessive_client_table_privileges.sql");
+const helperExecuteMigration = readMigration("20260924073018_harden_security_definer_helper_execute.sql");
+const discoveryBoundsMigration = readMigration("20260924073115_bound_discovery_radius_and_result_limit.sql");
 const defaultClientPrivilegesMigration = readMigration("20260924200500_harden_public_default_client_privileges.sql");
 const yocoTransitionMigration = readMigration("20260924110000_harden_yoco_payment_transitions.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
@@ -159,6 +161,20 @@ describe("community RLS recursion hardening", () => {
     expect(communityRlsRecursionMigration).toContain("create policy communities_member_read");
     expect(communityRlsRecursionMigration).toContain("public.is_community_member(id, (select auth.uid()))");
     expect(communityRlsRecursionMigration).not.toContain("from public.community_members");
+  });
+});
+
+describe("security-definer helper and discovery boundaries", () => {
+  it("removes direct client execute access from internal SECURITY DEFINER helpers", () => {
+    expect(helperExecuteMigration).toContain("revoke execute on function public.is_community_member(uuid, uuid) from public, anon, authenticated");
+    expect(helperExecuteMigration).toContain("revoke execute on function public.can_manage_business(uuid, uuid) from public, anon, authenticated");
+    expect(helperExecuteMigration).toContain("revoke execute on function public.can_view_full_profile(uuid, uuid) from public, anon, authenticated");
+    expect(helperExecuteMigration).toContain("drop function if exists public.is_platform_admin(uuid)");
+  });
+
+  it("bounds discovery radius and result size", () => {
+    expect(discoveryBoundsMigration).toContain("least(greatest(coalesce(radius_meters,500),500),50000)");
+    expect(discoveryBoundsMigration).toContain("limit least(greatest(coalesce(result_limit,100),1),100)");
   });
 });
 
