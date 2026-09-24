@@ -70,19 +70,19 @@ for (const file of files) {
 
     const line = node.loc?.start?.line ?? 0;
     if (!hasOnPress) {
-      errors.push(`\${rel}:\${line}: \${node.name.name} has no onPress handler`);
+      errors.push(`${rel}:${line}: ${node.name.name} has no onPress handler`);
     }
 
     const attrs = node.attributes.filter((attribute) => attribute?.type === "JSXAttribute");
     const disabledAttr = attrs.find((attribute) => attribute.name?.type === "JSXIdentifier" && attribute.name.name === "disabled");
     if (disabledAttr?.value?.type === "JSXExpressionContainer" && disabledAttr.value.expression?.type === "BooleanLiteral" && disabledAttr.value.expression.value === true) {
-      errors.push(`\${rel}:\${line}: \${node.name.name} is permanently disabled`);
+      errors.push(`${rel}:${line}: ${node.name.name} is permanently disabled`);
     }
 
     const onPressAttr = attrs.find((attribute) => attribute.name?.type === "JSXIdentifier" && attribute.name.name === "onPress");
     const onPressText = onPressAttr ? source.slice(onPressAttr.value?.start ?? 0, onPressAttr.value?.end ?? 0) : "";
-    if (/=>\\s*\\{\\s*\\}/.test(onPressText) || /=>\\s*null/.test(onPressText) || /=>\\s*undefined/.test(onPressText)) {
-      errors.push(`\${rel}:\${line}: \${node.name.name} has a no-op onPress handler`);
+    if (/=>\s*\\{\\s*\\}/.test(onPressText) || /=>\s*null/.test(onPressText) || /=>\s*undefined/.test(onPressText)) {
+      errors.push(`${rel}:${line}: ${node.name.name} has a no-op onPress handler`);
     }
 
   });
