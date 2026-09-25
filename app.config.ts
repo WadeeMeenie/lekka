@@ -2,7 +2,7 @@ import type { ExpoConfig } from "expo/config";
 
 // Preserve the released Android/iOS application identifier for upgrade compatibility.
 // The internal package name is historical; changing it would create a new app identity.
-const appId = "com.app.localradarsa";
+const bundleId = "com.app.localradarsa";
 
 const config: ExpoConfig = {
   name: "Lekka",
@@ -15,7 +15,7 @@ const config: ExpoConfig = {
   newArchEnabled: true,
   ios: {
     supportsTablet: true,
-    bundleIdentifier: appId,
+    bundleIdentifier: bundleId,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -29,7 +29,7 @@ const config: ExpoConfig = {
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
-    package: appId,
+    package: bundleId,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
