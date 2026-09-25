@@ -14,6 +14,16 @@ const profileRoleSecurityMigration = readMigration("20260905182000_protect_profi
 const businessFunctionSecurityMigration = readMigration("20260905183000_harden_business_security_definers.sql");
 const crossAccountHardeningMigration = readMigration("20260905190000_cross_account_business_community_storage_hardening.sql");
 const communityRlsRecursionMigration = readMigration("20260906071000_fix_community_rls_recursion.sql");
+const productionHardeningMigration = readMigration("20260921230000_production_hardening.sql");
+const profileRpcFieldsMigration = readMigration("20260921232000_profile_rpc_fields.sql");
+const localRadarSource = readFileSync(resolve(process.cwd(), "lib/local-radar.ts"), "utf8");
+const activeIdentitySource = readFileSync(resolve(process.cwd(), "lib/active-identity.ts"), "utf8");
+const radarRpcMigration = readMigration("20260921235000_lock_down_radar_rpc.sql");
+const excessiveClientPrivilegesMigration = readMigration("20260924200000_revoke_excessive_client_table_privileges.sql");
+const helperExecuteMigration = readMigration("20260924073018_harden_security_definer_helper_execute.sql");
+const discoveryBoundsMigration = readMigration("20260924073115_bound_discovery_radius_and_result_limit.sql");
+const defaultClientPrivilegesMigration = readMigration("20260924200500_harden_public_default_client_privileges.sql");
+const yocoTransitionMigration = readMigration("20260924110000_harden_yoco_payment_transitions.sql");
 const mediaCleanupFunction = readFileSync(resolve(process.cwd(), "supabase/functions/cleanup-media/index.ts"), "utf8");
 
 describe("media security migration", () => {
@@ -151,5 +161,81 @@ describe("community RLS recursion hardening", () => {
     expect(communityRlsRecursionMigration).toContain("create policy communities_member_read");
     expect(communityRlsRecursionMigration).toContain("public.is_community_member(id, (select auth.uid()))");
     expect(communityRlsRecursionMigration).not.toContain("from public.community_members");
+  });
+});
+
+describe("security-definer helper and discovery boundaries", () => {
+  it("removes direct client execute access from internal SECURITY DEFINER helpers", () => {
+    expect(helperExecuteMigration).toContain("revoke execute on function public.is_community_member(uuid, uuid) from public, anon, authenticated");
+    expect(helperExecuteMigration).toContain("revoke execute on function public.can_manage_business(uuid, uuid) from public, anon, authenticated");
+    expect(helperExecuteMigration).toContain("revoke execute on function public.can_view_full_profile(uuid, uuid) from public, anon, authenticated");
+    expect(helperExecuteMigration).toContain("drop function if exists public.is_platform_admin(uuid)");
+  });
+
+  it("bounds discovery radius and result size", () => {
+    expect(discoveryBoundsMigration).toContain("least(greatest(coalesce(radius_meters,500),500),50000)");
+    expect(discoveryBoundsMigration).toContain("limit least(greatest(coalesce(result_limit,100),1),100)");
+  });
+});
+
+describe("production hardening", () => {
+  it("restores caller-owned block RLS and blocks cross-account reads/writes", () => {
+    expect(productionHardeningMigration).toContain("create policy blocks_self_access");
+    expect(productionHardeningMigration).toContain("using (blocker_id = auth.uid())");
+    expect(productionHardeningMigration).toContain("with check (blocker_id = auth.uid())");
+  });
+
+  it("creates a single viewer-aware profile boundary and removes sensitive column SELECT grants", () => {
+    expect(productionHardeningMigration).toContain("create or replace function public.get_profile_for_viewer");
+    expect(productionHardeningMigration).toContain("create or replace function public.get_my_profile");
+    expect(productionHardeningMigration).toContain("create or replace function public.update_my_profile");
+    expect(productionHardeningMigration).toContain("revoke select on public.profiles from anon, authenticated");
+    expect(productionHardeningMigration).toContain("grant select (id, display_name, username, profile_image_path)");
+  });
+
+  it("makes private-profile post visibility depend on owner or accepted buddy access", () => {
+    expect(productionHardeningMigration).toContain("public.is_profile_private(author_id)");
+    expect(productionHardeningMigration).toContain("public.can_view_full_profile(auth.uid(), author_id)");
+    expect(productionHardeningMigration).toContain("drop policy if exists posts_public_read");
+  });
+
+  it("returns the private profile fields only through the viewer-aware RPC", () => {
+    expect(profileRpcFieldsMigration).toContain("interests text[]");
+    expect(profileRpcFieldsMigration).toContain("home_area text");
+    expect(profileRpcFieldsMigration).toContain("public.can_view_full_profile(auth.uid(), p.id)");
+  });
+
+  it("locks location-sensitive Radar RPC execution to authenticated callers", () => {
+    expect(radarRpcMigration).toContain("revoke execute on function public.nearby_radar");
+    expect(radarRpcMigration).toContain("from public, anon");
+    expect(radarRpcMigration).toContain("grant execute on function public.nearby_radar");
+    expect(radarRpcMigration).toContain("to authenticated");
+  });
+
+  it("removes client-side TRUNCATE, REFERENCES and TRIGGER privileges from application tables", () => {
+    expect(excessiveClientPrivilegesMigration).toContain("revoke truncate, references, trigger on table");
+    expect(excessiveClientPrivilegesMigration).toContain("from anon, authenticated");
+    expect(excessiveClientPrivilegesMigration).toContain("c.relkind = 'r'");
+  });
+
+  it("removes dangerous client privileges from future public functions and tables", () => {
+    expect(defaultClientPrivilegesMigration).toContain("alter default privileges in schema public revoke truncate, references, trigger on tables from anon, authenticated");
+    expect(defaultClientPrivilegesMigration).toContain("alter default privileges in schema public revoke execute on functions from anon, authenticated");
+  });
+
+  it("enforces monotonic provider payment transitions and keeps the status RPC server-only", () => {
+    expect(yocoTransitionMigration).toContain("status = p_status");
+    expect(yocoTransitionMigration).toContain("status = 'pending' and p_status in ('paid', 'failed')");
+    expect(yocoTransitionMigration).toContain("status = 'paid' and p_status = 'refunded'");
+    expect(yocoTransitionMigration).toContain("invalid_payment_transition");
+    expect(yocoTransitionMigration).toContain("from public, anon, authenticated");
+    expect(yocoTransitionMigration).toContain("to service_role");
+  });
+
+  it("scopes offline feed and active identity storage to the authenticated account", () => {
+    expect(localRadarSource).toContain("local-radar/posts/v2");
+    expect(localRadarSource).toContain('POSTS_KEY + "/" + userId');
+    expect(activeIdentitySource).toContain("lekka/active-identity/v2");
+    expect(activeIdentitySource).toContain('ACTIVE_IDENTITY_KEY + "/" + user.id');
   });
 });

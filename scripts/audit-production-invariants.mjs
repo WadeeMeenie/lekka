@@ -55,7 +55,7 @@ if (/service_role|SUPABASE_SERVICE_ROLE|SERVICE_ROLE_KEY/i.test(supabaseSource))
 if (!/EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/.test(supabaseSource)) errors.push("Supabase client must use EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY.");
 requireFile(path.join(root, "hooks", "use-supabase-auth.ts"), "Supabase auth hook");
 requireFile(path.join(appDir, "auth.tsx"), "Authentication route");
-requireFile(path.join(appDir, "oauth", "callback.tsx"), "OAuth callback route");
+// Supabase OAuth is completed by WebBrowser.openAuthSessionAsync() and exchangeCodeForSession(); no legacy callback route is required.
 
 // 3. Social/discovery correctness: one canonical nearby-discovery path.
 for (const file of ["lib/discovery.ts", "lib/local-radar.ts", "lib/location.ts", "lib/supabase-repository.ts"]) requireFile(path.join(root, file), "Canonical discovery architecture");

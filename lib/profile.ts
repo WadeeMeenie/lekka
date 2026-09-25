@@ -18,34 +18,24 @@ export type ProfileInput = {
 
 export async function loadMyProfile() {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { data: null, error: new Error("Please sign in") };
-  return supabase
-    .from("profiles")
-    .select("id, display_name, username, bio, home_area, preferred_radius_m, interests, location_visibility, profile_image_path")
-    .eq("id", user.id)
-    .maybeSingle();
+  const { data, error } = await supabase.rpc("get_my_profile");
+  return { data: data?.[0] ?? null, error };
 }
 
 export async function saveMyProfile(input: ProfileInput) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { data: null, error: new Error("Please sign in") };
-  return supabase
-    .from("profiles")
-    .upsert({
-      id: user.id,
-      display_name: input.displayName,
-      username: input.username || null,
-      bio: input.bio,
-      home_area: input.homeArea,
-      preferred_radius_m: input.preferredRadiusM,
-      interests: input.interests ?? [],
-      location_visibility: input.locationVisibility ?? "area",
-      updated_at: new Date().toISOString(),
-    })
-    .select("id, display_name, username, bio, home_area, preferred_radius_m, interests, location_visibility, profile_image_path")
-    .single();
+  const { data, error } = await supabase.rpc("update_my_profile", {
+    p_display_name: input.displayName,
+    p_username: input.username || null,
+    p_bio: input.bio,
+    p_home_area: input.homeArea,
+    p_preferred_radius_m: input.preferredRadiusM,
+    p_interests: input.interests ?? [],
+    p_location_visibility: input.locationVisibility ?? "area",
+    p_is_private: input.isPrivate ?? false,
+    p_friends_list_visibility: input.friendsListVisibility ?? "friends",
+  });
+  return { data: data?.[0] ?? null, error };
 }
 
 export async function saveMyProfileAvatar(uri: string, contentType = "image/jpeg") {

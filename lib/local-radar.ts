@@ -33,9 +33,26 @@ export const seededRadar: RadarItem[] = [
 export function rankPosts(posts: LocalPost[], tab: FeedTab): LocalPost[] { const scored = posts.map((post) => { const distanceScore = post.distance.includes("0.7") ? 4 : post.distance.includes("1.2") ? 3 : 2; const trustScore = post.trusted ? 2 : 0; const tabScore = tab === "Nearby" ? distanceScore : tab === "Following" && post.author.includes("Neighbourhood") ? 4 : tab === "Trending" ? post.likes / 10 : post.kind === "alert" ? 3 : 1; return { post, score: distanceScore + trustScore + tabScore }; }); return scored.sort((a, b) => b.score - a.score).map(({ post }) => post); }
 export type FeedPreference = "interested" | "not_interested";
 export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>, currentUserPostIds: ReadonlySet<string> = new Set()): LocalPost[] { return rankPosts(posts.filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested"), tab).sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested")); }
-const POSTS_KEY = "local-radar/posts/v1";
+const POSTS_KEY = "local-radar/posts/v2";
+const LEGACY_POSTS_KEY = "local-radar/posts/v1";
 const SETTINGS_KEY = "local-radar/settings/v2";
-export async function loadPosts(): Promise<LocalPost[]> { const value = await AsyncStorage.getItem(POSTS_KEY); return value ? JSON.parse(value) : []; }
-export async function savePosts(posts: LocalPost[]) { await AsyncStorage.setItem(POSTS_KEY, JSON.stringify(posts)); }
+
+function postsKey(userId?: string | null) {
+  return userId ? POSTS_KEY + "/" + userId : POSTS_KEY + "/guest";
+}
+
+export async function loadPosts(userId?: string | null): Promise<LocalPost[]> {
+  const key = postsKey(userId);
+  const value = await AsyncStorage.getItem(key);
+  if (value) return JSON.parse(value);
+  if (!userId) return [];
+  // Never carry an unscoped feed cache across authenticated identities.
+  await AsyncStorage.removeItem(LEGACY_POSTS_KEY);
+  return [];
+}
+
+export async function savePosts(posts: LocalPost[], userId?: string | null) {
+  await AsyncStorage.setItem(postsKey(userId), JSON.stringify(posts));
+}
 export async function loadSettings(): Promise<LocalSettings> { const value = await AsyncStorage.getItem(SETTINGS_KEY); if (!value) { const legacy = await AsyncStorage.getItem("local-radar/settings/v1"); return legacy ? { ...defaultSettings, ...JSON.parse(legacy), selectedLocation: null } : defaultSettings; } return { ...defaultSettings, ...JSON.parse(value) }; }
 export async function saveSettings(settings: LocalSettings) { await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
