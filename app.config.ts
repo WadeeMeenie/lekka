@@ -1,4 +1,3 @@
-import "./scripts/load-env.js";
 import type { ExpoConfig } from "expo/config";
 
 // Preserve the released Android/iOS application identifier for upgrade compatibility.
