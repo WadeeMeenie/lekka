@@ -1,45 +1,22 @@
-// Load environment variables with proper priority (system > .env)
 import "./scripts/load-env.js";
 import type { ExpoConfig } from "expo/config";
 
-const rawBundleId = "com.app.localradarsa";
-const bundleId =
-  rawBundleId
-    .replace(/[-_]/g, ".")
-    .replace(/[^a-zA-Z0-9.]/g, "")
-    .replace(/\.+/g, ".")
-    .replace(/^\.+|\.+$/g, "")
-    .toLowerCase()
-    .split(".")
-    .map((segment) => /^[a-zA-Z]/.test(segment) ? segment : "x" + segment)
-    .join(".") || "space.manus.app";
-const timestamp = bundleId.split(".").pop()?.replace(/^t/, "") ?? "";
-const schemeFromBundleId = `manus${timestamp}`;
-
-const env = {
-  appName: "Lekka",
-  appSlug: "lekka",
-  logoUrl: "/manus-storage/local-radar-sa-icon_bbf80540.png",
-  scheme: schemeFromBundleId,
-  iosBundleId: bundleId,
-  androidPackage: bundleId,
-};
+// Preserve the released Android/iOS application identifier for upgrade compatibility.
+// The internal package name is historical; changing it would create a new app identity.
+const appId = "com.app.localradarsa";
 
 const config: ExpoConfig = {
-  name: env.appName,
-  slug: env.appSlug,
+  name: "Lekka",
+  slug: "lekka",
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  scheme: env.scheme,
+  scheme: "lekka",
   userInterfaceStyle: "automatic",
-
-  // Keep the known-green Android configuration for the internal debug build.
   newArchEnabled: true,
-
   ios: {
     supportsTablet: true,
-    bundleIdentifier: env.iosBundleId,
+    bundleIdentifier: appId,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
@@ -53,13 +30,13 @@ const config: ExpoConfig = {
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
-    package: env.androidPackage,
+    package: appId,
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
         action: "VIEW",
         autoVerify: true,
-        data: [{ scheme: env.scheme, host: "*" }],
+        data: [{ scheme: "lekka", host: "*" }],
         category: ["BROWSABLE", "DEFAULT"],
       },
     ],
