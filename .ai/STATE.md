@@ -43,3 +43,4 @@
 - Added migration parity, PostGIS remediation, Yoco source-alignment, category workflow, backup/restore/monitoring, device-validation, and final checklist reports.
 - Aligned repository Yoco checkout and webhook source with the deployed server-only verified contract; added focused regression tests. The deployed Edge Functions remain unchanged and payment release is still blocked.
 - Live PostGIS grants, migration drift, leaked-password setting, and operational/device/legal evidence remain unresolved or unverified. Final decision remains **NOT READY**.
+- Critical-blocker validation passed: 119 tests passed, 3 skipped; focused Yoco source test 6/6; TypeScript, lint, server build, Expo web export, and diff checks passed. No production deployment authorization was available.

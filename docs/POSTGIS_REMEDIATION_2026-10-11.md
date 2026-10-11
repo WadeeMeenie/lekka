@@ -46,3 +46,7 @@ limit 20;
 ```
 
 Then rerun the Supabase security advisor and verify the `anon_security_definer_function_executable` and `authenticated_security_definer_function_executable` findings no longer include these overloads. Until both checks pass, status remains **BLOCKED**.
+
+## Fresh live verification — 2026-10-11
+
+The exact read-only query was rerun against project `local-radar-sa`. All three overloads still report owner `supabase_admin`, ACL entries granting `X` to `PUBLIC`, `anon`, `authenticated`, and `service_role`, and effective `anon_execute=true`, `authenticated_execute=true`, `public_execute=true`, and `service_execute=true`. No elevated owner authorization was available, so no remediation was attempted and this blocker remains **OPEN**.

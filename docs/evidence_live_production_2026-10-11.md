@@ -37,3 +37,9 @@ Other active functions include `cleanup-media` v4, `nearby-media` v1, and `nearb
 - Performance advisors report 39 auth-RLS init-plan findings, 58 multiple-permissive-policy findings, and 26 unused indexes.
 
 The advisor output was read-only and no production mutation was performed.
+
+## Fresh critical-blocker verification
+
+The exact PostGIS privilege query was rerun. Each overload is owned by `supabase_admin`, has `X` ACL entries for `PUBLIC`, `anon`, `authenticated`, and `service_role`, and reports all four effective privilege checks as `true`. No elevated owner authorization was available.
+
+The deployed `yoco-create-checkout` function remains version 11. Its order-error branch logs the error and then returns `order_creation_failed` unconditionally because the return is not scoped by braces. The corrected source is committed locally, but production was not deployed or mutated.

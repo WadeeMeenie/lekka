@@ -18,7 +18,9 @@ Lekka’s current product scope is verification payments in TEST mode. The verif
 
 ## Verification
 
-`tests/yoco-source-alignment.security.test.ts` covers server-only order creation, absence of caller-supplied amount, fixed error control flow, verified amount/currency transitions, webhook replay headers, admin gating, TEST-mode enforcement, and duplicate-subscription handling.
+`tests/yoco-source-alignment.security.test.ts` covers server-only order creation, absence of caller-supplied amount, fixed error control flow, verified success/failed/refunded amount-currency transitions, missing checkout IDs, invalid signatures, stale/replayed webhook headers, duplicate webhook persistence, unauthorized checkout requests, admin gating, TEST-mode enforcement, and duplicate-subscription handling.
+
+The fresh deployed-source comparison confirms that production `yoco-create-checkout` is still version 11 with the unconditional return defect. The exact source-only diff and the non-executed deployment command are recorded in `docs/YOCO_DEPLOYMENT_PROPOSAL_2026-10-11.md`.
 
 ## Remaining actions
 
@@ -27,5 +29,7 @@ Lekka’s current product scope is verification payments in TEST mode. The verif
 3. Execute a provider-supported TEST checkout with isolated data.
 4. Verify paid, failed, cancelled, delayed, duplicate, and refunded events against the resulting `payment_orders` row.
 5. Re-read deployed function source/version and rerun the source-alignment tests.
+
+The proposed deployment command is intentionally not executed because no production-deployment authorization was supplied.
 
 Final status remains **BLOCKED for payment release** until the corrected function is deployed and an end-to-end TEST payment is verified.

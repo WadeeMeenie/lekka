@@ -28,6 +28,22 @@ describe("Yoco source alignment", () => {
     expect(webhook).toContain('eventType !== "refund.succeeded"');
     expect(webhook).toContain("webhook-id");
     expect(webhook).toContain("webhook-timestamp");
+    expect(webhook).toContain('if (!(await verifySignature(rawBody, req))) return json({ error: "invalid_signature" }, 401);');
+    expect(webhook).toContain('if (eventInsertError && eventInsertError.code !== "23505")');
+    expect(webhook).toContain('eventType !== "payment.failed"');
+  });
+
+  it("keeps success and rejected payment outcomes on the verified transition path", () => {
+    expect(webhook).toContain('const nextStatus = eventType === "payment.succeeded" ? "paid" : eventType === "payment.failed" ? "failed" : "refunded";');
+    expect(webhook).toContain('if (!providerOrderId) return json({ error: "missing_checkout_id" }, 400);');
+    expect(webhook).toContain('const currency = typeof data.currency === "string" ? data.currency.toUpperCase() : null;');
+    expect(webhook).toContain("Number.isSafeInteger(data.amount)");
+  });
+
+  it("rejects unauthenticated checkout calls before any provider request", () => {
+    expect(checkout).toContain('if (!authHeader) return json({ error: "missing_authorization" }, 401);');
+    expect(checkout).toContain('if (userError || !user) return json({ error: "unauthorized" }, 401);');
+    expect(checkout).toContain('if (input.purpose !== "verification") return json({ error: "unsupported_test_product" }, 400);');
   });
 
   it("keeps merchant webhook setup admin-gated and test-mode only", () => {
