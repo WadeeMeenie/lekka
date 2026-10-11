@@ -255,3 +255,20 @@ describe("PostGIS metadata access", () => {
     expect(spatialRefSysMigration.match(/FROM PUBLIC, anon, authenticated/g)?.length).toBe(3);
   });
 });
+
+
+describe("Yoco checkout redirect security", () => {
+  it("never accepts client-controlled payment return destinations", async () => {
+    const checkoutFunction = readFileSync(
+      resolve(process.cwd(), "supabase/functions/yoco-create-checkout/index.ts"),
+      "utf8",
+    );
+
+    expect(checkoutFunction).not.toMatch(/input\.(successUrl|cancelUrl|failureUrl)/);
+    expect(checkoutFunction).toContain('const returnUrl = (result: "success" | "cancel" | "failure")');
+    expect(checkoutFunction).toContain('successUrl: returnUrl("success")');
+    expect(checkoutFunction).toContain('cancelUrl: returnUrl("cancel")');
+    expect(checkoutFunction).toContain('failureUrl: returnUrl("failure")');
+    expect(checkoutFunction).toContain("encodeURIComponent(order.id)");
+  });
+});
