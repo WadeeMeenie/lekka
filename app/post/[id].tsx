@@ -99,7 +99,7 @@ export default function PostDetailScreen() {
 
   if (authGateAction) return <AuthGate action={authGateAction} onCancel={() => setAuthGateAction(null)} />;
   if (loading) return <ScreenContainer><View style={styles.center}><Text style={[styles.status, { color: colors.muted }]}>Loading post…</Text></View></ScreenContainer>;
-  if (!post) return <ScreenContainer><View style={styles.center}><Text style={[styles.status, { color: colors.foreground }]}>{loadError ?? "This post is no longer available."}</Text><Pressable onPress={() => router.back()} style={styles.backAction}><Text style={[styles.link, { color: colors.primary }]}>Go back</Text></Pressable></View></ScreenContainer>;
+  if (!post) return <ScreenContainer><View style={styles.center}><IconSymbol name="exclamationmark.triangle.fill" size={28} color={colors.error} /><Text style={[styles.status, { color: colors.foreground, textAlign: "center" }]}>{loadError ?? "This post is no longer available."}</Text><Pressable accessibilityRole="button" accessibilityLabel="Back to Home" onPress={() => router.replace("/(tabs)" as never)} style={[styles.backAction, { borderWidth: 1, borderColor: colors.border, borderRadius: 14, minHeight: 46, paddingHorizontal: 18, justifyContent: "center" }]}><Text style={[styles.backText, { color: colors.foreground }]}>Back to Home</Text></Pressable></View></ScreenContainer>;
 
   const author = post.profiles?.display_name || "Local neighbour";
   const isOwner = Boolean(user?.id && post.author_id && user.id === post.author_id);
