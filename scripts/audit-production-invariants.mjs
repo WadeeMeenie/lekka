@@ -92,7 +92,7 @@ const configSource = read(configPath);
 requireFile(configPath, "Expo Android configuration");
 if (!/newArchEnabled\s*:\s*true/.test(configSource)) errors.push("Expo New Architecture must remain enabled.");
 if (!/buildArchs\s*:\s*\[\s*[\"']arm64-v8a[\"']\s*\]/.test(configSource)) errors.push("Android build must retain arm64-v8a.");
-if (!/androidPackage:\s*bundleId/.test(configSource)) errors.push("Android package must derive from the canonical bundle id.");
+if (!/(?:androidPackage|package):\s*bundleId/.test(configSource)) errors.push("Android package must derive from the canonical bundle id.");
 if (/manus\$\{\"\"\}:\/\/|manus:\/\//.test(configSource)) errors.push("Malformed Lekka deep-link scheme detected in app.config.ts.");
 
 // 8. Test/CI blind-spot guard.
