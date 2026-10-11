@@ -6,7 +6,7 @@ const source = readFileSync(resolve(process.cwd(), "lib/social-repository.ts"), 
 
 describe("social mutation concurrency", () => {
   it("uses atomic database toggles for reaction, save, follow and block", () => {
-    expect(source).toContain('supabase.rpc("toggle_reaction", { p_post_id: postId })');
+    expect(source).toContain('supabase.rpc("toggle_post_like", { p_post_id: postId })');
     expect(source).toContain('supabase.rpc("toggle_saved_post", { p_post_id: postId })');
     expect(source).toContain('supabase.rpc("toggle_follow", { p_profile_id: profileId })');
     expect(source).toContain('supabase.rpc("toggle_block", { p_profile_id: profileId })');
