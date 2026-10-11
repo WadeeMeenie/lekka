@@ -37,3 +37,9 @@
 2. Supabase project owner resolves or formally accepts the PostGIS advisor findings.
 3. Payment owner adds repository regression tests from the deployed verified Yoco contract.
 4. Release owner reruns the full gate at the exact release-candidate SHA.
+
+## Closure pass — 2026-10-11
+
+- Added migration parity, PostGIS remediation, Yoco source-alignment, category workflow, backup/restore/monitoring, device-validation, and final checklist reports.
+- Aligned repository Yoco checkout and webhook source with the deployed server-only verified contract; added focused regression tests. The deployed Edge Functions remain unchanged and payment release is still blocked.
+- Live PostGIS grants, migration drift, leaked-password setting, and operational/device/legal evidence remain unresolved or unverified. Final decision remains **NOT READY**.

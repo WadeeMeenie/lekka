@@ -44,4 +44,10 @@ The repository and deployed Yoco webhook both use raw-body HMAC-SHA256 verificat
 
 - Supabase advisors and live privilege queries were collected during the 2026-10-11 audit.
 - Yoco signature guidance: https://developer.yoco.com/online/api-reference/webhooks/verifying-events/
-- Supabase RLS policy guidance: https://supabase.com/docs/guides/database/postgres/row-level-security
+- Supabase RLS policy guidance: https://supabase.com/docs/guides/database/row-level-security
+
+## Closure-pass update — 2026-10-11
+
+The live migration ledger and deployed Edge Function source were rechecked read-only. Production remains ahead of Git. The repository now aligns its Yoco checkout and webhook source with the server-only verified contract and adds `tests/yoco-source-alignment.security.test.ts`; no Edge Function was deployed. The deployed primary checkout function still requires the reviewed control-flow fix, so payment status remains blocked. See `docs/MIGRATION_PARITY_2026-10-11.md`, `docs/POSTGIS_REMEDIATION_2026-10-11.md`, and `docs/YOCO_SOURCE_ALIGNMENT_2026-10-11.md`.
+
+The five RLS-enabled/no-policy tables remain intentionally server-only based on their effective grants; adding broad client policies would weaken least privilege. PostGIS client execution remains effective and requires the elevated-owner action in the dedicated remediation report. Leaked-password protection, backup/restore, monitoring, legal/privacy, and native-device evidence remain unverified.

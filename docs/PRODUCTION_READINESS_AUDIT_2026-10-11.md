@@ -126,3 +126,11 @@
 3. Payment owner aligns repository code/tests with deployed verified Yoco functions and confirms event schemas from the sandbox.
 4. CI/release owner repairs the 401 integration check and runs Android/native validation at the exact candidate SHA.
 5. Operations owner performs a backup/restore drill and documents rollback, monitoring, queue, and webhook-reconciliation evidence.
+
+## Follow-up closure pass — 2026-10-11
+
+The live project was rechecked read-only. Migration history now verified through `20261011203434`; the repository remains at `20260906071000`. The three PostGIS overloads still have effective client execution grants because the ordinary migration runner cannot alter `supabase_admin`-owned functions. The five no-policy tables remain server-only by effective grants, so no broad client policies were added.
+
+The deployed Yoco source was compared with Git. The deployed primary checkout function has a control-flow defect that unconditionally returns `order_creation_failed` after logging an order error. The repository checkout was aligned to the deployed server-only RPC contract and fixed locally; the webhook was aligned to current event names and verified amount/currency transition inputs. A focused security test was added. No Edge Function, payment, migration, or production record was changed.
+
+The running app was smoke-tested through startup, auth entry, onboarding, account-intent, and personal-location steps. Category-specific persistence, isolated-account authorization, native Android, backup/restore, monitoring, legal/privacy, and provider TEST payment journeys were not completed. The defensible final decision remains **NOT READY**.

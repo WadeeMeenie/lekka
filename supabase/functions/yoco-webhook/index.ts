@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
   if (!webhookId) return json({ error: "missing_webhook_id" }, 400);
 
   const service = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-  const eventType = String(payload.event_type ?? "unknown");
+  const eventType = String(payload.type ?? payload.event_type ?? "unknown");
 
   const { error: eventInsertError } = await service.from("yoco_webhook_events").insert({
     webhook_id: webhookId,
@@ -88,22 +88,27 @@ Deno.serve(async (req) => {
     return json({ error: "webhook_persistence_failed" }, 500);
   }
 
-  if (eventType !== "payment.created" && eventType !== "payment.refunded") {
+  if (eventType !== "payment.succeeded" && eventType !== "payment.failed" && eventType !== "refund.succeeded") {
     return json({ received: true, ignored: true });
   }
 
-  const providerOrderId = typeof payload.order_id === "string" ? payload.order_id : "";
-  const paymentId = typeof payload.payment_id === "string" ? payload.payment_id : "";
-  if (!providerOrderId) return json({ error: "missing_order_id" }, 400);
+  const data = payload.data && typeof payload.data === "object" ? payload.data as Record<string, unknown> : payload;
+  const providerOrderId = typeof data.checkoutId === "string" ? data.checkoutId : typeof data.checkout_id === "string" ? data.checkout_id : "";
+  const paymentId = typeof data.id === "string" ? data.id : typeof payload.payment_id === "string" ? payload.payment_id : "";
+  if (!providerOrderId) return json({ error: "missing_checkout_id" }, 400);
 
-  const nextStatus = eventType === "payment.created" ? "paid" : "refunded";
+  const nextStatus = eventType === "payment.succeeded" ? "paid" : eventType === "payment.failed" ? "failed" : "refunded";
+  const amount = typeof data.amount === "number" && Number.isSafeInteger(data.amount) ? data.amount : null;
+  const currency = typeof data.currency === "string" ? data.currency.toUpperCase() : null;
   const { data: updatedOrder, error: updateError } = await service.rpc(
-    "set_payment_order_status_from_yoco",
+    "set_payment_order_status_from_yoco_verified",
     {
       p_checkout_id: providerOrderId,
       p_status: nextStatus,
       p_provider_payment_id: paymentId || null,
       p_metadata: { yoco_event_type: eventType, webhook_id: webhookId },
+      p_amount_cents: amount,
+      p_currency: currency,
     },
   );
 
