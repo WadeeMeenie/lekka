@@ -190,7 +190,7 @@ export default function HomeScreen() {
     setSheet(null);
     try {
       await Share.share({
-        message: `${post.title ? `${post.title}\\n` : ""}${post.body}\\n\\nOpen in Lekka: lekka://post/${post.id}`,
+        message: `${post.title ? `${post.title}\n` : ""}${post.body}\n\nOpen in Lekka: lekka://post/${post.id}`,
       });
     } catch {
       setToast("Couldn't open sharing options. Please try again.");
