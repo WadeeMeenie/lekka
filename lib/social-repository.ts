@@ -106,30 +106,25 @@ export async function deleteComment(commentId: string) {
 
 export async function toggleReaction(postId: string) {
   if (!supabase) return { liked: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { liked: false, error: authError };
   if (!user) return { liked: false, error: new Error("Please sign in") };
-  const existing = await supabase.from("reactions").select("post_id").eq("post_id", postId).eq("user_id", user.id).maybeSingle();
-  if (existing.error) return { liked: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("reactions").delete().eq("post_id", postId).eq("user_id", user.id);
-    return { liked: result.error ? true : false, error: result.error };
-  }
-  const result = await supabase.from("reactions").insert({ post_id: postId, user_id: user.id, reaction: "like" });
-  return { liked: result.error ? false : true, error: result.error };
+
+  // The database RPC serializes toggles with a transaction-scoped advisory lock.
+  // Avoid client-side SELECT-then-write races when a user taps rapidly or retries.
+  const result = await supabase.rpc("toggle_reaction", { p_post_id: postId });
+  return { liked: result.data === true, error: result.error };
 }
 
 export async function toggleSavedPost(postId: string) {
   if (!supabase) return { saved: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { saved: false, error: authError };
   if (!user) return { saved: false, error: new Error("Please sign in") };
-  const existing = await supabase.from("saved_posts").select("post_id").eq("post_id", postId).eq("user_id", user.id).maybeSingle();
-  if (existing.error) return { saved: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("saved_posts").delete().eq("post_id", postId).eq("user_id", user.id);
-    return { saved: result.error ? true : false, error: result.error };
-  }
-  const result = await supabase.from("saved_posts").insert({ post_id: postId, user_id: user.id });
-  return { saved: result.error ? false : true, error: result.error };
+
+  // The database RPC serializes toggles with a transaction-scoped advisory lock.
+  const result = await supabase.rpc("toggle_saved_post", { p_post_id: postId });
+  return { saved: result.data === true, error: result.error };
 }
 
 export async function listSavedPosts(page = 0, pageSize = 20) {
@@ -166,17 +161,14 @@ export async function getFollowState(profileId: string) {
 
 export async function toggleFollow(profileId: string) {
   if (!supabase) return { following: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { following: false, error: authError };
   if (!user) return { following: false, error: new Error("Please sign in") };
   if (user.id === profileId) return { following: false, error: new Error("You cannot follow yourself") };
-  const existing = await supabase.from("follows").select("following_id").eq("follower_id", user.id).eq("following_id", profileId).maybeSingle();
-  if (existing.error) return { following: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", profileId);
-    return { following: result.error ? true : false, error: result.error };
-  }
-  const result = await supabase.from("follows").insert({ follower_id: user.id, following_id: profileId });
-  return { following: result.error ? false : true, error: result.error };
+
+  // The database RPC serializes follow/unfollow transitions per user and target.
+  const result = await supabase.rpc("toggle_follow", { p_profile_id: profileId });
+  return { following: result.data === true, error: result.error };
 }
 
 export type PostFeedbackPreference = "interested" | "not_interested";
