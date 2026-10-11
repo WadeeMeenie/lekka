@@ -272,3 +272,26 @@ describe("Yoco checkout redirect security", () => {
     expect(checkoutFunction).toContain("encodeURIComponent(order.id)");
   });
 });
+
+
+describe("Yoco webhook payment verification", () => {
+  it("uses actual payment event types and validates amount/currency before paid state", () => {
+    const webhook = readFileSync(
+      resolve(process.cwd(), "supabase/functions/yoco-webhook/index.ts"),
+      "utf8",
+    );
+    const migration = readMigration("20261011120000_verify_yoco_payment_amount_currency.sql");
+
+    expect(webhook).toContain('payload.type ?? payload.event_type ?? "unknown"');
+    expect(webhook).toContain('eventType === "payment.succeeded" ? "paid"');
+    expect(webhook).toContain('eventType === "payment.failed" ? "failed"');
+    expect(webhook).toContain('eventType === "refund.succeeded" ? "refunded"');
+    expect(webhook).toContain('"set_payment_order_status_from_yoco_verified"');
+    expect(webhook).toContain("p_amount_cents: amount");
+    expect(webhook).toContain("p_currency: currency");
+    expect(migration).toContain("amount_cents = p_amount_cents");
+    expect(migration).toContain("upper(currency) = upper(p_currency)");
+    expect(migration).toContain("TO service_role");
+    expect(migration).toContain("FROM PUBLIC, anon, authenticated");
+  });
+});
