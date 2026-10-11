@@ -31,6 +31,6 @@ This checklist is the release gate for the current production-hardening candidat
 
 ## Known open items
 
-- The social reaction/save/follow/block client methods still use SELECT-then-write toggles. They now report failed writes truthfully, but concurrent taps can race. Replace them with reviewed atomic database operations and unique constraints before high-traffic launch.
+- Reaction/save/follow/block now use transaction-serialized RPCs; verify them with concurrent and retry tests before high-traffic launch.
 - Physical-device and multi-account tests require real test accounts/devices and cannot be truthfully marked complete by CI alone.
 - The production project still has unresolved PostGIS metadata grants and leaked-password protection disabled. Do not label the app launch-ready until these and the remaining gates above are closed.
