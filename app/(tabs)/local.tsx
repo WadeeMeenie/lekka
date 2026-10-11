@@ -35,7 +35,9 @@ export default function LocalScreen() {
     setError(null);
     try {
       const settings = await loadSettings();
-      const result = await getLastKnownOrCurrentLocation(settings.area);
+      const result = settings.selectedLocation
+        ? { status: "granted" as const, location: settings.selectedLocation }
+        : await getLastKnownOrCurrentLocation(settings.area);
       if (result.status !== "granted") throw new Error("Choose an area in Radar or enable location to discover local listings.");
       setLocation(result.location);
       const discovery = await discoverNearby({ location: result.location, contentType: selectedCategory.value, search: search.trim(), radiusMeters: radiusToMeters(settings.radius) });
