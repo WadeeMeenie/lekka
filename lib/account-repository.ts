@@ -18,11 +18,13 @@ export async function savePersonalIdentity(input: PersonalIdentityInput) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: new Error("Please sign in") };
 
-  const displayName = `${validated.data.firstName} ${validated.data.surname}`;
-  const profile = await supabase.from("profiles").upsert({ id: user.id, display_name: displayName, account_intent: "personal", updated_at: new Date().toISOString() });
-  if (profile.error) return { error: profile.error };
-  const identity = await supabase.from("personal_identities").upsert({ user_id: user.id, first_name: validated.data.firstName, surname: validated.data.surname, date_of_birth: validated.data.dateOfBirth, gender: validated.data.gender, updated_at: new Date().toISOString() });
-  return { error: identity.error };
+  const { error } = await supabase.rpc("save_personal_identity", {
+    p_first_name: validated.data.firstName,
+    p_surname: validated.data.surname,
+    p_date_of_birth: validated.data.dateOfBirth,
+    p_gender: validated.data.gender,
+  });
+  return { error };
 }
 
 export async function createBusinessProfile(input: BusinessProfileInput) {

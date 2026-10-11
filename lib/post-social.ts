@@ -2,7 +2,7 @@ import { getLastKnownOrCurrentLocation } from "@/lib/location";
 import { supabase } from "@/lib/supabase";
 import type { SocialComment, SocialPost } from "@/lib/social-repository";
 
-const POST_SELECT = "id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles!posts_author_id_fkey(id, display_name, username, bio, profile_image_path, interests, home_area), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)";
+const POST_SELECT = "id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles!posts_author_id_fkey(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)";
 const COMMENT_SELECT = "id, post_id, author_id, body, created_at, profiles!comments_author_id_fkey(id, display_name, username, profile_image_path)";
 
 type NearbyPostDetailResponse = {

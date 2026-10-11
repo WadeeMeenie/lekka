@@ -90,8 +90,15 @@ export default function PostDetailScreen() {
   });
   const save = () => runProtected("save posts", async () => { if (saveBusy) return; setSaveBusy(true); setFeedback(null); try { const result = await toggleSavedPostAtomic(id); if (result.error) { setFeedback("Couldn't update saved posts. Please try again."); return; } setSaved(result.saved); } finally { setSaveBusy(false); } });
   const submitComment = async () => { if (!isAuthenticated) { setAuthGateAction("comment on posts"); return; } const trimmedComment = commentText.trim(); if (commentBusy || !trimmedComment) return; setCommentBusy(true); setFeedback(null); try { const result = await createCommentSafe(id, trimmedComment); if (result.error || !result.data) { setFeedback(result.error?.message || "Couldn't comment. Please try again."); return; } setComments((current) => [result.data!, ...current]); setCommentCount((current) => current + 1); setCommentText(""); requestAnimationFrame(() => scrollRef.current?.scrollToEnd({ animated: true })); } finally { setCommentBusy(false); } };
-  const sharePost = async () => { const title = post?.title ?? "Lekka post"; await Share.share({ message: `${title}\n\n${post?.body ?? ""}\n\nOpen in Lekka: manuslocalradarsa://post/${id}` }); };
-  const copyLink = async () => { try { await Clipboard.setStringAsync(`manuslocalradarsa://post/${id}`); setOptionsOpen(false); setFeedback("Post link copied."); } catch { setActionError("Couldn't copy the post link."); } };
+  const sharePost = async () => {
+    const title = post?.title ?? "Lekka post";
+    try {
+      await Share.share({ message: [title, post?.body ?? "", "Open in Lekka: lekka://post/" + id].join("\n\n") });
+    } catch {
+      setFeedback("Couldn't open sharing options. Please try again.");
+    }
+  };
+  const copyLink = async () => { try { await Clipboard.setStringAsync(`lekka://post/${id}`); setOptionsOpen(false); setFeedback("Post link copied."); } catch { setActionError("Couldn't copy the post link."); } };
   const openOptions = () => { setActionError(null); setOptionsOpen(true); };
   const reportPost = async () => { if (!isAuthenticated) { setOptionsOpen(false); setAuthGateAction("report posts"); return; } setActionBusy(true); setActionError(null); try { const result = await reportContent({ postId: id, reason: "User report" }); if (result.error) { setActionError("Couldn't submit the report. Please try again."); return; } setOptionsOpen(false); setFeedback("Report submitted. Thanks for helping keep Lekka safe."); } finally { setActionBusy(false); } };
   const deletePost = async () => { if (!isAuthenticated) { setDeleteOpen(false); setAuthGateAction("delete your post"); return; } setActionBusy(true); setActionError(null); try { const result = await deleteOwnPost(id); if (result.error || !result.deleted) { setActionError(result.error?.message || "Couldn't delete this post. Please try again."); return; } setDeleteOpen(false); setOptionsOpen(false); router.back(); } finally { setActionBusy(false); } };
@@ -99,7 +106,7 @@ export default function PostDetailScreen() {
 
   if (authGateAction) return <AuthGate action={authGateAction} onCancel={() => setAuthGateAction(null)} />;
   if (loading) return <ScreenContainer><View style={styles.center}><Text style={[styles.status, { color: colors.muted }]}>Loading post…</Text></View></ScreenContainer>;
-  if (!post) return <ScreenContainer><View style={styles.center}><Text style={[styles.status, { color: colors.foreground }]}>{loadError ?? "This post is no longer available."}</Text><Pressable onPress={() => router.back()} style={styles.backAction}><Text style={[styles.link, { color: colors.primary }]}>Go back</Text></Pressable></View></ScreenContainer>;
+  if (!post) return <ScreenContainer><View style={styles.center}><IconSymbol name="exclamationmark.triangle.fill" size={28} color={colors.error} /><Text style={[styles.status, { color: colors.foreground, textAlign: "center" }]}>{loadError ?? "This post is no longer available."}</Text><Pressable accessibilityRole="button" accessibilityLabel="Back to Home" onPress={() => router.replace("/(tabs)" as never)} style={[styles.backAction, { borderWidth: 1, borderColor: colors.border, borderRadius: 14, minHeight: 46, paddingHorizontal: 18, justifyContent: "center" }]}><Text style={[styles.backText, { color: colors.foreground }]}>Back to Home</Text></Pressable></View></ScreenContainer>;
 
   const author = post.profiles?.display_name || "Local neighbour";
   const isOwner = Boolean(user?.id && post.author_id && user.id === post.author_id);

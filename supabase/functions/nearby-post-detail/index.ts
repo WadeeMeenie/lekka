@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
 
   const { data: post, error: postError } = await service
     .from("posts")
-    .select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles!posts_author_id_fkey(id, display_name, username, bio, profile_image_path, interests, home_area), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)")
+    .select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles!posts_author_id_fkey(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)")
     .eq("id", postId)
     .maybeSingle();
   if (postError || !post) return json({ error: "Post is no longer available" }, 404);
