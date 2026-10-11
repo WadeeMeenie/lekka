@@ -7,12 +7,11 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { requestApproximateLocation } from "@/lib/location";
-import { completeOnboarding, defaultOnboardingState, LEKKA_INTERESTS, loadOnboardingState, radiusToMeters, saveOnboardingState, toggleInterest, type OnboardingState } from "@/lib/onboarding";
+import { defaultOnboardingState, LEKKA_INTERESTS, loadOnboardingState, saveOnboardingState, toggleInterest, type OnboardingState } from "@/lib/onboarding";
 import { ThemePalettes, type ThemeId } from "@/constants/theme";
 import { useThemeContext } from "@/lib/theme-provider";
-import { saveMyProfile } from "@/lib/profile";
 
-const themeOptions: Array<{ id: ThemeId; label: string; description: string }> = [
+const themeOptions: { id: ThemeId; label: string; description: string }[] = [
   { id: "original", label: "Lekka Original", description: "Clean, local, and unmistakably Lekka." },
   { id: "midnight", label: "Midnight", description: "A calm premium dark canvas." },
   { id: "sunset", label: "Sunset", description: "Warm energy for busy local days." },
@@ -24,7 +23,7 @@ const themeOptions: Array<{ id: ThemeId; label: string; description: string }> =
 export default function OnboardingScreen() {
   const colors = useColors();
   const { themeId, setThemeId } = useThemeContext();
-  const { isAuthenticated, user } = useSupabaseAuth();
+  const { isAuthenticated } = useSupabaseAuth();
   const params = useLocalSearchParams<{ resume?: string }>();
   const [state, setState] = useState<OnboardingState>(defaultOnboardingState);
   const [busy, setBusy] = useState(false);

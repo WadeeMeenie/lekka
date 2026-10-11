@@ -9,8 +9,9 @@ A clean local build is not sufficient for release. The current checkout is `main
 
 - Build and TypeScript: **PASS locally** (`npm run check`, `npm run build`).
 - Static audits: **PASS locally** (`audit:interactions`, `audit:production`).
-- Unit/integration tests: **BLOCKED**: 104 passed, 1 failed, 2 skipped. The Supabase REST check returned HTTP 401. Direct probes confirmed the active modern `sb_publishable_…` key is rejected by the project gateway, while the legacy anon key succeeds; no live mutation was attempted.
-- Lint: **PASS with 14 warnings**, including missing React hook dependencies and unused onboarding code.
+- Unit/integration tests: **PASS locally**: 113 passed, 3 skipped. The Supabase REST check remains an external CI/configuration blocker when publishable credentials are supplied: the active modern `sb_publishable_…` key was rejected by the project gateway while the legacy anon key succeeded; no live mutation was attempted.
+- Lint: **PASS with 0 warnings** after repairing the stale nearby-feed, messaging, profile, menu, post-edit, onboarding, and post-detail dependency/type issues.
+- Web export: **PASS locally** (`npm run build:web`). Expo web support is explicit through `react-native-web`; NativeWind uses virtual CSS modules during web export to avoid Metro hashing a generated `node_modules` cache file.
 - Android/native build: **NOT VERIFIED locally**; historical PR CI passed only at the PR SHA.
 - Migration consistency: **BLOCKED**. Production has migrations through `20261011195846`, while this checkout contains files only through `20260906071000`.
 - Security advisors: **BLOCKED**. Production still reports public execution of three `st_estimatedextent` overloads and public, RLS-disabled `spatial_ref_sys`.

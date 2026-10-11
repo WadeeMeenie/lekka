@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router, useFocusEffect } from "expo-router";
 
@@ -25,6 +25,7 @@ const menuItems: MenuItem[] = [
 export default function MenuScreen() {
   const colors = useColors();
   const { user, isAuthenticated, logout } = useSupabaseAuth();
+  const userId = user?.id;
   const [displayName, setDisplayName] = useState<string | null>(null);
   const [username, setUsername] = useState<string | null>(null);
   const [isPlatformAdmin, setIsPlatformAdmin] = useState(false);
@@ -32,15 +33,11 @@ export default function MenuScreen() {
 
   useFocusEffect(useCallback(() => {
     let active = true;
-    if (!user) { setDisplayName(null); setUsername(null); setIsPlatformAdmin(false); return () => { active = false; }; }
+    if (!userId) { setDisplayName(null); setUsername(null); setIsPlatformAdmin(false); return () => { active = false; }; }
     void loadMyProfile().then(({ data }) => { if (active) { setDisplayName(data?.display_name ?? null); setUsername(data?.username ?? null); } });
-    void supabase?.rpc("is_platform_admin", { target_user: user.id }).then(({ data }) => { if (active) setIsPlatformAdmin(data === true); });
+    void supabase?.rpc("is_platform_admin", { target_user: userId }).then(({ data }) => { if (active) setIsPlatformAdmin(data === true); });
     return () => { active = false; };
-  }, [user?.id]));
-
-  useEffect(() => {
-    if (!user) setIsPlatformAdmin(false);
-  }, [user]);
+  }, [userId]));
 
   const signOut = async () => {
     setSignOutOpen(false);

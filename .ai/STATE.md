@@ -9,7 +9,7 @@
 - Repository cloned from `WadeeMeenie/lekka`; current `main` is clean at the base SHA before audit documentation.
 - PR #9 is open, clean, and historically green at `b5bf8d69798c2f9aaea763ea6304ec003d9f0621`.
 - TypeScript, static audits, Expo public config, and server build pass locally.
-- Test result: 104 passed, 1 failed, 2 skipped. The Supabase REST integration check returns 401 because the enabled modern publishable key is rejected by the gateway; the legacy anon key succeeds. No code workaround was committed.
+- Current validation: TypeScript, lint (0 warnings), 113 tests passed with 3 skipped, interaction and production audits, server build, and Expo web export all pass locally. The Supabase REST integration check remains externally blocked when the modern publishable key is supplied because the gateway returns 401; no code workaround was committed.
 - Production Supabase project `local-radar-sa` is active and has migration history through 2026-10-11, beyond the repository’s last migration file dated 2026-09-06.
 - Production PostGIS grants and security-advisor findings remain unresolved.
 - Production has newer Yoco server-only RPCs and Edge Functions with amount/currency verification; the repository is not the same release source.
@@ -21,6 +21,7 @@
 - Restricted the service-backed storage proxy to configured public prefixes, rejected traversal-like keys, and added three regression tests. The fix is local and not deployed.
 - Audited server, Edge Function, scheduled cleanup, Yoco, nearby-media, and live `SECURITY DEFINER` grants; added `docs/AUTHORIZATION_MIDDLEWARE_AUDIT_2026-10-11.md` and hardened session JWT configuration/app binding.
 - No effective production data, Edge Function, customer record, payment, branch merge, or remote PR was changed. Two live migration records were added while attempting the requested PostGIS revocation, but the extension-owned function ACLs remained unchanged because the migration runner is not the `supabase_admin` owner.
+- Added explicit `react-native-web` support, a reproducible `npm run build:web` command, and a web-only NativeWind Metro mode. Browser smoke verification reached registration and onboarding/account-intent/personal-location steps without startup console errors.
 
 ## Blockers
 

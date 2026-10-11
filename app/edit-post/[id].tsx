@@ -9,6 +9,7 @@ import { supabase } from "@/lib/supabase";
 export default function EditPostScreen() {
   const colors = useColors();
   const { user } = useSupabaseAuth();
+  const userId = user?.id;
   const { id } = useLocalSearchParams<{ id: string }>();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -18,10 +19,10 @@ export default function EditPostScreen() {
   useEffect(() => {
     let active = true;
     void (async () => {
-      if (!supabase || !user || !id) return;
+      if (!supabase || !userId || !id) return;
       const { data, error } = await supabase.from("posts").select("title,body,author_id").eq("id", id).maybeSingle();
       if (!active) return;
-      if (error || !data || data.author_id !== user.id) {
+      if (error || !data || data.author_id !== userId) {
         Alert.alert("Couldn't load post", error?.message || "You can only edit your own posts.");
         router.back();
         return;
@@ -31,7 +32,7 @@ export default function EditPostScreen() {
       setLoading(false);
     })();
     return () => { active = false; };
-  }, [id, user?.id]);
+  }, [id, userId]);
 
   const save = async () => {
     if (!supabase || !user || !id || !body.trim()) return;

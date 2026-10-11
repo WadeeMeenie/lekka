@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -9,7 +9,7 @@ import { useColors } from "@/hooks/use-colors";
 import { NearbySkeletonList } from "@/components/ui/loading-skeleton";
 import { getFetchPresentation } from "@/lib/loading-state";
 
-const contentTypes: Array<{ label: string; value: DiscoveryContentType }> = [
+const contentTypes: { label: string; value: DiscoveryContentType }[] = [
   { label: "All", value: "all" },
   { label: "Posts", value: "post" },
   { label: "Businesses", value: "business" },
@@ -35,8 +35,9 @@ export default function NearbyScreen() {
   const [areaQuery, setAreaQuery] = useState("");
   const [areaError, setAreaError] = useState<string | null>(null);
   const [searchingArea, setSearchingArea] = useState(false);
+  const filterRef = useRef({ radius, contentType });
 
-  const refreshDiscovery = async (location: DeviceLocation, nextRadius = radius, nextType = contentType, background = false) => {
+  const refreshDiscovery = useCallback(async (location: DeviceLocation, nextRadius: string, nextType: DiscoveryContentType, background = false) => {
     setCurrentLocation(location);
     if (background) setRefreshing(true);
     try {
@@ -45,7 +46,11 @@ export default function NearbyScreen() {
     } finally {
       if (background) setRefreshing(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    filterRef.current = { radius, contentType };
+  }, [contentType, radius]);
 
   const useCurrentLocation = async () => {
     const result = await requestApproximateLocation(currentLocation?.area || "your area");
@@ -84,14 +89,14 @@ export default function NearbyScreen() {
       setRadius(settings.radius);
       if (settings.selectedLocation) {
         setLocationStatus("manual");
-        await refreshDiscovery(settings.selectedLocation, settings.radius, contentType);
+        await refreshDiscovery(settings.selectedLocation, settings.radius, filterRef.current.contentType);
       } else {
         const result = await getLastKnownOrCurrentLocation(settings.area);
         if (!active) return;
         if (result.status === "granted") {
           setLocationStatus("granted");
-          await refreshDiscovery(result.location, settings.radius, contentType);
-          if (active) stopWatching = await watchMeaningfulForegroundLocation((next) => { if (active) void refreshDiscovery(next, radius, contentType, true); }, result.location.area);
+          await refreshDiscovery(result.location, settings.radius, filterRef.current.contentType);
+          if (active) stopWatching = await watchMeaningfulForegroundLocation((next) => { if (active) void refreshDiscovery(next, filterRef.current.radius, filterRef.current.contentType, true); }, result.location.area);
         } else {
           setLocationStatus("denied");
           setItems([]);
@@ -100,12 +105,12 @@ export default function NearbyScreen() {
       if (active) setInitialLoading(false);
     })().catch(() => { if (active) { setItems([]); setInitialLoading(false); } });
     return () => { active = false; stopWatching(); };
-  }, []);
+  }, [refreshDiscovery]);
 
   useEffect(() => {
     if (!currentLocation || initialLoading) return;
     void refreshDiscovery(currentLocation, radius, contentType, true);
-  }, [contentType]);
+  }, [contentType, currentLocation, initialLoading, radius, refreshDiscovery]);
 
   const setDiscoveryRadius = (nextRadius: string) => {
     setRadius(nextRadius);

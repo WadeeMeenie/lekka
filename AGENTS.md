@@ -27,10 +27,13 @@ npm run audit:production
 npm test
 npm run lint
 npm run build
+npm run build:web
 npx expo config --type public
 ```
 
 For native changes also run the CI Android prebuild and Gradle debug builds. Record the exact SHA and any unavailable checks. A passing build is not a release recommendation by itself.
+
+`npm run build:web` sets `EXPO_PLATFORM=web`; keep the web-only NativeWind virtual-module mode in `metro.config.cjs` so Metro does not attempt to hash the generated `node_modules/react-native-css-interop/.cache/web.css` file.
 
 ## Database and release discipline
 

@@ -78,7 +78,11 @@ export default function PostDetailScreen() {
       if (!path) return null;
       const signed = await createSignedMediaUrl(path);
       return signed.data?.signedUrl ? [comment.id, signed.data.signedUrl] as const : null;
-    })).then((pairs) => { if (mounted) setCommentAvatarUrls(Object.fromEntries(pairs.filter(Boolean) as Array<readonly [string, string]>) as Record<string, string>); });
+    })).then((pairs) => {
+      if (!mounted) return;
+      const avatarPairs = pairs.filter((pair): pair is readonly [string, string] => Boolean(pair));
+      setCommentAvatarUrls(Object.fromEntries(avatarPairs) as Record<string, string>);
+    });
     return () => { mounted = false; };
   }, [comments]);
 

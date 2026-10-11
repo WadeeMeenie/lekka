@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
@@ -19,8 +19,10 @@ export default function MessagesScreen() {
   const [requestBusy, setRequestBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const selectedId = selected?.id;
+  const selectedRequestStatus = selected?.request_status;
 
-  const loadConversations = async () => {
+  const loadConversations = useCallback(async () => {
     setLoading(true);
     setLoadError(null);
     try {
@@ -30,25 +32,25 @@ export default function MessagesScreen() {
       if (conversationId) setSelected(result.data.find((conversation) => conversation.id === conversationId) ?? null);
     } catch (error) { setLoadError(error instanceof Error ? error.message : "We couldn't load your messages. Please try again."); }
     finally { setLoading(false); }
-  };
+  }, [conversationId]);
 
-  useEffect(() => { if (isAuthenticated) void loadConversations(); }, [isAuthenticated, conversationId]);
+  useEffect(() => { if (isAuthenticated) void loadConversations(); }, [isAuthenticated, loadConversations]);
 
   useEffect(() => {
-    if (!selected) return;
+    if (!selectedId) return;
     let active = true;
     const load = async () => {
       try {
-        const result = await listConversationMessages(selected.id);
+        const result = await listConversationMessages(selectedId);
         if (active && result.error) Alert.alert("Couldn't load conversation", result.error.message || "Please try again.");
         if (active && !result.error) setMessages(result.data);
-        if (selected.request_status === "accepted") await markConversationRead(selected.id);
+        if (selectedRequestStatus === "accepted") await markConversationRead(selectedId);
       } catch (error) { if (active) Alert.alert("Couldn't load conversation", error instanceof Error ? error.message : "Please try again."); }
     };
     void load();
-    const stop = subscribeToConversation(selected.id, () => { void load(); void loadConversations(); });
+    const stop = subscribeToConversation(selectedId, () => { void load(); void loadConversations(); });
     return () => { active = false; stop(); };
-  }, [selected?.id, selected?.request_status]);
+  }, [loadConversations, selectedId, selectedRequestStatus]);
 
   if (!isAuthenticated) return <ScreenContainer><View style={styles.center}><Text style={[styles.title, { color: colors.foreground }]}>Sign in to use messages</Text><Pressable accessibilityRole="button" onPress={() => router.push("/auth" as never)} style={[styles.primary, { backgroundColor: colors.primary }]}><Text style={styles.primaryText}>Sign in</Text></Pressable></View></ScreenContainer>;
 

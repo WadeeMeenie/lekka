@@ -18,7 +18,7 @@ import { ThemePalettes, type ThemeId } from "@/constants/theme";
 import { BIO_MAX_LENGTH, DISPLAY_NAME_MAX_LENGTH, validateProfileFields } from "@/lib/profile-validation";
 import { checkUsernameAvailability, findAvailableUsernameSuggestions, loadServerUsernameHistory, normalizeUsername, recordServerUsernameChange, trackUsernameEvent, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH, validateUsername } from "@/lib/username";
 
-const themeOptions: Array<{ id: ThemeId; label: string }> = [
+const themeOptions: { id: ThemeId; label: string }[] = [
   { id: "original", label: "Lekka Original" }, { id: "midnight", label: "Midnight" }, { id: "sunset", label: "Sunset" }, { id: "ocean", label: "Ocean" }, { id: "sa-vibe", label: "SA Vibe" }, { id: "neon", label: "Neon" },
 ];
 
@@ -26,6 +26,7 @@ export default function ProfileScreen() {
   const colors = useColors();
   const { themeId, setThemeId } = useThemeContext();
   const { user, logout } = useSupabaseAuth();
+  const userId = user?.id;
   const [displayName, setDisplayName] = useState("");
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
@@ -60,7 +61,7 @@ export default function ProfileScreen() {
     void loadMyProfile().then(({ data, error }) => {
       if (!active) return;
       setLoading(false);
-      if (error && user) setLoadError("We couldn’t load your profile. You can still edit and try saving again.");
+      if (error && userId) setLoadError("We couldn’t load your profile. You can still edit and try saving again.");
       if (data) {
         setDisplayName(data.display_name ?? "");
         setUsername(data.username ?? "");
@@ -76,25 +77,25 @@ export default function ProfileScreen() {
       }
     });
     return () => { active = false; };
-  }, [user]);
+  }, [userId]);
   useEffect(() => () => {
     if (avatarToastTimer.current) clearTimeout(avatarToastTimer.current);
   }, []);
   useEffect(() => { void loadProfileSettings().then(setProfileSettings); }, []);
   useEffect(() => {
-    if (!user) return;
-    void loadServerUsernameHistory(user.id).then(async (serverResult) => {
+    if (!userId) return;
+    void loadServerUsernameHistory(userId).then(async (serverResult) => {
       if (!serverResult.error) {
         const history = serverResult.data.map((item) => ({ username: item.new_username, changedAt: item.changed_at }));
         setUsernameHistory(history);
         setUsernameCooldown(usernameCooldownMessage(history));
         return;
       }
-      const localHistory = await loadUsernameHistory(user.id);
+      const localHistory = await loadUsernameHistory(userId);
       setUsernameHistory(localHistory);
       setUsernameCooldown(usernameCooldownMessage(localHistory));
     });
-  }, [user]);
+  }, [userId]);
   useEffect(() => {
     const messages = { checking: "Checking username availability.", available: "Username is available.", unavailable: "Username is unavailable.", error: "Username availability could not be verified.", idle: "" };
     const message = messages[usernameStatus];
