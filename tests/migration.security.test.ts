@@ -280,7 +280,7 @@ describe("Yoco webhook payment verification", () => {
       resolve(process.cwd(), "supabase/functions/yoco-webhook/index.ts"),
       "utf8",
     );
-    const migration = readMigration("20261011120000_verify_yoco_payment_amount_currency.sql");
+    const migration = readMigration("20261011192054_verify_yoco_payment_amount_currency.sql");
 
     expect(webhook).toContain('payload.type ?? payload.event_type ?? "unknown"');
     expect(webhook).toContain('eventType === "payment.succeeded" ? "paid"');
