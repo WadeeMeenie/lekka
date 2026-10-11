@@ -45,9 +45,8 @@ export async function saveMyProfileAvatar(uri: string, contentType = "image/jpeg
   const path = createProfileAvatarPath(user.id);
   const upload = await uploadMedia(uri, path, contentType);
   if (upload.error) return { data: null, error: upload.error };
-  const update = await supabase
-    .from("profiles")
-    .update({ profile_image_path: path, updated_at: new Date().toISOString() })
-    .eq("id", user.id);
-  return { data: path, error: update.error };
+  const update = await supabase.rpc("update_my_profile_avatar", {
+    p_profile_image_path: path,
+  });
+  return { data: update.error ? null : path, error: update.error };
 }
