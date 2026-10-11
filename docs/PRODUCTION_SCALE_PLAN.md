@@ -27,7 +27,7 @@ This is an operational gate, not a claim that the current project has passed it.
 - Use bounded pagination and query limits for every feed/search endpoint; avoid unbounded selects.
 - Verify indexes with real query plans and representative row counts. Avoid deleting indexes solely because a low-traffic test environment marks them unused.
 - Check RLS policies under anon, user A, user B, blocked users, and service role; include private profiles/posts and community membership boundaries.
-- Replace client-side SELECT-then-write toggles with atomic server-side operations or idempotent mutations before high-concurrency launch.
+- Reaction, save, follow, and block toggles now call transaction-serialized database RPCs; the dedicated like RPC avoids an overloaded PostgREST function name. Verify these flows under concurrent-user tests before high-concurrency launch.
 - Ensure retries are safe, especially for payments, messages, uploads, and notification jobs.
 - Confirm observability excludes passwords, tokens, signed URLs, and sensitive precise location from logs.
 
