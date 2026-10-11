@@ -112,10 +112,10 @@ export async function toggleReaction(postId: string) {
   if (existing.error) return { liked: false, error: existing.error };
   if (existing.data) {
     const result = await supabase.from("reactions").delete().eq("post_id", postId).eq("user_id", user.id);
-    return { liked: false, error: result.error };
+    return { liked: result.error ? true : false, error: result.error };
   }
   const result = await supabase.from("reactions").insert({ post_id: postId, user_id: user.id, reaction: "like" });
-  return { liked: true, error: result.error };
+  return { liked: result.error ? false : true, error: result.error };
 }
 
 export async function toggleSavedPost(postId: string) {
@@ -126,10 +126,10 @@ export async function toggleSavedPost(postId: string) {
   if (existing.error) return { saved: false, error: existing.error };
   if (existing.data) {
     const result = await supabase.from("saved_posts").delete().eq("post_id", postId).eq("user_id", user.id);
-    return { saved: false, error: result.error };
+    return { saved: result.error ? true : false, error: result.error };
   }
   const result = await supabase.from("saved_posts").insert({ post_id: postId, user_id: user.id });
-  return { saved: true, error: result.error };
+  return { saved: result.error ? false : true, error: result.error };
 }
 
 export async function listSavedPosts(page = 0, pageSize = 20) {
@@ -173,10 +173,10 @@ export async function toggleFollow(profileId: string) {
   if (existing.error) return { following: false, error: existing.error };
   if (existing.data) {
     const result = await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", profileId);
-    return { following: false, error: result.error };
+    return { following: result.error ? true : false, error: result.error };
   }
   const result = await supabase.from("follows").insert({ follower_id: user.id, following_id: profileId });
-  return { following: true, error: result.error };
+  return { following: result.error ? false : true, error: result.error };
 }
 
 export type PostFeedbackPreference = "interested" | "not_interested";
@@ -303,8 +303,8 @@ export async function toggleBlock(profileId: string) {
   if (existing.error) return { blocked: false, error: existing.error };
   if (existing.data) {
     const result = await supabase.from("blocks").delete().eq("blocker_id", user.id).eq("blocked_id", profileId);
-    return { blocked: false, error: result.error };
+    return { blocked: result.error ? true : false, error: result.error };
   }
   const result = await supabase.from("blocks").insert({ blocker_id: user.id, blocked_id: profileId });
-  return { blocked: true, error: result.error };
+  return { blocked: result.error ? false : true, error: result.error };
 }
