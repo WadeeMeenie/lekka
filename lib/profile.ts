@@ -48,5 +48,9 @@ export async function saveMyProfileAvatar(uri: string, contentType = "image/jpeg
   const update = await supabase.rpc("update_my_profile_avatar", {
     p_profile_image_path: path,
   });
-  return { data: update.error ? null : path, error: update.error };
+  if (update.error) {
+    await supabase.storage.from("local-radar-media").remove([path]);
+    return { data: null, error: update.error };
+  }
+  return { data: path, error: null };
 }
