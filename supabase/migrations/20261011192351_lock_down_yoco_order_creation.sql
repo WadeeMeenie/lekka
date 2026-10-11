@@ -46,7 +46,7 @@ BEGIN
   VALUES (
     p_user_id, p_business_id, 'verification', p_reference_id, 20000,
     extensions.gen_random_uuid()::text,
-    pg_catalog.coalesce(p_metadata, '{}'::jsonb) || pg_catalog.jsonb_build_object(
+    COALESCE(p_metadata, '{}'::jsonb) || pg_catalog.jsonb_build_object(
       'environment', 'test',
       'user_id', p_user_id
     )
