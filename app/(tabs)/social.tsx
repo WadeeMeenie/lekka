@@ -3,6 +3,7 @@ import { router } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AuthGate } from "@/components/auth-gate";
 import { ScreenContainer } from "@/components/screen-container";
+import { LekkaScreenHeading } from "@/components/ui/lekka-screen-heading";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
@@ -42,7 +43,7 @@ export default function SocialScreen() {
 
   return <ScreenContainer><ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
     {authGateAction && <AuthGate action={authGateAction} onCancel={() => setAuthGateAction(null)} />}
-    <View style={styles.header}><View style={styles.headerCopy}><Text style={[styles.eyebrow, { color: colors.muted }]}>YOUR PEOPLE</Text><Text style={[styles.title, { color: colors.foreground }]}>Social</Text></View><Pressable onPress={() => { if (requireAuth("message people")) setSegment("Messages"); }} accessibilityLabel="Messages" accessibilityRole="button" style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="message.fill" size={20} color={colors.foreground} /></Pressable></View>
+    <LekkaScreenHeading eyebrow="YOUR PEOPLE" title="Social" accessory={<Pressable onPress={() => { if (requireAuth("message people")) setSegment("Messages"); }} accessibilityLabel="Messages" accessibilityRole="button" style={[styles.iconButton, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="message.fill" size={20} color={colors.foreground} /></Pressable>} />
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.segmentRow}>{(["Communities", "Following", "Messages"] as Segment[]).map((item) => { const selected = segment === item; return <Pressable key={item} onPress={() => { if (item === "Messages" && !requireAuth("message people")) return; setSegment(item); }} accessibilityRole="button" accessibilityState={{ selected }} style={[styles.segmentButton, { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.border }]}><Text style={[styles.segmentText, { color: selected ? colors.background : colors.muted }]}>{item}</Text></Pressable>; })}</ScrollView>
     {segment === "Communities" ? <>
       <View style={styles.sectionRow}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Public communities</Text><Pressable onPress={createCommunity} accessibilityRole="button" style={[styles.createButton, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="plus" size={16} color={colors.primary} /><Text style={[styles.createText, { color: colors.primary }]}>New</Text></Pressable></View>
