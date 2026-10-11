@@ -299,7 +299,7 @@ describe("Yoco webhook payment verification", () => {
 
 describe("Yoco order creation and checkout attachment are server-only", () => {
   it("revokes client execution and requires a pending business verification request", () => {
-    const migration = readMigration("20261011192500_lock_down_yoco_order_creation.sql");
+    const migration = readMigration("20261011192351_lock_down_yoco_order_creation.sql");
     const checkout = readFileSync(
       resolve(process.cwd(), "supabase/functions/yoco-create-checkout/index.ts"),
       "utf8",
