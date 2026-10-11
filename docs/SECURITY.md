@@ -2,6 +2,14 @@
 
 ## Confirmed production findings
 
+### Fixed locally — session JWT fail-closed and app binding
+
+The server SDK now refuses to sign or verify sessions when `VITE_APP_ID` is missing or `JWT_SECRET` is shorter than 32 characters, and rejects otherwise-valid tokens whose `appId` does not match the current application. Empty display names remain valid because they are not authorization claims. This fix is local and not deployed.
+
+### Follow-up — OAuth login-CSRF state binding
+
+The OAuth `state` value is currently a base64-encoded redirect URI rather than a browser-bound nonce. The provider exchange may add protection, but the server does not independently bind the callback to the initiating browser session. Add a server-issued state nonce or document provider-level protection before broad web launch.
+
 ### Fixed locally — reflective credentialed CORS
 
 The server previously reflected any request `Origin` while sending `Access-Control-Allow-Credentials: true`. The audit branch now requires an explicit `CORS_ALLOWED_ORIGINS` match in configured environments or the paired local preview frontend when unset, rejects disallowed origins with HTTP 403, and adds focused regression tests. This fix is committed locally but is not deployed.

@@ -17,6 +17,17 @@ import type {
 // Utility function
 const isNonEmptyString = (value: unknown): value is string =>
   typeof value === "string" && value.length > 0;
+const isString = (value: unknown): value is string => typeof value === "string";
+const MIN_SESSION_SECRET_LENGTH = 32;
+
+export function assertSessionConfiguration(appId: string, cookieSecret: string): void {
+  if (!isNonEmptyString(appId)) {
+    throw new Error("VITE_APP_ID must be configured before issuing sessions");
+  }
+  if (cookieSecret.length < MIN_SESSION_SECRET_LENGTH) {
+    throw new Error(`JWT_SECRET must be at least ${MIN_SESSION_SECRET_LENGTH} characters`);
+  }
+}
 
 export type SessionPayload = {
   openId: string;
@@ -137,6 +148,7 @@ class SDKServer {
 
   private getSessionSecret() {
     const secret = ENV.cookieSecret;
+    assertSessionConfiguration(ENV.appId, secret);
     return new TextEncoder().encode(secret);
   }
 
@@ -193,7 +205,7 @@ class SDKServer {
       });
       const { openId, appId, name } = payload as Record<string, unknown>;
 
-      if (!isNonEmptyString(openId) || !isNonEmptyString(appId) || !isNonEmptyString(name)) {
+      if (!isNonEmptyString(openId) || !isString(appId) || appId !== ENV.appId || !isString(name)) {
         console.warn("[Auth] Session payload missing required fields");
         return null;
       }

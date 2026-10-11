@@ -19,6 +19,7 @@
 - Added `AGENTS.md`, `PRODUCT_SPEC.md`, `docs/RELEASE_READINESS.md`, `docs/SECURITY.md`, `docs/PRODUCTION_SCALE_PLAN.md`, and this state file.
 - Replaced reflective credentialed CORS with an explicit origin allowlist and added five regression tests. The fix is local and not deployed.
 - Restricted the service-backed storage proxy to configured public prefixes, rejected traversal-like keys, and added three regression tests. The fix is local and not deployed.
+- Audited server, Edge Function, scheduled cleanup, Yoco, nearby-media, and live `SECURITY DEFINER` grants; added `docs/AUTHORIZATION_MIDDLEWARE_AUDIT_2026-10-11.md` and hardened session JWT configuration/app binding.
 - No production database, Edge Function, customer record, payment, branch merge, or remote PR was changed.
 
 ## Blockers
@@ -26,6 +27,7 @@
 - Decide the source of truth for production drift and import/reconcile all required migrations and deployed function source into Git.
 - Obtain supported remediation for PostGIS extension-owned privileges.
 - Resolve the Supabase modern publishable-key/gateway mismatch without silently downgrading the client.
+- Add browser-bound OAuth state protection before broad web launch.
 - Verify Auth leaked-password protection, backups/restore, deployment rollback, native/device flows, and legal/commercial readiness.
 
 ## Next actions
