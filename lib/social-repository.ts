@@ -288,15 +288,12 @@ export async function reportContent(input: { postId?: string; commentId?: string
 
 export async function toggleBlock(profileId: string) {
   if (!supabase) return { blocked: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { blocked: false, error: authError };
   if (!user) return { blocked: false, error: new Error("Please sign in") };
   if (user.id === profileId) return { blocked: false, error: new Error("You cannot block yourself") };
-  const existing = await supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id).eq("blocked_id", profileId).maybeSingle();
-  if (existing.error) return { blocked: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("blocks").delete().eq("blocker_id", user.id).eq("blocked_id", profileId);
-    return { blocked: result.error ? true : false, error: result.error };
-  }
-  const result = await supabase.from("blocks").insert({ blocker_id: user.id, blocked_id: profileId });
-  return { blocked: result.error ? false : true, error: result.error };
+
+  // Serialize block/unblock in Postgres so concurrent taps cannot race.
+  const result = await supabase.rpc("toggle_block", { p_profile_id: profileId });
+  return { blocked: result.data === true, error: result.error };
 }
