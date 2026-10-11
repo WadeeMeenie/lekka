@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
   const { data: { user }, error: userError } = await authClient.auth.getUser();
   if (userError || !user) return json({ error: "unauthorized" }, 401);
 
-  let input: { businessId?: string; purpose?: string; referenceId?: string; successUrl?: string; cancelUrl?: string; failureUrl?: string };
+  let input: { businessId?: string; purpose?: string; referenceId?: string };
   try { input = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
 
   if (input.purpose !== "verification") return json({ error: "unsupported_test_product" }, 400);
@@ -40,11 +40,14 @@ Deno.serve(async (req) => {
     p_amount_cents: 20000,
     p_metadata: { environment: "test", user_id: user.id },
   }).single();
-  if (orderError || !order) return json({ error: "order_creation_failed", detail: orderError?.message }, 400);
+  if (orderError || !order) console.error("Yoco order creation failed", orderError?.code ?? "unknown");
+    return json({ error: "order_creation_failed" }, 400);
 
-  const successUrl = input.successUrl ?? `${APP_SCHEME}://payment/success?order_id=${order.id}`;
-  const cancelUrl = input.cancelUrl ?? `${APP_SCHEME}://payment/cancel?order_id=${order.id}`;
-  const failureUrl = input.failureUrl ?? `${APP_SCHEME}://payment/failure?order_id=${order.id}`;
+  // Return destinations are controlled by server configuration, never by client input.
+  // Accepting arbitrary URLs here would let an authenticated caller redirect a checkout
+  // to a phishing page while preserving the appearance of a Lekka payment flow.
+  const returnUrl = (result: "success" | "cancel" | "failure") =>
+    `${APP_SCHEME}://payment/${result}?order_id=${encodeURIComponent(order.id)}`;
 
   const yocoResponse = await fetch("https://payments.yoco.com/api/checkouts", {
     method: "POST",
@@ -56,9 +59,9 @@ Deno.serve(async (req) => {
     body: JSON.stringify({
       amount: order.amount_cents,
       currency: "ZAR",
-      successUrl,
-      cancelUrl,
-      failureUrl,
+      successUrl: returnUrl("success"),
+      cancelUrl: returnUrl("cancel"),
+      failureUrl: returnUrl("failure"),
       metadata: { lekkaOrderId: order.id, businessId: order.business_id, purpose: order.purpose },
     }),
   });
@@ -67,7 +70,8 @@ Deno.serve(async (req) => {
   if (!yocoResponse.ok || !yocoBody.id || !yocoBody.redirectUrl) {
     const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
     await service.from("payment_orders").update({ status: "failed", metadata: { yoco_error: yocoBody }, updated_at: new Date().toISOString() }).eq("id", order.id);
-    return json({ error: "yoco_checkout_creation_failed", detail: yocoBody }, 502);
+    console.error("Yoco checkout creation failed", yocoResponse.status, yocoBody);
+    return json({ error: "yoco_checkout_creation_failed" }, 502);
   }
 
   const { error: attachError } = await authClient.rpc("attach_yoco_checkout", {
