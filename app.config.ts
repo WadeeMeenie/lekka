@@ -10,7 +10,7 @@ const config: ExpoConfig = {
   version: "1.0.0",
   orientation: "portrait",
   icon: "./assets/images/icon.png",
-  scheme: "lekka",
+  scheme: ["manuslocalradarsa", "lekka"],
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   ios: {
@@ -35,7 +35,10 @@ const config: ExpoConfig = {
       {
         action: "VIEW",
         autoVerify: true,
-        data: [{ scheme: "lekka", host: "*" }],
+        data: [
+          { scheme: "manuslocalradarsa", host: "*" },
+          { scheme: "lekka", host: "*" },
+        ],
         category: ["BROWSABLE", "DEFAULT"],
       },
     ],
