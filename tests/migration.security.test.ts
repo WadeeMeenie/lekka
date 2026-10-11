@@ -22,6 +22,7 @@ const activeIdentitySource = readFileSync(resolve(process.cwd(), "lib/active-ide
 const radarRpcMigration = readMigration("20260921235000_lock_down_radar_rpc.sql");
 const excessiveClientPrivilegesMigration = readMigration("20260924200000_revoke_excessive_client_table_privileges.sql");
 const helperExecuteMigration = readMigration("20260924073018_harden_security_definer_helper_execute.sql");
+const restoredPolicyHelpersMigration = readMigration("20261011210000_restore_policy_helpers_and_profile_avatar.sql");
 const discoveryBoundsMigration = readMigration("20260924073115_bound_discovery_radius_and_result_limit.sql");
 const defaultClientPrivilegesMigration = readMigration("20260924200500_harden_public_default_client_privileges.sql");
 const yocoTransitionMigration = readMigration("20260924110000_harden_yoco_payment_transitions.sql");
@@ -166,6 +167,16 @@ describe("community RLS recursion hardening", () => {
 });
 
 describe("security-definer helper and discovery boundaries", () => {
+  it("restores policy-required helper execution only with caller-scoped predicates", () => {
+    expect(restoredPolicyHelpersMigration).toContain("target_user = auth.uid()");
+    expect(restoredPolicyHelpersMigration).toContain("viewer_id = auth.uid()");
+    expect(restoredPolicyHelpersMigration).toContain("viewer = auth.uid()");
+    expect(restoredPolicyHelpersMigration).toContain("grant execute on function public.is_community_member(uuid, uuid) to anon, authenticated");
+    expect(restoredPolicyHelpersMigration).toContain("grant execute on function public.is_business_manager(uuid, uuid) to authenticated");
+    expect(restoredPolicyHelpersMigration).toContain("grant execute on function public.can_view_full_profile(uuid, uuid) to authenticated");
+    expect(restoredPolicyHelpersMigration).toContain("revoke execute on function public.is_business_manager(uuid, uuid) from public");
+  });
+
   it("removes direct client execute access from internal SECURITY DEFINER helpers", () => {
     expect(helperExecuteMigration).toContain("revoke execute on function public.is_community_member(uuid, uuid) from public, anon, authenticated");
     expect(helperExecuteMigration).toContain("revoke execute on function public.can_manage_business(uuid, uuid) from public, anon, authenticated");
