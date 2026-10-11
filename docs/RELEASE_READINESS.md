@@ -1,0 +1,27 @@
+# Release readiness
+
+**Audit date:** 2026-10-11  
+**Verdict:** **NOT READY**
+
+A clean local build is not sufficient for release. The current checkout is `main` at `b0ee8fa7cb199b1e2b8b7bc2deb666dfecc985b8`. PR #9 is open and green at historical head `b5bf8d69798c2f9aaea763ea6304ec003d9f0621`, but that is not the SHA audited here.
+
+## Gate status
+
+- Build and TypeScript: **PASS locally** (`npm run check`, `npm run build`).
+- Static audits: **PASS locally** (`audit:interactions`, `audit:production`).
+- Unit/integration tests: **BLOCKED**: 104 passed, 1 failed, 2 skipped. The Supabase REST check returned HTTP 401 using the repository’s published key; no live mutation was attempted.
+- Lint: **PASS with 14 warnings**, including missing React hook dependencies and unused onboarding code.
+- Android/native build: **NOT VERIFIED locally**; historical PR CI passed only at the PR SHA.
+- Migration consistency: **BLOCKED**. Production has migrations through `20261011195846`, while this checkout contains files only through `20260906071000`.
+- Security advisors: **BLOCKED**. Production still reports public execution of three `st_estimatedextent` overloads and public, RLS-disabled `spatial_ref_sys`.
+- Payments: **NOT VERIFIED end to end**. Production has newer server-only Yoco RPCs and a verified amount/currency path than this checkout; no live or sandbox charge was attempted.
+- Auth leaked-password protection: **BLOCKED/EXTERNAL**. Supabase reports it disabled; enablement requires project Auth settings and must be checked against plan capabilities.
+- Backups, restore, monitoring, load, physical-device testing, legal/privacy/terms: **NOT VERIFIED**.
+
+## Release blockers
+
+1. Reconcile repository and production migration/function history without overwriting production or silently applying SQL.
+2. Resolve or formally accept the PostGIS elevated-owner findings. The repository migration did not change effective grants.
+3. Align the repository Yoco implementation with the deployed server-only payment path and add tests for verified amount/currency and valid transitions.
+4. Repair or explain the 401 integration check with the actual CI/project credentials, without committing or exposing secrets.
+5. Obtain evidence for Auth password protection, backups/restore, deployment rollback, and Android/device flows.
