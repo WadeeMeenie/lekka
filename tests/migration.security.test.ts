@@ -295,3 +295,25 @@ describe("Yoco webhook payment verification", () => {
     expect(migration).toContain("FROM PUBLIC, anon, authenticated");
   });
 });
+
+
+describe("Yoco order creation and checkout attachment are server-only", () => {
+  it("revokes client execution and requires a pending business verification request", () => {
+    const migration = readMigration("20261011192500_lock_down_yoco_order_creation.sql");
+    const checkout = readFileSync(
+      resolve(process.cwd(), "supabase/functions/yoco-create-checkout/index.ts"),
+      "utf8",
+    );
+
+    expect(migration).toContain("public.create_yoco_payment_order_server");
+    expect(migration).toContain("public.attach_yoco_checkout_server");
+    expect(migration).toContain("vr.status = 'pending'");
+    expect(migration).toContain("p_business_id, p_reference_id, 20000");
+    expect(migration).toContain("FROM PUBLIC, anon, authenticated");
+    expect(migration).toContain("TO service_role");
+    expect(checkout).toContain('rpc("create_yoco_payment_order_server"');
+    expect(checkout).toContain('rpc("attach_yoco_checkout_server"');
+    expect(checkout).not.toContain('rpc("create_yoco_payment_order"');
+    expect(checkout).not.toContain('rpc("attach_yoco_checkout"');
+  });
+});
