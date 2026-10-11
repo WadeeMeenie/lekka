@@ -16,21 +16,21 @@ Deno.serve(async (req) => {
   const authClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: authHeader } }, auth: { persistSession: false, autoRefreshToken: false } });
   const { data: { user }, error: userError } = await authClient.auth.getUser();
   if (userError || !user) return json({ error: "unauthorized" }, 401);
+  const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
   let input: { businessId?: string; purpose?: string; referenceId?: string };
   try { input = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
   if (input.purpose !== "verification") return json({ error: "unsupported_test_product" }, 400);
   if (!input.businessId || !input.referenceId) return json({ error: "business_id_and_reference_id_required" }, 400);
-  const { data: order, error: orderError } = await authClient.rpc("create_yoco_payment_order", { p_business_id: input.businessId, p_purpose: "verification", p_reference_id: input.referenceId, p_amount_cents: 20000, p_metadata: { environment: "test", user_id: user.id } }).single();
+  const { data: order, error: orderError } = await service.rpc("create_yoco_payment_order_server", { p_user_id: user.id, p_business_id: input.businessId, p_purpose: "verification", p_reference_id: input.referenceId, p_metadata: { environment: "test", user_id: user.id } }).single();
   if (orderError || !order) return json({ error: "order_creation_failed", detail: orderError?.message }, 400);
   const returnUrl = (result: string) => `${RETURN_BASE}?order_id=${encodeURIComponent(order.id)}&result=${result}`;
   const yocoResponse = await fetch("https://payments.yoco.com/api/checkouts", { method: "POST", headers: { Authorization: `Bearer ${YOCO_SECRET_KEY}`, "Content-Type": "application/json", "Idempotency-Key": order.idempotency_key }, body: JSON.stringify({ amount: order.amount_cents, currency: "ZAR", successUrl: returnUrl("success"), cancelUrl: returnUrl("cancel"), failureUrl: returnUrl("failure"), metadata: { lekkaOrderId: order.id, businessId: order.business_id, purpose: order.purpose } }) });
   const yocoBody = await yocoResponse.json().catch(() => ({}));
   if (!yocoResponse.ok || !yocoBody.id || !yocoBody.redirectUrl) {
-    const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
     await service.from("payment_orders").update({ status: "failed", metadata: { yoco_error: yocoBody }, updated_at: new Date().toISOString() }).eq("id", order.id);
     return json({ error: "yoco_checkout_creation_failed", detail: yocoBody }, 502);
   }
-  const { error: attachError } = await authClient.rpc("attach_yoco_checkout", { p_order_id: order.id, p_checkout_id: yocoBody.id });
+  const { error: attachError } = await service.rpc("attach_yoco_checkout_server", { p_order_id: order.id, p_checkout_id: yocoBody.id, p_user_id: user.id });
   if (attachError) return json({ error: "checkout_persistence_failed" }, 500);
   return json({ orderId: order.id, checkoutId: yocoBody.id, redirectUrl: yocoBody.redirectUrl });
 });
