@@ -34,9 +34,9 @@ BEGIN
 
   UPDATE public.payment_orders
   SET status = p_status,
-      provider_payment_id = pg_catalog.coalesce(p_provider_payment_id, provider_payment_id),
-      metadata = metadata || pg_catalog.coalesce(p_metadata, '{}'::jsonb),
-      paid_at = CASE WHEN p_status = 'paid' THEN pg_catalog.coalesce(paid_at, pg_catalog.now()) ELSE paid_at END,
+      provider_payment_id = COALESCE(p_provider_payment_id, provider_payment_id),
+      metadata = metadata || COALESCE(p_metadata, '{}'::jsonb),
+      paid_at = CASE WHEN p_status = 'paid' THEN COALESCE(paid_at, pg_catalog.now()) ELSE paid_at END,
       updated_at = pg_catalog.now()
   WHERE provider_checkout_id = p_checkout_id
     AND (
