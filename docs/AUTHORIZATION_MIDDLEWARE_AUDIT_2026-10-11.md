@@ -38,7 +38,7 @@ This audit covers the server middleware, tRPC routers, OAuth/session SDK, servic
 
 The live project was inspected with bounded read-only catalog queries. Anonymous execution is denied for all listed application `SECURITY DEFINER` functions except the three unresolved `st_estimatedextent` overloads. Authenticated execution is limited to user-scoped/profile/business operations such as `get_my_profile`, `get_profile_for_viewer`, nearby reads, invitations, buddy operations, verification submission/review, and profile/business updates. Payment transitions, cleanup authorization, nearby authorization helpers, notification helpers, and server-only Yoco RPCs are service-role-only.
 
-The exception remains material: `st_estimatedextent(text,text)`, its three-argument overload, and its four-argument overload are still executable by `anon`, `authenticated`, and `public`. This is tracked in `docs/SECURITY.md` and requires supported elevated-owner remediation.
+The exception remains material: `st_estimatedextent(text,text)`, its three-argument overload, and its four-argument overload are still executable by `anon`, `authenticated`, and `public`. Two live revoke migrations were recorded during this task, but the ACL did not change. The live migration runner is `postgres`; the extension-owned functions are owned by `supabase_admin`, and `postgres` cannot assume that role. This requires a supported elevated-owner/platform remediation; extension ownership must not be changed as a workaround.
 
 ## Local changes in this audit
 

@@ -20,7 +20,7 @@
 - Replaced reflective credentialed CORS with an explicit origin allowlist and added five regression tests. The fix is local and not deployed.
 - Restricted the service-backed storage proxy to configured public prefixes, rejected traversal-like keys, and added three regression tests. The fix is local and not deployed.
 - Audited server, Edge Function, scheduled cleanup, Yoco, nearby-media, and live `SECURITY DEFINER` grants; added `docs/AUTHORIZATION_MIDDLEWARE_AUDIT_2026-10-11.md` and hardened session JWT configuration/app binding.
-- No production database, Edge Function, customer record, payment, branch merge, or remote PR was changed.
+- No effective production data, Edge Function, customer record, payment, branch merge, or remote PR was changed. Two live migration records were added while attempting the requested PostGIS revocation, but the extension-owned function ACLs remained unchanged because the migration runner is not the `supabase_admin` owner.
 
 ## Blockers
 

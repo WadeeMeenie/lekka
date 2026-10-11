@@ -22,7 +22,7 @@ The public `/manus-storage/*` route previously used a service-backed presign ope
 
 Supabase security advisors reported that `public.st_estimatedextent(text,text)`, the three-argument overload, and the four-argument overload are executable by `anon`, `authenticated`, and `public`. Direct read-only SQL verification on 2026-10-11 confirmed all three effective grants remain true. `public.spatial_ref_sys` is public, has RLS disabled, and is selectable by `anon`, `authenticated`, and `public`.
 
-The repository contains a revoke migration, but it did not change effective grants. Do not repeat it blindly. Determine whether these extension-owned objects require an elevated owner or Supabase support remediation. Owner: backend/platform. Evidence required: advisor result and `has_function_privilege`/table privilege queries showing the grants are removed or an accepted supported exception.
+The repository contains a revoke migration, and two additional live migrations were recorded on 2026-10-11, but none changed the raw ACL. The live migration runner is `postgres` while all three extension-owned functions are owned by `supabase_admin`; `postgres` cannot assume that role (`pg_has_role` returned false), so the revokes are no-ops. Do not change extension ownership. Backend/platform must run the revoke through a supported elevated-owner path or obtain Supabase remediation. Evidence required: advisor result and `has_function_privilege`/raw `proacl` queries showing the grants are removed or an accepted supported exception.
 
 ### P1 — Production/repository security drift
 

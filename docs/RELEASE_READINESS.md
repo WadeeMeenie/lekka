@@ -21,7 +21,7 @@ A clean local build is not sufficient for release. The current checkout is `main
 ## Release blockers
 
 1. Reconcile repository and production migration/function history without overwriting production or silently applying SQL.
-2. Resolve or formally accept the PostGIS elevated-owner findings. The repository migration did not change effective grants.
+2. Resolve or formally accept the PostGIS elevated-owner findings. Two live revoke migrations were recorded, but the `postgres` migration runner cannot alter functions owned by `supabase_admin`; raw ACLs and effective grants remain unchanged.
 3. Align the repository Yoco implementation with the deployed server-only payment path and add tests for verified amount/currency and valid transitions.
 4. Have the Supabase/project owner correct or rotate the modern publishable-key configuration. Do not silently downgrade the client to legacy anon; rerun the integration check after correction.
 5. Obtain evidence for Auth password protection, backups/restore, deployment rollback, and Android/device flows.
