@@ -21,6 +21,14 @@ This checklist is the release gate for the current production-hardening candidat
 - [ ] Test Storage upload, signed URL expiry, replacement/deletion cleanup, and access control across accounts.
 - [ ] Verify database backup/PITR availability and a rollback plan before any production DDL.
 
+## Verified live changes (2026-10-11)
+
+- The production checkout function no longer accepts client-controlled success/cancel/failure URLs (Edge Function version 11).
+- The Yoco webhook handler now recognizes `payment.succeeded`, `payment.failed`, and `refund.succeeded`, correlates checkout IDs, and calls a server-only RPC that verifies amount and ZAR currency before a paid transition (Edge Function version 12).
+- Order creation and checkout attachment are now server-only RPCs; the previous client-callable RPC grants were revoked. Both checkout Edge Function versions use the server-only RPCs (v1 version 11; v2 version 10).
+- Live migrations recorded by Supabase: `20261011192054` (verified Yoco amount/currency) and `20261011192351` (server-only order creation/checkout attachment). Repository migration filenames are aligned to those versions.
+- The current verification checkout is explicitly **test-only**, with a fixed R200 amount and `environment=test` metadata. It is not a production monetization flow; do not switch it to live Yoco credentials until a separate production pricing/checkout configuration and end-to-end live-mode safeguards are implemented and tested.
+
 ## Payments and launch
 
 - [ ] Use Yoco sandbox/test credentials to exercise checkout creation, webhook signature/authentication, duplicate/replayed webhook delivery, cancellation/failure, paid transition, and refund handling.
