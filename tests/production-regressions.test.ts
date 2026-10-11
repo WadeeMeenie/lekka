@@ -34,6 +34,22 @@ describe("reported Lekka production regressions", () => {
     expect(migration).toContain("grant execute on function public.create_community(text, text, text, text, text, text[]) to authenticated");
   });
 
+  it("saves personal identity without direct client writes to profiles", () => {
+    const accountRepository = read("lib/account-repository.ts");
+    const migration = read("supabase/migrations/20261011211500_save_personal_identity_rpc.sql");
+    expect(accountRepository).toContain('supabase.rpc("save_personal_identity"');
+    expect(accountRepository).not.toContain('.from("profiles")');
+    expect(migration).toContain("update public.profiles");
+    expect(migration).toContain("insert into public.personal_identities");
+    expect(migration).toContain("grant execute on function public.save_personal_identity(text, text, date, text) to authenticated");
+  });
+
+  it("honors a manually selected Radar area for Local discovery", () => {
+    const local = read("app/(tabs)/local.tsx");
+    expect(local).toContain("settings.selectedLocation");
+    expect(local).toContain("location: settings.selectedLocation");
+  });
+
   it("provides retry and real navigation actions when community or post detail cannot load", () => {
     const community = read("app/community/[id].tsx");
     const post = read("app/post/[id].tsx");
