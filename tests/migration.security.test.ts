@@ -15,6 +15,7 @@ const businessFunctionSecurityMigration = readMigration("20260905183000_harden_b
 const crossAccountHardeningMigration = readMigration("20260905190000_cross_account_business_community_storage_hardening.sql");
 const communityRlsRecursionMigration = readMigration("20260906071000_fix_community_rls_recursion.sql");
 const productionHardeningMigration = readMigration("20260921230000_production_hardening.sql");
+const spatialRefSysMigration = readMigration("20261011082000_restrict_postgis_metadata_client_access.sql");
 const profileRpcFieldsMigration = readMigration("20260921232000_profile_rpc_fields.sql");
 const localRadarSource = readFileSync(resolve(process.cwd(), "lib/local-radar.ts"), "utf8");
 const activeIdentitySource = readFileSync(resolve(process.cwd(), "lib/active-identity.ts"), "utf8");
@@ -237,5 +238,20 @@ describe("production hardening", () => {
     expect(localRadarSource).toContain('POSTS_KEY + "/" + userId');
     expect(activeIdentitySource).toContain("lekka/active-identity/v2");
     expect(activeIdentitySource).toContain('ACTIVE_IDENTITY_KEY + "/" + user.id');
+  });
+});
+
+
+describe("PostGIS metadata access", () => {
+  it("keeps coordinate-system metadata readable but prevents client writes", () => {
+    expect(spatialRefSysMigration).toContain("REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER");
+    expect(spatialRefSysMigration).toContain("GRANT SELECT ON TABLE public.spatial_ref_sys TO anon, authenticated");
+  });
+
+  it("removes client access to SECURITY DEFINER extent metadata helpers", () => {
+    expect(spatialRefSysMigration).toContain("public.st_estimatedextent(text, text)");
+    expect(spatialRefSysMigration).toContain("public.st_estimatedextent(text, text, text)");
+    expect(spatialRefSysMigration).toContain("public.st_estimatedextent(text, text, text, boolean)");
+    expect(spatialRefSysMigration.match(/FROM PUBLIC, anon, authenticated/g)?.length).toBe(3);
   });
 });
