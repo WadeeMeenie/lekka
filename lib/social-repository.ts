@@ -5,11 +5,10 @@ export type SocialProfile = {
   id: string;
   display_name: string;
   username: string | null;
+  bio: string | null;
   profile_image_path: string | null;
-  /** Present only when returned by the viewer-aware profile RPC. */
-  bio?: string | null;
-  interests?: string[];
-  home_area?: string;
+  interests: string[];
+  home_area: string;
 };
 
 export type SocialPost = {
