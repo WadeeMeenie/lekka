@@ -39,6 +39,14 @@
 
 **Verification:** `npm run check`, focused CORS tests, full tests without live integration credentials, lint, build, and `git diff --check` pass. Deployment and browser verification remain outstanding.
 
+### P1 — Arbitrary service-backed storage presigning (fixed locally)
+
+**Evidence:** the unauthenticated `/manus-storage/*` route previously forwarded any caller-supplied key to Forge using the server’s privileged API key and redirected to the returned signed URL.
+
+**Fix:** added a public-prefix policy with `PUBLIC_STORAGE_PREFIXES` (default `generated/`), URL decoding and traversal rejection, and a non-disclosing 404 for private namespaces. Added `tests/storage-proxy.security.test.ts` covering defaults, configured prefixes, encoded keys, and traversal paths.
+
+**Verification:** strict type-checking, focused storage tests, full tests, lint, build, and diff validation pass. Deployment and confirmation of the production public-prefix configuration remain outstanding.
+
 ### P1 — Production source drift blocks reproducible release
 
 **Evidence:** live migration history includes later Yoco, RLS, PostGIS, grant, and product migrations through `20261011195846`; Git checkout ends at `20260906071000`. Production Edge Functions are active at newer versions and include `yoco-create-checkout-v2` plus server-only RPC calls absent from this checkout.
@@ -102,6 +110,7 @@
 - Created the non-destructive audit branch `audit/production-readiness-2026-10-11`.
 - Added the required repository guidance and release artifacts: `AGENTS.md`, `PRODUCT_SPEC.md`, `docs/RELEASE_READINESS.md`, `docs/SECURITY.md`, `docs/PRODUCTION_SCALE_PLAN.md`, `.ai/STATE.md`, and this report.
 - Hardened credentialed CORS in `server/_core/index.ts`, added `server/_core/cors.ts`, and added `tests/cors.security.test.ts`.
+- Restricted the service-backed storage proxy in `server/_core/storageProxy.ts`, added `server/_core/storageProxyPolicy.ts`, and added `tests/storage-proxy.security.test.ts`.
 - No database migration was applied. No Edge Function was deployed. No customer data, payment, branch merge, force-push, or PR merge was performed.
 
 ## External evidence

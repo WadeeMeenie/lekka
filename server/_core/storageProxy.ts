@@ -1,11 +1,20 @@
 import type { Express } from "express";
 import { ENV } from "./env";
+import { isPublicStorageKey, normalizeStorageKey } from "./storageProxyPolicy";
 
 export function registerStorageProxy(app: Express) {
   app.get("/manus-storage/*", async (req, res) => {
-    const key = (req.params as Record<string, string>)[0];
+    const rawKey = (req.params as Record<string, string>)[0];
+    const key = rawKey ? normalizeStorageKey(rawKey) : null;
     if (!key) {
       res.status(400).send("Missing storage key");
+      return;
+    }
+
+    if (!isPublicStorageKey(key)) {
+      // Do not reveal whether a private key exists. The proxy is deliberately
+      // public only for explicitly configured public namespaces.
+      res.status(404).send("Storage object not found");
       return;
     }
 
