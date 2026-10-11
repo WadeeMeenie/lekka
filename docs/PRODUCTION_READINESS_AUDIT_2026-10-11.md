@@ -67,7 +67,9 @@
 
 **Impact:** live integration health and key validity are not proven by the local test.
 
-**Required fix:** verify the currently active publishable key/configuration in the project and CI, without printing or committing secret material; rerun the test at the candidate SHA.
+**Follow-up evidence:** the Supabase project API reports the modern publishable key as enabled, but direct requests using it as `apikey` return `401 Invalid API key`. The legacy anon key succeeds, including when paired with the modern key as Bearer. This points to a project gateway/key configuration mismatch rather than a test-only header issue.
+
+**Required fix:** have the Supabase/project owner correct or rotate the modern publishable key configuration, without printing or committing key material. Do not silently downgrade the client architecture to legacy anon. Rerun the test at the candidate SHA after correction.
 
 ### P2 — Auth leaked-password protection disabled
 
