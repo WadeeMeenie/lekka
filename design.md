@@ -1,80 +1,74 @@
-# Local Radar SA — Mobile Interface Design Plan
+# Lekka — Product UX and Interface System
 
 ## Product direction
 
-Local Radar SA is a portrait-first, one-handed Android social network built around the question: “What matters around me right now?” The first release prioritises a focused local feed, Local Radar discovery, lightweight posting, local alerts, and a useful local directory. It should feel like a calm, premium native Android product rather than a web page or a clone of an existing social platform.
+Lekka is a portrait-first, one-handed South African social and local-discovery app built around the question: **“What matters around me right now?”** It combines a nearby social feed, Local Radar, lightweight posting, community discovery, and a useful local directory.
 
-## Screen list
+The experience should feel premium, practical, friendly, and confidently local without leaning on stereotypes. It should not resemble a generic SaaS dashboard or copy another social platform's visual identity.
 
-| Screen | Primary content and functionality |
-|---|---|
-| Home | Current area header, search, notifications, profile entry, feed tabs for For You, Nearby, Trending, and Following, plus local post cards with reaction, comment, share, and save actions. |
-| Local Radar | Local discovery with list/map toggle, radius selector, category filters, and privacy-safe area markers for deals, events, alerts, jobs, services, and marketplace listings. |
-| Create | Composer for text posts, local alerts, events, marketplace listings, job listings, and service requests. Includes audience/location visibility selection and publish confirmation. |
-| Social | Segmented view for communities, friends/following, and messages. The MVP includes community discovery and conversation entry points. |
-| Local | Directory landing screen for businesses, deals, events, marketplace, jobs, and services with category tiles and search. |
-| Post detail | Full post content, author/area context, comments, reactions, save, report, and related nearby content. |
-| Radar item detail | Detail view for a local listing, event, deal, alert, job, or service with approximate area, source, status, contact/action button, and report option. |
-| Profile | User identity, area-level location, activity summary, saved items, and followed places/communities. |
-| Search | Search field with recent searches and scoped results across people, places, businesses, communities, and local content. |
-| Notifications | Local activity, comments, follows, alerts, event reminders, and moderation feedback. |
-| Settings and privacy | Discovery radius, manual area selection, location permission explanation, approximate-location visibility, notification preferences, and account controls. |
+The application is an existing Expo / React Native app backed by Supabase and PostGIS. UX changes must preserve the live data model, authentication, RLS boundaries, account-scoped offline drafts, media upload flow, route identities, and Yoco integration. Never replace a live integration with seed data or simulate a success state.
 
-## Key user flows
+## Primary navigation
 
-### Discover what is happening nearby
+The five destinations remain:
 
-1. User opens Home and sees the selected area, such as Bellville.
-2. User switches between For You and Nearby without leaving the feed.
-3. User taps a post to open Post detail, or taps Local Radar to broaden discovery.
-4. User adjusts the radius and category chips, then opens a Radar item detail.
-5. User saves, shares, reports, contacts, or returns to the list using native back navigation.
+1. **Home** — nearby feed, search, notifications, reactions, saves, sharing, reporting, and offline draft status.
+2. **Radar** — nearby discovery with radius and content filters, location permission state, and manual South African area exploration.
+3. **Create** — post type, category, content/media, audience, privacy summary, publish and queued-draft feedback.
+4. **Social** — communities, followed communities, and the current messaging entry point.
+5. **Local** — nearby businesses, deals, events, marketplace, jobs, and services.
 
-### Publish a local alert
+Do not rename route files or change route contracts solely for visual consistency.
 
-1. User taps the central Create tab.
-2. User chooses Local Alert and selects a category such as road closure, outage, lost pet, or community issue.
-3. User enters a short description and chooses an approximate area and audience.
-4. User reviews the visibility summary and publishes.
-5. The alert appears in the local feed and Radar with a reported status and report action.
+## Brand: Karoo Signal
 
-### Publish a general post
+- **Background:** `#F7F8F5` light / `#111816` dark.
+- **Surface:** `#FFFFFF` light / `#1B2421` dark.
+- **Foreground:** `#10211D` light / `#F4F7F2` dark.
+- **Muted text:** `#63736D` light / `#A5B4AD` dark.
+- **Primary amber:** `#E9A23B` light / `#F2B451` dark.
+- **Fynbos green:** `#2F7D67` light / `#65B59B` dark.
+- **Alert coral:** `#D95D4F` light / `#F17C6D` dark.
+- **Border:** `#DDE5DF` light / `#33433D` dark.
 
-1. User opens Create and chooses Post.
-2. User enters text and optionally selects an image placeholder path for future media integration.
-3. User chooses Nearby, My community, My followers, Public, or a specific group.
-4. User publishes and receives immediate in-app confirmation.
-5. The new post is inserted into the local feed and persisted locally.
+Amber is the main action/selection color; green is for positive and trust states; coral is reserved for urgent alerts and destructive actions. Avoid using color as the only signal.
 
-### Configure privacy-safe location
+## Layout and type
 
-1. User opens Settings and privacy.
-2. User chooses current location or manual area selection.
-3. User selects a discovery radius from 500 m through City, Province, South Africa, or Global.
-4. User chooses approximate area visibility and can disable location without losing access to the rest of the product.
-5. The selection is persisted on-device and reflected in Home and Radar headers.
+- Keep primary actions reachable with one hand.
+- Use 16 dp screen gutters, a consistent spacing rhythm, clear hierarchy, and intentional whitespace.
+- Destination headings use a shared 27–28 dp bold title, a compact uppercase eyebrow when useful, and 13 dp supporting text.
+- Body text should be comfortable to read; metadata is secondary but not tiny.
+- Use restrained card borders, modest corner radii, and imagery only when it adds context.
+- All controls should have clear pressed, selected, disabled, and busy states; primary touch targets should be at least 44 dp.
+- Respect safe areas, keyboard behavior, dark mode, screen-reader labels, and user font scaling.
 
-## Layout and interaction rules
+## Core flows
 
-The app uses a five-destination bottom navigation bar: Home, Local Radar, Create, Social, and Local. The Create destination is visually elevated but remains a normal one-handed touch target. Every screen uses safe-area-aware containers, large touch targets, concise labels, clear pressed states, and accessible contrast. Lists use performant virtualised list components. Detail screens use a native-style top bar with back navigation and contextual actions. Empty, loading, error, and permission-denied states are designed as first-class content rather than dead ends.
+### Discover nearby
 
-## Brand and colour choices
+Home shows the active area and nearby content. Users can filter the feed or open Radar to change the radius and content type. Radar supports current approximate location and manual area exploration without forcing device-location permission. A result should make its category, area, distance context, and next action clear.
 
-The visual identity is called “Karoo Signal”: warm, grounded, and distinctly local without relying on stereotypes. The base is an ink navy for readability, with a sunlit amber action colour and a fynbos green secondary accent. A coral alert colour is reserved for urgent community notices.
+### Publish
 
-| Token | Light value | Dark value | Use |
-|---|---|---|---|
-| Background | `#F7F8F5` | `#111816` | Main screen background |
-| Surface | `#FFFFFF` | `#1B2421` | Cards, sheets, and elevated areas |
-| Foreground | `#10211D` | `#F4F7F2` | Primary text |
-| Muted | `#63736D` | `#A5B4AD` | Supporting text |
-| Primary amber | `#E9A23B` | `#F2B451` | Main actions, active tab, discovery highlights |
-| Fynbos green | `#2F7D67` | `#65B59B` | Secondary actions and trusted/community states |
-| Alert coral | `#D95D4F` | `#F17C6D` | Local alerts and destructive actions |
-| Border | `#DDE5DF` | `#33433D` | Dividers and card outlines |
+Create follows the order: type → category → content/media → audience → privacy summary → publish. Validation should appear beside the relevant action. An offline draft must be labelled as queued, not published; success is shown only when the backend write succeeds. Media failures must offer an appropriate retry.
 
-Typography should use the platform sans-serif with strong weight contrast: compact, semibold headings; readable body copy; and subdued metadata. Imagery should favour real local context when available, with rounded 18–24 px cards, modest elevation, and no excessive gradients.
+### Privacy and account
 
-## MVP boundary
+Explain location visibility before publishing or granting location access. Provide explicit guest/authenticated states. Never expose exact coordinates in public-facing copy, leak account-scoped drafts across accounts, or claim unavailable OAuth providers are working.
 
-The first implementation will make the primary flows functional with local seed data and AsyncStorage persistence. Server routes, user authentication, uploads, live maps, push notifications, and cross-device sync remain clearly separated as integration points so the project can grow without presenting fake production capabilities.
+## Required states for async flows
+
+Design and test each applicable state: loading, content, empty, recoverable error with retry, offline/queued, permission denied, configuration unavailable, and success after confirmed completion. Prefer plain-language recovery guidance over raw backend messages. Roll back optimistic state when a write fails.
+
+## UX/UI delivery gate
+
+A screen is not considered finished solely because it looks attractive or compiles. The completion criteria are:
+- Existing features and data contracts are preserved.
+- Visual hierarchy, spacing, navigation, and interaction behavior are consistent.
+- Accessibility labels, contrast, target sizes, and keyboard/safe-area behavior are checked.
+- Loading, empty, error, permission, offline, and success states are covered.
+- TypeScript, lint, interaction and production-invariant audits, tests, Expo compatibility checks, and native Android build pass on the exact candidate commit.
+- The installed APK is exercised on a real Android device; CI success is not a substitute for device QA.
+
+See [UX_UI_AUDIT.md](./UX_UI_AUDIT.md) for screen-level findings, implementation status, and the remaining acceptance plan.
