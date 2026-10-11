@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
     {
       p_checkout_id: checkoutId,
       p_status: nextStatus,
-      p_provider_payment_id: paymentId || null,
+      p_provider_payment_id: nextStatus === "refunded" ? null : paymentId || null,
       p_metadata: { yoco_event_type: eventType, webhook_id: webhookId },
       p_amount_cents: amount,
       p_currency: currency,
