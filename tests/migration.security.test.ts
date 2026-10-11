@@ -290,7 +290,7 @@ describe("Yoco webhook payment verification", () => {
     expect(webhook).toContain("p_amount_cents: amount");
     expect(webhook).toContain("p_currency: currency");
     expect(migration).toContain("amount_cents = p_amount_cents");
-    expect(migration).toContain("upper(currency) = upper(p_currency)");
+    expect(migration).toContain("pg_catalog.upper(currency) = pg_catalog.upper(p_currency)");
     expect(migration).toContain("TO service_role");
     expect(migration).toContain("FROM PUBLIC, anon, authenticated");
   });
@@ -308,7 +308,7 @@ describe("Yoco order creation and checkout attachment are server-only", () => {
     expect(migration).toContain("public.create_yoco_payment_order_server");
     expect(migration).toContain("public.attach_yoco_checkout_server");
     expect(migration).toContain("vr.status = 'pending'");
-    expect(migration).toContain("p_business_id, p_reference_id, 20000");
+    expect(migration).toContain("p_user_id, p_business_id, 'verification', p_reference_id, 20000");
     expect(migration).toContain("FROM PUBLIC, anon, authenticated");
     expect(migration).toContain("TO service_role");
     expect(checkout).toContain('rpc("create_yoco_payment_order_server"');
