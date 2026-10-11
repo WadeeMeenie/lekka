@@ -112,7 +112,7 @@ export async function toggleReaction(postId: string) {
 
   // The database RPC serializes toggles with a transaction-scoped advisory lock.
   // Avoid client-side SELECT-then-write races when a user taps rapidly or retries.
-  const result = await supabase.rpc("toggle_reaction", { p_post_id: postId });
+  const result = await supabase.rpc("toggle_post_like", { p_post_id: postId });
   return { liked: result.data === true, error: result.error };
 }
 
