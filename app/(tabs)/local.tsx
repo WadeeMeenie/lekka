@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenContainer } from "@/components/screen-container";
+import { LekkaScreenHeading } from "@/components/ui/lekka-screen-heading";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { getLastKnownOrCurrentLocation, type DeviceLocation } from "@/lib/location";
@@ -55,7 +56,7 @@ export default function LocalScreen() {
 
   return <ScreenContainer>
     <FlatList data={items} keyExtractor={(item) => `${item.sourceType}:${item.id}`} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" ListHeaderComponent={<View>
-      <View style={styles.headerRow}><View style={styles.headerCopy}><Text style={[styles.title, { color: colors.foreground }]}>Local</Text><View style={styles.locationLine}><IconSymbol name="location.fill" size={14} color={colors.primary} /><Text style={[styles.location, { color: colors.muted }]}>{location?.area || "your area"}</Text><Text style={[styles.locationHint, { color: colors.muted }]}>· same discovery area</Text></View></View><View style={[styles.countPill, { backgroundColor: colors.surface, borderColor: colors.border }]}><Text style={[styles.countText, { color: colors.muted }]}>{items.length}</Text></View></View>
+      <LekkaScreenHeading eyebrow="LOCAL DIRECTORY" title="Local" subtitle={`${location?.area || "Your area"} · nearby places and services`} accessory={<View style={[styles.countPill, { backgroundColor: colors.surface, borderColor: colors.border }]}><Text style={[styles.countText, { color: colors.muted }]}>{items.length}</Text></View>} />
       <View style={[styles.search, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="magnifyingglass" size={19} color={colors.muted} /><TextInput value={search} onChangeText={setSearch} placeholder="Search this area" placeholderTextColor={colors.muted} style={[styles.searchInput, { color: colors.foreground }]} returnKeyType="search" /></View>
       <FlatList data={categories} horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryRow} keyExtractor={(item) => item.value} renderItem={({ item }) => { const selected = selectedCategory.value === item.value; return <Pressable accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={`Browse ${item.label} nearby`} onPress={() => { setSelectedCategory(item); setSearch(""); }} style={[styles.categoryChip, { backgroundColor: selected ? colors.primary : colors.surface, borderColor: selected ? colors.primary : colors.border }]}><IconSymbol name={item.icon} size={16} color={selected ? colors.background : colors.muted} /><Text style={[styles.categoryText, { color: selected ? colors.background : colors.muted }]}>{item.label}</Text></Pressable>; }} />
       <View style={styles.resultHeader}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>{selectedCategory.label}</Text><Text style={[styles.resultMeta, { color: colors.muted }]}>{items.length} nearby</Text></View>
