@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 describe("production query-support indexes", () => {
   it("indexes the posts community pinning foreign key", () => {
     const migration = readFileSync(
-      resolve(process.cwd(), "supabase/migrations/20261011084000_index_posts_community_pinned_by.sql"),
+      resolve(process.cwd(), "supabase/migrations/20261011114123_index_posts_community_pinned_by_20261011.sql"),
       "utf8",
     );
 
