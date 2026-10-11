@@ -7,6 +7,8 @@ export type ViewerProfile = {
   display_name: string;
   profile_image_path: string | null;
   bio: string | null;
+  interests: string[];
+  home_area: string | null;
   is_private: boolean;
   friends_list_visibility: FriendsListVisibility;
   can_view_full: boolean;

@@ -5,10 +5,13 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const YOCO_SECRET_KEY = Deno.env.get("YOCO_SECRET_KEY");
-const RETURN_BASE = Deno.env.get("YOCO_RETURN_BASE") ?? `${SUPABASE_URL}/functions/v1/yoco-return`;
+const APP_SCHEME = Deno.env.get("LEKKA_APP_SCHEME") ?? "manuslocalradarsa";
 
 const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+  new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json" },
+  });
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -24,27 +27,29 @@ Deno.serve(async (req) => {
   const { data: { user }, error: userError } = await authClient.auth.getUser();
   if (userError || !user) return json({ error: "unauthorized" }, 401);
 
+  const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
+
   let input: { businessId?: string; purpose?: string; referenceId?: string };
-  try {
-    input = await req.json();
-  } catch {
-    return json({ error: "invalid_json" }, 400);
-  }
+  try { input = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
 
   if (input.purpose !== "verification") return json({ error: "unsupported_test_product" }, 400);
   if (!input.businessId || !input.referenceId) return json({ error: "business_id_and_reference_id_required" }, 400);
 
-  const { data: order, error: orderError } = await authClient.rpc("create_yoco_payment_order", {
+  const { data: order, error: orderError } = await service.rpc("create_yoco_payment_order_server", {
+    p_user_id: user.id,
     p_business_id: input.businessId,
     p_purpose: "verification",
     p_reference_id: input.referenceId,
-    p_amount_cents: 20000,
     p_metadata: { environment: "test", user_id: user.id },
   }).single();
-  if (orderError || !order) return json({ error: "order_creation_failed", detail: orderError?.message }, 400);
+  if (orderError || !order) console.error("Yoco order creation failed", orderError?.code ?? "unknown");
+    return json({ error: "order_creation_failed" }, 400);
 
-  const returnUrl = (result: string) =>
-    `${RETURN_BASE}?order_id=${encodeURIComponent(order.id)}&result=${encodeURIComponent(result)}`;
+  // Return destinations are controlled by server configuration, never by client input.
+  // Accepting arbitrary URLs here would let an authenticated caller redirect a checkout
+  // to a phishing page while preserving the appearance of a Lekka payment flow.
+  const returnUrl = (result: "success" | "cancel" | "failure") =>
+    `${APP_SCHEME}://payment/${result}?order_id=${encodeURIComponent(order.id)}`;
 
   const yocoResponse = await fetch("https://payments.yoco.com/api/checkouts", {
     method: "POST",
@@ -65,18 +70,15 @@ Deno.serve(async (req) => {
 
   const yocoBody = await yocoResponse.json().catch(() => ({}));
   if (!yocoResponse.ok || !yocoBody.id || !yocoBody.redirectUrl) {
-    const service = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
-    await service.from("payment_orders").update({
-      status: "failed",
-      metadata: { yoco_error: yocoBody },
-      updated_at: new Date().toISOString(),
-    }).eq("id", order.id);
-    return json({ error: "yoco_checkout_creation_failed", detail: yocoBody }, 502);
+    await service.from("payment_orders").update({ status: "failed", metadata: { yoco_error: yocoBody }, updated_at: new Date().toISOString() }).eq("id", order.id);
+    console.error("Yoco checkout creation failed", yocoResponse.status, yocoBody);
+    return json({ error: "yoco_checkout_creation_failed" }, 502);
   }
 
-  const { error: attachError } = await authClient.rpc("attach_yoco_checkout", {
+  const { error: attachError } = await service.rpc("attach_yoco_checkout_server", {
     p_order_id: order.id,
     p_checkout_id: yocoBody.id,
+    p_user_id: user.id,
   });
   if (attachError) return json({ error: "checkout_persistence_failed" }, 500);
 

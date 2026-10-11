@@ -55,7 +55,7 @@ if (/service_role|SUPABASE_SERVICE_ROLE|SERVICE_ROLE_KEY/i.test(supabaseSource))
 if (!/EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY/.test(supabaseSource)) errors.push("Supabase client must use EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY.");
 requireFile(path.join(root, "hooks", "use-supabase-auth.ts"), "Supabase auth hook");
 requireFile(path.join(appDir, "auth.tsx"), "Authentication route");
-requireFile(path.join(appDir, "oauth", "callback.tsx"), "OAuth callback route");
+// Supabase OAuth is completed by WebBrowser.openAuthSessionAsync() and exchangeCodeForSession(); no legacy callback route is required.
 
 // 3. Social/discovery correctness: one canonical nearby-discovery path.
 for (const file of ["lib/discovery.ts", "lib/local-radar.ts", "lib/location.ts", "lib/supabase-repository.ts"]) requireFile(path.join(root, file), "Canonical discovery architecture");
@@ -92,7 +92,7 @@ const configSource = read(configPath);
 requireFile(configPath, "Expo Android configuration");
 if (!/newArchEnabled\s*:\s*true/.test(configSource)) errors.push("Expo New Architecture must remain enabled.");
 if (!/buildArchs\s*:\s*\[\s*[\"']arm64-v8a[\"']\s*\]/.test(configSource)) errors.push("Android build must retain arm64-v8a.");
-if (!/androidPackage:\s*bundleId/.test(configSource)) errors.push("Android package must derive from the canonical bundle id.");
+if (!/(?:androidPackage|package):\s*bundleId/.test(configSource)) errors.push("Android package must derive from the canonical bundle id.");
 if (/manus\$\{\"\"\}:\/\/|manus:\/\//.test(configSource)) errors.push("Malformed Lekka deep-link scheme detected in app.config.ts.");
 
 // 8. Test/CI blind-spot guard.

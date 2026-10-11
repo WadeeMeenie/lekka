@@ -43,9 +43,7 @@ export async function createYocoTestWebhookSubscription() {
     return { data: null, error: sessionError ?? new Error("You must be signed in") };
   }
 
-  const { data: isAdmin, error: adminError } = await supabase.rpc("is_platform_admin", {
-    target_user: sessionData.session.user.id,
-  });
+  const { data: isAdmin, error: adminError } = await supabase.rpc("is_platform_admin");
   if (adminError) return { data: null, error: adminError };
   if (!isAdmin) return { data: null, error: new Error("Platform admin access required") };
 

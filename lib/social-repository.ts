@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getProfileForViewer } from "@/lib/profile-privacy";
 
 export type SocialProfile = {
   id: string;
@@ -43,10 +44,19 @@ export async function getPostDetail(postId: string) {
   if (!supabase) return unavailable<SocialPost | null>(null);
   const { data, error } = await supabase
     .from("posts")
-    .select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, bio, profile_image_path, interests, home_area), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)")
+    .select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)")
     .eq("id", postId)
     .maybeSingle();
-  return { data: data as SocialPost | null, error };
+  if (error || !data) return { data: data as SocialPost | null, error };
+  const profile = await getProfileForViewer(data.author_id);
+  if (profile.error) return { data: null, error: profile.error };
+  return {
+    data: {
+      ...(data as unknown as SocialPost),
+      profiles: profile.data as SocialProfile | null,
+    },
+    error: null,
+  };
 }
 
 export async function getPostInteractionState(postId: string) {
@@ -96,30 +106,25 @@ export async function deleteComment(commentId: string) {
 
 export async function toggleReaction(postId: string) {
   if (!supabase) return { liked: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { liked: false, error: authError };
   if (!user) return { liked: false, error: new Error("Please sign in") };
-  const existing = await supabase.from("reactions").select("post_id").eq("post_id", postId).eq("user_id", user.id).maybeSingle();
-  if (existing.error) return { liked: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("reactions").delete().eq("post_id", postId).eq("user_id", user.id);
-    return { liked: false, error: result.error };
-  }
-  const result = await supabase.from("reactions").insert({ post_id: postId, user_id: user.id, reaction: "like" });
-  return { liked: true, error: result.error };
+
+  // The database RPC serializes toggles with a transaction-scoped advisory lock.
+  // Avoid client-side SELECT-then-write races when a user taps rapidly or retries.
+  const result = await supabase.rpc("toggle_post_like", { p_post_id: postId });
+  return { liked: result.data === true, error: result.error };
 }
 
 export async function toggleSavedPost(postId: string) {
   if (!supabase) return { saved: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { saved: false, error: authError };
   if (!user) return { saved: false, error: new Error("Please sign in") };
-  const existing = await supabase.from("saved_posts").select("post_id").eq("post_id", postId).eq("user_id", user.id).maybeSingle();
-  if (existing.error) return { saved: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("saved_posts").delete().eq("post_id", postId).eq("user_id", user.id);
-    return { saved: false, error: result.error };
-  }
-  const result = await supabase.from("saved_posts").insert({ post_id: postId, user_id: user.id });
-  return { saved: true, error: result.error };
+
+  // The database RPC serializes toggles with a transaction-scoped advisory lock.
+  const result = await supabase.rpc("toggle_saved_post", { p_post_id: postId });
+  return { saved: result.data === true, error: result.error };
 }
 
 export async function listSavedPosts(page = 0, pageSize = 20) {
@@ -130,7 +135,7 @@ export async function listSavedPosts(page = 0, pageSize = 20) {
   const to = from + pageSize - 1;
   const { data, error } = await supabase
     .from("saved_posts")
-    .select("post_id, posts(id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, bio, profile_image_path, interests, home_area), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order))")
+    .select("post_id, posts(id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order))")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .range(from, to);
@@ -139,7 +144,7 @@ export async function listSavedPosts(page = 0, pageSize = 20) {
 
 export async function getPublicProfile(profileId: string) {
   if (!supabase) return unavailable<SocialProfile | null>(null);
-  const { data, error } = await supabase.from("profiles").select("id, display_name, username, bio, profile_image_path, interests, home_area").eq("id", profileId).maybeSingle();
+  const { data, error } = await getProfileForViewer(profileId);
   return { data: data as SocialProfile | null, error };
 }
 
@@ -156,17 +161,14 @@ export async function getFollowState(profileId: string) {
 
 export async function toggleFollow(profileId: string) {
   if (!supabase) return { following: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { following: false, error: authError };
   if (!user) return { following: false, error: new Error("Please sign in") };
   if (user.id === profileId) return { following: false, error: new Error("You cannot follow yourself") };
-  const existing = await supabase.from("follows").select("following_id").eq("follower_id", user.id).eq("following_id", profileId).maybeSingle();
-  if (existing.error) return { following: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("follows").delete().eq("follower_id", user.id).eq("following_id", profileId);
-    return { following: false, error: result.error };
-  }
-  const result = await supabase.from("follows").insert({ follower_id: user.id, following_id: profileId });
-  return { following: true, error: result.error };
+
+  // The database RPC serializes follow/unfollow transitions per user and target.
+  const result = await supabase.rpc("toggle_follow", { p_profile_id: profileId });
+  return { following: result.data === true, error: result.error };
 }
 
 export type PostFeedbackPreference = "interested" | "not_interested";
@@ -286,15 +288,12 @@ export async function reportContent(input: { postId?: string; commentId?: string
 
 export async function toggleBlock(profileId: string) {
   if (!supabase) return { blocked: false, error: new Error("Backend is not configured") };
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { blocked: false, error: authError };
   if (!user) return { blocked: false, error: new Error("Please sign in") };
   if (user.id === profileId) return { blocked: false, error: new Error("You cannot block yourself") };
-  const existing = await supabase.from("blocks").select("blocked_id").eq("blocker_id", user.id).eq("blocked_id", profileId).maybeSingle();
-  if (existing.error) return { blocked: false, error: existing.error };
-  if (existing.data) {
-    const result = await supabase.from("blocks").delete().eq("blocker_id", user.id).eq("blocked_id", profileId);
-    return { blocked: false, error: result.error };
-  }
-  const result = await supabase.from("blocks").insert({ blocker_id: user.id, blocked_id: profileId });
-  return { blocked: true, error: result.error };
+
+  // Serialize block/unblock in Postgres so concurrent taps cannot race.
+  const result = await supabase.rpc("toggle_block", { p_profile_id: profileId });
+  return { blocked: result.data === true, error: result.error };
 }
