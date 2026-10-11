@@ -27,7 +27,7 @@ begin
   end if;
   if p_date_of_birth is null
      or p_date_of_birth < date '1900-01-01'
-     or p_date_of_birth > (pg_catalog.current_date - interval '13 years')::date then
+     or p_date_of_birth > (current_date - interval '13 years')::date then
     raise exception 'Lekka accounts are available from age 13' using errcode = '22023';
   end if;
   if v_gender is not null and v_gender not in ('male', 'female', 'prefer_not_to_say') then
