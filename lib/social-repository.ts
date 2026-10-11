@@ -5,10 +5,7 @@ export type SocialProfile = {
   id: string;
   display_name: string;
   username: string | null;
-  bio: string | null;
   profile_image_path: string | null;
-  interests: string[];
-  home_area: string;
 };
 
 export type SocialPost = {
