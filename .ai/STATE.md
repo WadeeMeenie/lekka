@@ -17,6 +17,7 @@
 ## Changes in this audit
 
 - Added `AGENTS.md`, `PRODUCT_SPEC.md`, `docs/RELEASE_READINESS.md`, `docs/SECURITY.md`, `docs/PRODUCTION_SCALE_PLAN.md`, and this state file.
+- Replaced reflective credentialed CORS with an explicit origin allowlist and added four regression tests. The fix is local and not deployed.
 - No production database, Edge Function, customer record, payment, branch merge, or remote PR was changed.
 
 ## Blockers

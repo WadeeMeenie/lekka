@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { getAllowedCorsOrigin } from "./cors";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -31,18 +32,24 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Enable CORS for all routes - reflect the request origin to support credentials
+  // Credentialed CORS must only be enabled for explicitly trusted origins.
   app.use((req, res, next) => {
     const origin = req.headers.origin;
     if (origin) {
-      res.header("Access-Control-Allow-Origin", origin);
+      const allowedOrigin = getAllowedCorsOrigin(req, origin);
+      if (!allowedOrigin) {
+        res.status(403).json({ error: "Origin is not allowed" });
+        return;
+      }
+      res.header("Access-Control-Allow-Origin", allowedOrigin);
+      res.header("Vary", "Origin");
+      res.header("Access-Control-Allow-Credentials", "true");
+      res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Origin, X-Requested-With, Content-Type, Accept, Authorization",
+      );
     }
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    res.header(
-      "Access-Control-Allow-Headers",
-      "Origin, X-Requested-With, Content-Type, Accept, Authorization",
-    );
-    res.header("Access-Control-Allow-Credentials", "true");
 
     // Handle preflight requests
     if (req.method === "OPTIONS") {

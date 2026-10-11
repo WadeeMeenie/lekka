@@ -31,6 +31,14 @@
 
 ## Findings register
 
+### P1 — Reflective credentialed CORS (fixed locally)
+
+**Evidence:** `server/_core/index.ts` reflected every supplied `Origin` and enabled credentials, allowing an arbitrary website to attempt browser requests with Lekka cookies.
+
+**Fix:** added `server/_core/cors.ts` with explicit configured origins and a narrowly scoped local preview mapping. Disallowed origins now receive HTTP 403. Added `tests/cors.security.test.ts` covering production allowlists, authoritative production configuration, preview origins, localhost, malformed origins, and credential-bearing origins.
+
+**Verification:** `npm run check`, focused CORS tests, full tests without live integration credentials, lint, build, and `git diff --check` pass. Deployment and browser verification remain outstanding.
+
 ### P1 — Production source drift blocks reproducible release
 
 **Evidence:** live migration history includes later Yoco, RLS, PostGIS, grant, and product migrations through `20261011195846`; Git checkout ends at `20260906071000`. Production Edge Functions are active at newer versions and include `yoco-create-checkout-v2` plus server-only RPC calls absent from this checkout.
@@ -93,6 +101,7 @@
 
 - Created the non-destructive audit branch `audit/production-readiness-2026-10-11`.
 - Added the required repository guidance and release artifacts: `AGENTS.md`, `PRODUCT_SPEC.md`, `docs/RELEASE_READINESS.md`, `docs/SECURITY.md`, `docs/PRODUCTION_SCALE_PLAN.md`, `.ai/STATE.md`, and this report.
+- Hardened credentialed CORS in `server/_core/index.ts`, added `server/_core/cors.ts`, and added `tests/cors.security.test.ts`.
 - No database migration was applied. No Edge Function was deployed. No customer data, payment, branch merge, force-push, or PR merge was performed.
 
 ## External evidence

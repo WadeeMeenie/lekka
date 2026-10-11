@@ -11,6 +11,7 @@ Lekka is an Expo Router React Native application targeting Android, iOS, and web
 - Every database change must be a reviewed, versioned migration committed with the code change.
 - Keep service-role credentials and provider secrets out of source, logs, fixtures, screenshots, and reports.
 - Keep client access publishable-key-only. Privileged payment, moderation, Storage, and administration operations belong behind authenticated server or Edge Function boundaries.
+- Configure production credentialed CORS with an explicit comma-separated `CORS_ALLOWED_ORIGINS` allowlist; never restore request-origin reflection.
 - Do not weaken RLS, grants, security-definer search paths, webhook verification, or payment transition guards to make a test pass.
 - Synthetic test data only. Never charge live customers during validation.
 

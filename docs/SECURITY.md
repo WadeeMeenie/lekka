@@ -2,6 +2,10 @@
 
 ## Confirmed production findings
 
+### Fixed locally — reflective credentialed CORS
+
+The server previously reflected any request `Origin` while sending `Access-Control-Allow-Credentials: true`. The audit branch now requires an explicit `CORS_ALLOWED_ORIGINS` match in configured environments or the paired local preview frontend when unset, rejects disallowed origins with HTTP 403, and adds focused regression tests. This fix is committed locally but is not deployed.
+
 ### P1 — PostGIS API exposure remains effective
 
 Supabase security advisors reported that `public.st_estimatedextent(text,text)`, the three-argument overload, and the four-argument overload are executable by `anon`, `authenticated`, and `public`. Direct read-only SQL verification on 2026-10-11 confirmed all three effective grants remain true. `public.spatial_ref_sys` is public, has RLS disabled, and is selectable by `anon`, `authenticated`, and `public`.
