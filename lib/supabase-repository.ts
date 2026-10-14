@@ -8,7 +8,7 @@ import type { SocialPost } from "@/lib/social-repository";
 function toLocalPost(row: any): LocalPost {
   const profile = row.profiles ?? null;
   const author = row.author_name || profile?.display_name || "Local neighbour";
-  return { id: row.id, authorId: row.author_id ?? null, kind: row.kind === "alert" ? "alert" : "post", category: row.category ?? undefined, author, initials: author.slice(0, 2).toUpperCase(), profileImagePath: profile?.profile_image_path ?? null, mediaPath: row.post_media?.[0]?.storage_path ?? row.media_path ?? null, area: row.area, distance: formatDistanceLabel(row.distance_label), time: formatRelativeTime(row.created_at), title: row.title ?? undefined, body: row.body, likes: row.reaction_count ?? 0, comments: row.comment_count ?? 0, trusted: Number(row.trust_score ?? 0) >= 0.8, accent: row.kind === "alert" ? "#D95D4F" : "#2F7D67" };
+  return { id: row.id, authorId: row.author_id ?? null, kind: row.kind === "alert" ? "alert" : "post", category: row.category ?? undefined, author, initials: author.slice(0, 2).toUpperCase(), profileImagePath: row.profile_image_path ?? profile?.profile_image_path ?? null, mediaPath: row.post_media?.[0]?.storage_path ?? row.media_path ?? null, area: row.area, distance: formatDistanceLabel(row.distance_label), time: formatRelativeTime(row.created_at), title: row.title ?? undefined, body: row.body, likes: row.reaction_count ?? 0, comments: row.comment_count ?? 0, trusted: Number(row.trust_score ?? 0) >= 0.8, accent: row.kind === "alert" ? "#D95D4F" : "#2F7D67", details: row.details ?? {}, marketplacePriceCents: row.marketplace_price_cents ?? null, marketplaceCondition: row.marketplace_condition ?? null, marketplaceStatus: row.marketplace_status ?? "available" };
 }
 function formatRelativeTime(value: string) { const minutes = Math.max(1, Math.round((Date.now() - new Date(value).getTime()) / 60000)); if (minutes < 60) return `${minutes} min`; const hours = Math.round(minutes / 60); if (hours < 24) return `${hours} hr`; const days = Math.round(hours / 24); if (days < 30) return `${days} day${days === 1 ? "" : "s"}`; return `${Math.round(days / 7)} week${Math.round(days / 7) === 1 ? "" : "s"}`; }
 function formatDistanceLabel(value?: string | null) {
@@ -30,15 +30,18 @@ async function hydratePostData(posts: LocalPost[]): Promise<LocalPost[]> {
   if (!supabase || posts.length === 0) return posts;
   const ids = posts.map((post) => post.id);
   const authorIds = posts.map((post) => post.authorId).filter((id): id is string => Boolean(id));
-  const [mediaResult, profileResult] = await Promise.all([
+  const [mediaResult, profileResult, listingResult] = await Promise.all([
     supabase.from("post_media").select("post_id, storage_path, media_type, sort_order").in("post_id", ids).order("sort_order", { ascending: true }),
     authorIds.length ? supabase.from("profiles").select("id, display_name, profile_image_path").in("id", authorIds) : Promise.resolve({ data: [], error: null }),
+    supabase.from("posts").select("id, details, marketplace_price_cents, marketplace_condition, marketplace_status").in("id", ids),
   ]);
   const firstMedia = new Map<string, string>();
   for (const row of (mediaResult.data ?? []) as Array<{ post_id: string; storage_path: string }>) if (!firstMedia.has(row.post_id)) firstMedia.set(row.post_id, row.storage_path);
   const profiles = new Map<string, { display_name: string; profile_image_path: string | null }>();
   for (const row of (profileResult.data ?? []) as Array<{ id: string; display_name: string; profile_image_path: string | null }>) profiles.set(row.id, row);
-  return posts.map((post) => { const profile = post.authorId ? profiles.get(post.authorId) : undefined; return { ...post, author: profile?.display_name || post.author, initials: (profile?.display_name || post.author).slice(0, 2).toUpperCase(), profileImagePath: post.profileImagePath ?? profile?.profile_image_path ?? null, mediaPath: post.mediaPath ?? firstMedia.get(post.id) ?? null }; });
+  const listingData = new Map<string, { details: Record<string, unknown> | null; marketplace_price_cents: number | null; marketplace_condition: LocalPost["marketplaceCondition"]; marketplace_status: LocalPost["marketplaceStatus"] }>();
+  for (const row of (listingResult.data ?? []) as Array<{ id: string; details: Record<string, unknown> | null; marketplace_price_cents: number | null; marketplace_condition: LocalPost["marketplaceCondition"]; marketplace_status: LocalPost["marketplaceStatus"] }>) listingData.set(row.id, row);
+  return posts.map((post) => { const profile = post.authorId ? profiles.get(post.authorId) : undefined; const listing = listingData.get(post.id); return { ...post, author: profile?.display_name || post.author, initials: (profile?.display_name || post.author).slice(0, 2).toUpperCase(), profileImagePath: post.profileImagePath ?? profile?.profile_image_path ?? null, mediaPath: post.mediaPath ?? firstMedia.get(post.id) ?? null, details: listing?.details ?? post.details ?? {}, marketplacePriceCents: listing?.marketplace_price_cents ?? post.marketplacePriceCents ?? null, marketplaceCondition: listing?.marketplace_condition ?? post.marketplaceCondition ?? null, marketplaceStatus: listing?.marketplace_status ?? post.marketplaceStatus ?? "available" }; });
 }
 
 export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPost[]> {
@@ -121,10 +124,10 @@ export function subscribeToLocalChanges(onChange: () => void) {
   };
 }
 
-export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
+export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string; details?: Record<string, unknown>; marketplacePriceCents?: number; marketplaceCondition?: LocalPost["marketplaceCondition"] }) {
   if (!isSupabaseConfigured || !supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser(); if (!user) return { data: null, error: new Error("Please sign in to publish to the community") };
-  const result = await supabase.from("posts").insert({ author_id: user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, business_id: input.businessId ?? null, area: input.area, visibility: input.visibility ?? "nearby", approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null }).select().single();
+  const result = await supabase.from("posts").insert({ author_id: user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, details: input.details ?? {}, marketplace_price_cents: input.marketplacePriceCents ?? null, marketplace_condition: input.marketplaceCondition ?? null, marketplace_status: "available", business_id: input.businessId ?? null, area: input.area, visibility: input.visibility ?? "nearby", approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null }).select().single();
   if (!result.error) notifyLocalFeedListeners();
   return result;
 }
@@ -134,6 +137,15 @@ export async function fetchNearbyItems(location?: DeviceLocation, settings?: Loc
   const { data, error } = await supabase.rpc("nearby_radar", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusToMeters(activeSettings.radius), category_filter: category && category !== "All" ? category : null }); if (error || !data) return []; return data as RadarItem[];
 }
 const radiusToMeters = discoveryRadiusToMeters;
+export async function updateMarketplaceStatus(postId: string, status: "available" | "reserved" | "sold") {
+  if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { data: null, error: new Error("Please sign in to manage a listing") };
+  const result = await supabase.from("posts").update({ marketplace_status: status, updated_at: new Date().toISOString() }).eq("id", postId).eq("author_id", user.id).eq("category", "marketplace").select("id, marketplace_status").single();
+  if (!result.error) notifyLocalFeedListeners();
+  return result;
+}
+
 export async function uploadMedia(uri: string, path: string, contentType: string) { if (!supabase) throw new Error("Backend is not configured"); const file = new File(uri); const bytes = await file.bytes(); return supabase.storage.from("local-radar-media").upload(path, bytes, { contentType, upsert: false }); }
 
 export async function attachPostMedia(input: { postId: string; storagePath: string; mediaType: "image" | "video"; width?: number; height?: number }) {
