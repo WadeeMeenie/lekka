@@ -21,6 +21,9 @@ describe("category-specific post experience", () => {
     expect(composer).toContain("Business update headline");
     expect(repository).toContain("businessLogoPath: business?.logo_path ?? null");
     expect(feed).toContain("post.businessName ? post.businessName : post.author");
+    expect(composer).toContain("let createdPostId: string | undefined");
+    expect(composer).toContain("postId: createdPostId");
+    expect(composer).toContain("storagePath: createdPostId ? `${user.id}/${createdPostId}/primary-media` : undefined");
     expect(composer).toContain("clearCategoryFields");
     expect(composer).toContain('placeholder="Price in R (e.g. 850)"');
     expect(composer).toContain("employmentType: jobType");
