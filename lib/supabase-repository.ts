@@ -154,6 +154,12 @@ export async function uploadMedia(uri: string, path: string, contentType: string
 
 export async function attachPostMedia(input: { postId: string; storagePath: string; mediaType: "image" | "video"; width?: number; height?: number }) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
+  const existing = await supabase.from("post_media").select().eq("post_id", input.postId).eq("storage_path", input.storagePath).maybeSingle();
+  if (existing.error) return { data: null, error: existing.error };
+  if (existing.data) {
+    notifyLocalFeedListeners();
+    return existing;
+  }
   const result = await supabase.from("post_media").insert({ post_id: input.postId, storage_path: input.storagePath, media_type: input.mediaType, width: input.width ?? null, height: input.height ?? null, sort_order: 0 }).select().single();
   if (!result.error) notifyLocalFeedListeners();
   return result;
