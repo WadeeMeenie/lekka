@@ -28,3 +28,5 @@ Reproduction for Windows alternate runner: use `startVitest` from `vitest/node`,
 
 Additional final evidence: public target Supabase /auth/v1/settings returned HTTP 200 using the repository publishable key. This separate read-only smoke test does not validate RLS, credentials, email delivery or live user workflows. Full-suite integration test remained skipped. Post-owner regression failed before fix and passes 3/3 after; media attachment retry regression failed before fix and passes after. Final source checks and web export passed after these changes.
 
+
+CI follow-up: first Linux run passed install, TypeScript, static audits, tests (145 pass / 1 skip, including public auth-settings integration) and lint, but failed cold web export because NativeWind created web.css after Metro's crawl. metro.config.cjs now initializes that placeholder before crawling. A local export with web.css removed and --clear passed all 40 routes; generated CSS remains populated by NativeWind. Follow-up Linux CI is pending. Android build is pending. No deployment.

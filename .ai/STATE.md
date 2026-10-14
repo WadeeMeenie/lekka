@@ -8,3 +8,5 @@ Backend connection initially denied target project, then Unknown tool after user
 
 Final local update: 144 tests pass / 2 skip; TypeScript, interaction/invariant audits and 40-route web export pass. Expo lint 14 warnings. Auth browser checks at 390x667/1280x800 pass within described scope. Fixed shared theme mismatch, signup scroll/labels, unsupported audience choices, author binding and acknowledged media-stage retry. Public Supabase auth settings returns HTTP 200; management connector still Unknown tool. Next: review/publish candidate, restore management access and staging; run live authorization/history reconciliation and all remaining route/device tests. See final test report. No deployment.
 
+
+CI follow-up: draft PR #12 published. First Linux CI caught missing cold-cache web.css; Metro configuration now initializes it before crawling. Local cold export passes 40 routes. First CI tests: 145 pass / 1 skip. Follow-up CI and Android remain pending; backend and launch gates remain blocked.

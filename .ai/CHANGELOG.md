@@ -4,3 +4,5 @@
 
 Follow-up: owner binding (red/green 3 tests), acknowledged photo upload retry (red/green test), composer checkpoints, audience label correction, shared theme palette/background, responsive auth and accessible labels, removal of nonexistent OAuth screen registration. Final total 144 pass / 2 skipped. Browser auth visual checks and export passed; public auth endpoint HTTP 200.
 
+
+Cold export fix: initialize NativeWind web CSS placeholder before Metro crawl. Reproduced in Linux CI; verified local export after removing generated web.css and clearing Metro cache. NativeWind still generates stylesheet contents.
