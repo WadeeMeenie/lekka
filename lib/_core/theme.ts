@@ -67,7 +67,7 @@ type RuntimePalette = SchemePaletteItem & {
   danger: string;
 };
 
-function buildRuntimePalette(scheme: ColorScheme, themeId: ThemeId = "original"): RuntimePalette {
+export function buildRuntimePalette(scheme: ColorScheme, themeId: ThemeId = "original"): RuntimePalette {
   const base = ThemePalettes[themeId][scheme];
   return {
     ...base,

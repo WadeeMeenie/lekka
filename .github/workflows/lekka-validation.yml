@@ -38,7 +38,7 @@ jobs:
           [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
           [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npx --yes pnpm@9.12.0 install --frozen-lockfile
       - name: TypeScript
         run: npm run check
       - name: Static interaction and route audit
@@ -48,7 +48,9 @@ jobs:
       - name: Unit and integration tests
         run: npm test
       - name: Lint
-        run: npm run lint
+        run: npx --yes pnpm@9.12.0 run lint
+      - name: Production web export
+        run: npx expo export --platform web
       - name: Expo config
         run: npx expo config --type public
       - name: Expo dependency compatibility
@@ -81,7 +83,7 @@ jobs:
           [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
           [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npx --yes pnpm@9.12.0 install --frozen-lockfile
       - name: Expo config
         run: npx expo config --type public
       - name: Expo prebuild

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Linking from "expo-linking";
 import { router, useLocalSearchParams } from "expo-router";
@@ -119,26 +119,26 @@ export default function AuthScreen() {
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-      <View style={styles.content}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : "height"}><ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
         <View style={styles.logo}><IconSymbol name="location.fill" size={25} color="#10211D" /></View>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA</Text>
         <Text style={[styles.title, { color: colors.foreground }]}>{mode === "signIn" ? "Welcome back." : mode === "signUp" ? intent === "business" ? "Build your local business presence." : "Join your local network." : "Reset your password."}</Text>
         <Text style={[styles.subtitle, { color: colors.muted }]}>{mode === "reset" ? "Enter the email address you use for Lekka. We’ll send a secure reset link if an account exists." : intent === "business" && mode === "signUp" ? "One secure Lekka identity can manage your personal profile and business profiles." : "Use your own email address and create a password for your Lekka account."}</Text>
         {feedback && <AuthFeedback feedback={feedback} colors={colors} onDismiss={clearFeedback} />}
-        {mode === "signUp" && <TextInput value={name} onChangeText={(value) => { setName(value); clearFeedback(); }} placeholder="Display name" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />}
-        <TextInput value={email} onChangeText={(value) => { setEmail(value); if (feedback?.tone === "error") clearFeedback(); }} autoCapitalize="none" keyboardType="email-address" placeholder="Your email address" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />
+        {mode === "signUp" && <TextInput accessibilityLabel="Display name" autoComplete="name" value={name} onChangeText={(value) => { setName(value); clearFeedback(); }} placeholder="Display name" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />}
+        <TextInput accessibilityLabel="Email address" autoComplete="email" value={email} onChangeText={(value) => { setEmail(value); if (feedback?.tone === "error") clearFeedback(); }} autoCapitalize="none" keyboardType="email-address" placeholder="Your email address" placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} />
         {mode !== "reset" && <>
           <View style={[styles.passwordRow, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <TextInput value={password} onChangeText={(value) => { setPassword(value); if (feedback?.tone === "error") clearFeedback(); }} secureTextEntry={!passwordVisible} placeholder={mode === "signUp" ? "Create your password" : "Password"} placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} />
+            <TextInput accessibilityLabel="Password" autoComplete={mode === "signUp" ? "new-password" : "current-password"} value={password} onChangeText={(value) => { setPassword(value); if (feedback?.tone === "error") clearFeedback(); }} secureTextEntry={!passwordVisible} placeholder={mode === "signUp" ? "Create your password" : "Password"} placeholderTextColor={colors.muted} style={[styles.passwordInput, { color: colors.foreground }]} />
             <Pressable accessibilityRole="button" accessibilityLabel={getPasswordToggleLabel(passwordVisible)} accessibilityHint="Changes whether your password is visible" onPress={() => setPasswordVisible((visible) => !visible)} style={styles.passwordToggle}><MaterialIcons name={getPasswordToggleIcon(passwordVisible)} size={22} color={colors.muted} /></Pressable>
           </View>
           {mode === "signUp" && <><PasswordStrengthMeter password={password} colors={colors} /><PasswordRequirements password={password} colors={colors} /></>}
         </>}
         <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy, busy }} onPress={() => void submit()} disabled={busy} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: busy ? 0.6 : pressed ? 0.85 : 1 }]}>{busy && <ActivityIndicator size="small" color="#10211D" />}<Text style={styles.primaryText}>{busy ? "Please wait…" : mode === "signIn" ? "Continue with email" : mode === "signUp" ? "Create account with email" : resetSent ? "Send reset link again" : "Send reset link"}</Text></Pressable>
         {mode === "reset" && resetSent && <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || resendCooldown > 0 }} disabled={busy || resendCooldown > 0} onPress={() => void submit()} style={({ pressed }) => [styles.resend, { borderColor: colors.border, opacity: busy || resendCooldown > 0 ? 0.55 : pressed ? 0.7 : 1 }]}><Text style={[styles.resendText, { color: colors.primary }]}>{getResendEmailLabel(resendCooldown)}</Text></Pressable>}
-        <Pressable onPress={() => updateMode(mode === "reset" ? "signIn" : isSignIn ? "signUp" : "signIn")}><Text style={[styles.switchText, { color: colors.primary }]}>{mode === "reset" ? "Back to sign in" : isSignIn ? "New here? Create an account" : "Already have an account? Sign in"}</Text></Pressable>
-        {isSignIn && <Pressable onPress={() => updateMode("reset")}><Text style={[styles.secondaryText, { color: colors.muted }]}>Forgot your password?</Text></Pressable>}
-      </View>
+        <Pressable accessibilityRole="button" style={{ minHeight: 44, justifyContent: "center" }} onPress={() => updateMode(mode === "reset" ? "signIn" : isSignIn ? "signUp" : "signIn")}><Text style={[styles.switchText, { color: colors.primary }]}>{mode === "reset" ? "Back to sign in" : isSignIn ? "New here? Create an account" : "Already have an account? Sign in"}</Text></Pressable>
+        {isSignIn && <Pressable accessibilityRole="button" style={{ minHeight: 44, justifyContent: "center" }} onPress={() => updateMode("reset")}><Text style={[styles.secondaryText, { color: colors.muted }]}>Forgot your password?</Text></Pressable>}
+      </ScrollView></KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
@@ -160,7 +160,7 @@ function PasswordRequirements({ password, colors }: { password: string; colors: 
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, justifyContent: "center", padding: 24 },
+  content: { flexGrow: 1, justifyContent: "center", padding: 24, width: "100%", maxWidth: 520, alignSelf: "center" },
   logo: { width: 52, height: 52, borderRadius: 18, backgroundColor: "#E9A23B", alignItems: "center", justifyContent: "center", marginBottom: 18 },
   eyebrow: { fontSize: 11, fontWeight: "800", letterSpacing: 1.2 },
   title: { fontSize: 31, lineHeight: 37, fontWeight: "800", marginTop: 9 },

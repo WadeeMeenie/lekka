@@ -61,7 +61,6 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="auth" />
               <Stack.Screen name="onboarding" />
-              <Stack.Screen name="oauth/callback" />
               <Stack.Screen name="reset-password" />
             </Stack>
             <StatusBar style="auto" />

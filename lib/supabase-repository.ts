@@ -1,4 +1,4 @@
-import { File } from "expo-file-system/next";
+import { readMediaBytes } from "@/lib/read-media-bytes";
 import { AppState } from "react-native";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DeviceLocation } from "@/lib/location";
@@ -121,10 +121,11 @@ export function subscribeToLocalChanges(onChange: () => void) {
   };
 }
 
-export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
+export async function createPost(input: { ownerId?: string; kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
   if (!isSupabaseConfigured || !supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser(); if (!user) return { data: null, error: new Error("Please sign in to publish to the community") };
-  const result = await supabase.from("posts").insert({ author_id: user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, business_id: input.businessId ?? null, area: input.area, visibility: input.visibility ?? "nearby", approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null }).select().single();
+  if (input.ownerId && input.ownerId !== user.id) return { data: null, error: new Error("Sign in with the account that saved this draft to publish it") };
+  const result = await supabase.from("posts").insert({ author_id: input.ownerId ?? user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, business_id: input.businessId ?? null, area: input.area, visibility: input.visibility ?? "nearby", approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null }).select().single();
   if (!result.error) notifyLocalFeedListeners();
   return result;
 }
@@ -134,7 +135,7 @@ export async function fetchNearbyItems(location?: DeviceLocation, settings?: Loc
   const { data, error } = await supabase.rpc("nearby_radar", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusToMeters(activeSettings.radius), category_filter: category && category !== "All" ? category : null }); if (error || !data) return []; return data as RadarItem[];
 }
 const radiusToMeters = discoveryRadiusToMeters;
-export async function uploadMedia(uri: string, path: string, contentType: string) { if (!supabase) throw new Error("Backend is not configured"); const file = new File(uri); const bytes = await file.bytes(); return supabase.storage.from("local-radar-media").upload(path, bytes, { contentType, upsert: false }); }
+export async function uploadMedia(uri: string, path: string, contentType: string) { if (!supabase) throw new Error("Backend is not configured"); const bytes = await readMediaBytes(uri); return supabase.storage.from("local-radar-media").upload(path, bytes, { contentType, upsert: false }); }
 
 export async function attachPostMedia(input: { postId: string; storagePath: string; mediaType: "image" | "video"; width?: number; height?: number }) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
