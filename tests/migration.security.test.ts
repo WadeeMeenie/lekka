@@ -24,6 +24,7 @@ const excessiveClientPrivilegesMigration = readMigration("20260924200000_revoke_
 const helperExecuteMigration = readMigration("20260924073018_harden_security_definer_helper_execute.sql");
 const restoredPolicyHelpersMigration = readMigration("20261011210000_restore_policy_helpers_and_profile_avatar.sql");
 const safeProfileAccessMigration = readMigration("20261014123000_restore_safe_profile_column_access.sql");
+const profilePrivacySource = readFileSync(resolve(process.cwd(), "lib/profile-privacy.ts"), "utf8");
 const discoveryBoundsMigration = readMigration("20260924073115_bound_discovery_radius_and_result_limit.sql");
 const defaultClientPrivilegesMigration = readMigration("20260924200500_harden_public_default_client_privileges.sql");
 const yocoTransitionMigration = readMigration("20260924110000_harden_yoco_payment_transitions.sql");
@@ -208,7 +209,11 @@ describe("safe profile column access", () => {
     expect(safeProfileAccessMigration).toContain("(select auth.uid()) = id");
     expect(safeProfileAccessMigration).toContain("not public.is_profile_private(id)");
     expect(safeProfileAccessMigration).toContain("public.can_view_full_profile((select auth.uid()), id)");
-    expect(safeProfileAccessMigration).toContain("grant update (is_private, friends_list_visibility)");
+    expect(safeProfileAccessMigration).toContain("create or replace function public.update_my_profile_privacy");
+    expect(safeProfileAccessMigration).toContain("grant execute on function public.update_my_profile_privacy(boolean, text) to authenticated");
+    expect(safeProfileAccessMigration).not.toContain("grant update (is_private, friends_list_visibility)");
+    expect(profilePrivacySource).toContain("rpc('update_my_profile_privacy'");
+    expect(profilePrivacySource).not.toContain("from('profiles').update");
   });
 });
 

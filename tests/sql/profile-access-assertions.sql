@@ -14,10 +14,12 @@ BEGIN
     RAISE EXCEPTION 'A private profile column or anonymous profile read remains granted';
   END IF;
 
-  IF NOT has_column_privilege('authenticated', 'public.profiles', 'is_private', 'UPDATE')
-     OR NOT has_column_privilege('authenticated', 'public.profiles', 'friends_list_visibility', 'UPDATE')
+  IF has_column_privilege('authenticated', 'public.profiles', 'is_private', 'UPDATE')
+     OR has_column_privilege('authenticated', 'public.profiles', 'friends_list_visibility', 'UPDATE')
      OR has_column_privilege('authenticated', 'public.profiles', 'display_name', 'UPDATE')
-     OR has_column_privilege('authenticated', 'public.profiles', 'id', 'INSERT') THEN
+     OR has_column_privilege('authenticated', 'public.profiles', 'id', 'INSERT')
+     OR NOT has_function_privilege('authenticated', 'public.update_my_profile_privacy(boolean,text)', 'EXECUTE')
+     OR has_function_privilege('anon', 'public.update_my_profile_privacy(boolean,text)', 'EXECUTE') THEN
     RAISE EXCEPTION 'Profile write privileges are not least-privilege';
   END IF;
 END;
@@ -37,8 +39,15 @@ BEGIN
 END;
 $$;
 
-UPDATE public.profiles
-SET is_private = true
-WHERE id = auth.uid();
+SELECT public.update_my_profile_privacy(true, 'friends');
 
 RESET ROLE;
+
+DO $
+BEGIN
+  IF NOT (SELECT p.is_private FROM public.profiles p
+          WHERE p.id = '11111111-1111-4111-8111-111111111111') THEN
+    RAISE EXCEPTION 'Owner-scoped privacy RPC did not update the owner profile';
+  END IF;
+END;
+$;
