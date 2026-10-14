@@ -27,5 +27,9 @@ export async function updateProfilePrivacy(isPrivate: boolean, friendsListVisibi
   if (!client) return { error: new Error('Supabase is not configured') };
   const { data: { user } } = await client.auth.getUser();
   if (!user) return { error: new Error('Not authenticated') };
-  return client.from('profiles').update({ is_private: isPrivate, friends_list_visibility: friendsListVisibility }).eq('id', user.id);
+  const { error } = await client.rpc('update_my_profile_privacy', {
+    p_is_private: isPrivate,
+    p_friends_list_visibility: friendsListVisibility,
+  });
+  return { error };
 }

@@ -13,15 +13,32 @@ concurrency:
   group: lekka-validation-${{ github.ref }}
   cancel-in-progress: true
 
+# CI must never silently build an APK connected to production. Configure the
+# three LEKKA_STAGING_* repository secrets only after an isolated staging
+# project has been approved and verified. Otherwise leave the backend unconfigured.
 env:
-  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://vnitwsjidlurlwlpsmtf.supabase.co' }}
-  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_hy1yuUGTdhl8fEnR4jAIIg_kWJ3JQdX' }}
+  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.LEKKA_STAGING_SUPABASE_URL || '' }}
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEKKA_STAGING_SUPABASE_PUBLISHABLE_KEY || '' }}
+  EXPO_PUBLIC_STAGING_PROJECT_REF: ${{ secrets.LEKKA_STAGING_PROJECT_REF }}
+  EXPO_PUBLIC_APP_ENV: ${{ secrets.LEKKA_STAGING_PROJECT_REF != '' && 'staging' || 'ci' }}
 
 jobs:
   code-quality:
     name: Code / tests / integration
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,16 +46,34 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Validate Supabase build configuration
+      - name: Validate isolated backend configuration
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$EXPO_PUBLIC_SUPABASE_URL"
-          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
-          [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
-          [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
+          if [[ -z "$EXPO_PUBLIC_SUPABASE_URL" && -z "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]]; then
+            test -z "$EXPO_PUBLIC_STAGING_PROJECT_REF"
+            test "$EXPO_PUBLIC_APP_ENV" = "ci"
+          else
+            test -n "$EXPO_PUBLIC_STAGING_PROJECT_REF"
+            [[ "$EXPO_PUBLIC_STAGING_PROJECT_REF" =~ ^[a-z]{20}$ ]]
+            test "$EXPO_PUBLIC_STAGING_PROJECT_REF" != "vnitwsjidlurlwlpsmtf"
+            test "$EXPO_PUBLIC_SUPABASE_URL" = "https://${EXPO_PUBLIC_STAGING_PROJECT_REF}.supabase.co"
+            test "$EXPO_PUBLIC_APP_ENV" = "staging"
+            [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
+          fi
+      - name: Validate profile access migration on isolated PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host -e PGPASSWORD=postgres -v "$GITHUB_WORKSPACE:/repo:ro" postgres:17 bash -lc '
+            set -euo pipefail
+            until pg_isready -h 127.0.0.1 -U postgres; do sleep 1; done
+            psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f /repo/tests/sql/profile-access-fixture.sql
+            psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f /repo/supabase/migrations/20261014123000_restore_safe_profile_column_access.sql
+            psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f /repo/tests/sql/profile-access-assertions.sql
+          '
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npx --yes pnpm@9.12.0 install --frozen-lockfile
       - name: TypeScript
         run: npm run check
       - name: Static interaction and route audit
@@ -48,7 +83,9 @@ jobs:
       - name: Unit and integration tests
         run: npm test
       - name: Lint
-        run: npm run lint
+        run: npx --yes pnpm@9.12.0 run lint
+      - name: Production web export
+        run: npx expo export --platform web
       - name: Expo config
         run: npx expo config --type public
       - name: Expo dependency compatibility
@@ -72,16 +109,23 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Validate Supabase build configuration
+      - name: Validate isolated backend configuration
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$EXPO_PUBLIC_SUPABASE_URL"
-          test -n "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY"
-          [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
-          [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
+          if [[ -z "$EXPO_PUBLIC_SUPABASE_URL" && -z "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]]; then
+            test -z "$EXPO_PUBLIC_STAGING_PROJECT_REF"
+            test "$EXPO_PUBLIC_APP_ENV" = "ci"
+          else
+            test -n "$EXPO_PUBLIC_STAGING_PROJECT_REF"
+            [[ "$EXPO_PUBLIC_STAGING_PROJECT_REF" =~ ^[a-z]{20}$ ]]
+            test "$EXPO_PUBLIC_STAGING_PROJECT_REF" != "vnitwsjidlurlwlpsmtf"
+            test "$EXPO_PUBLIC_SUPABASE_URL" = "https://${EXPO_PUBLIC_STAGING_PROJECT_REF}.supabase.co"
+            test "$EXPO_PUBLIC_APP_ENV" = "staging"
+            [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
+          fi
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npx --yes pnpm@9.12.0 install --frozen-lockfile
       - name: Expo config
         run: npx expo config --type public
       - name: Expo prebuild
@@ -93,19 +137,17 @@ jobs:
         run: |
           test -f gradlew
           grep -q '^newArchEnabled=true' gradle.properties
-          ./gradlew :app:tasks --all --no-daemon >/tmp/gradle-tasks.txt
-          grep -q 'assembleDebug' /tmp/gradle-tasks.txt
-          grep -q 'assembleInternalDebug' /tmp/gradle-tasks.txt
+          test -f app/build.gradle
       - name: Android debug build
         working-directory: android
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
       - name: Android internal debug build
         working-directory: android
         run: ./gradlew :app:assembleInternalDebug --no-daemon --stacktrace
-      - name: Upload debug APKs
+      - name: Upload CI debug APKs (backend disabled unless staging secrets are configured)
         uses: actions/upload-artifact@v4
         with:
-          name: lekka-android-debug-apks
+          name: lekka-ci-debug-apks-no-production
           path: |
             android/app/build/outputs/apk/debug/*.apk
             android/app/build/outputs/apk/internalDebug/*.apk

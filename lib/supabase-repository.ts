@@ -1,8 +1,8 @@
-import { File } from "expo-file-system/next";
+import { readMediaBytes } from "@/lib/read-media-bytes";
 import { AppState } from "react-native";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DeviceLocation } from "@/lib/location";
-import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";
+import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadSettings } from "@/lib/local-radar";
 import type { SocialPost } from "@/lib/social-repository";
 
 function toLocalPost(row: any): LocalPost {
@@ -42,15 +42,15 @@ async function hydratePostData(posts: LocalPost[]): Promise<LocalPost[]> {
 }
 
 export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPost[]> {
-  if (!isSupabaseConfigured || !supabase) return loadPosts();
-  const { data: { user } } = await supabase.auth.getUser();
-  const cached = await loadPosts(user?.id);
-  if (!user) return cached;
+  // Supabase is the source of truth. Never substitute seeded/local cached posts
+  // for a failed auth or network request; that makes fake/stale content look live.
+  if (!isSupabaseConfigured || !supabase) return [];
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) return [];
   const result = location ? await supabase.rpc("nearby_feed_posts", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000 }) : await supabase.from("posts").select(`id, author_id, kind, category, title, body, area, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).limit(50);
-  const { data, error } = result;
-  if (error || !data) return cached;
-  const posts = await hydratePostData(data.map(toLocalPost));
-  await savePosts(posts, user.id);
+  if (result.error || !result.data) return [];
+  const posts = await hydratePostData(result.data.map(toLocalPost));
+  // No local feed cache: account content must always come from Supabase.
   return posts;
 }
 
@@ -121,10 +121,11 @@ export function subscribeToLocalChanges(onChange: () => void) {
   };
 }
 
-export async function createPost(input: { kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
+export async function createPost(input: { ownerId?: string; kind: LocalPost["kind"]; category?: RadarCategory; title?: string; body: string; area: string; visibility?: "nearby" | "public"; location?: DeviceLocation; businessId?: string }) {
   if (!isSupabaseConfigured || !supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser(); if (!user) return { data: null, error: new Error("Please sign in to publish to the community") };
-  const result = await supabase.from("posts").insert({ author_id: user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, business_id: input.businessId ?? null, area: input.area, visibility: input.visibility ?? "nearby", approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null }).select().single();
+  if (input.ownerId && input.ownerId !== user.id) return { data: null, error: new Error("Sign in with the account that saved this draft to publish it") };
+  const result = await supabase.from("posts").insert({ author_id: input.ownerId ?? user.id, kind: input.kind, category: input.category, title: input.title, body: input.body, business_id: input.businessId ?? null, area: input.area, visibility: input.visibility ?? "nearby", approximate_location: input.location ? `SRID=4326;POINT(${input.location.longitude} ${input.location.latitude})` : null }).select().single();
   if (!result.error) notifyLocalFeedListeners();
   return result;
 }
@@ -134,7 +135,7 @@ export async function fetchNearbyItems(location?: DeviceLocation, settings?: Loc
   const { data, error } = await supabase.rpc("nearby_radar", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusToMeters(activeSettings.radius), category_filter: category && category !== "All" ? category : null }); if (error || !data) return []; return data as RadarItem[];
 }
 const radiusToMeters = discoveryRadiusToMeters;
-export async function uploadMedia(uri: string, path: string, contentType: string) { if (!supabase) throw new Error("Backend is not configured"); const file = new File(uri); const bytes = await file.bytes(); return supabase.storage.from("local-radar-media").upload(path, bytes, { contentType, upsert: false }); }
+export async function uploadMedia(uri: string, path: string, contentType: string) { if (!supabase) throw new Error("Backend is not configured"); const bytes = await readMediaBytes(uri); return supabase.storage.from("local-radar-media").upload(path, bytes, { contentType, upsert: false }); }
 
 export async function attachPostMedia(input: { postId: string; storagePath: string; mediaType: "image" | "video"; width?: number; height?: number }) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
@@ -143,16 +144,18 @@ export async function attachPostMedia(input: { postId: string; storagePath: stri
   return result;
 }
 
-export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean };
+export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean; error?: Error | null };
 export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20, radiusMeters = 5000): Promise<FeedPage> {
-  if (!isSupabaseConfigured || !supabase) return { posts: [], nextCursor: null, hasMore: false };
-  const { data: { user } } = await supabase.auth.getUser();
-  const cached = await loadPosts(user?.id);
-  if (!user) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
+  if (!isSupabaseConfigured || !supabase) return { posts: [], nextCursor: null, hasMore: false, error: new Error("Supabase is not configured") };
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError) return { posts: [], nextCursor: null, hasMore: false, error: authError };
+  if (!user) return { posts: [], nextCursor: null, hasMore: false, error: new Error("Please sign in to load your feed") };
   const cursorParts = cursor ? cursor.split("|") : []; const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null; const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null; let result: any;
   if (location) result = await supabase.rpc("nearby_feed_posts_page", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusMeters, cursor_created_at: cursorCreatedAt, cursor_id: cursorId, page_size: pageSize });
   else { let query = supabase.from("posts").select(`id, author_id, kind, category, title, body, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize); if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`); result = await query; }
-  if (result.error || !result.data) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false }; const rows = result.data as Array<{ id: string; created_at: string }>; const posts = await hydratePostData(rows.map(toLocalPost)); const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null; return { posts, nextCursor: next, hasMore: Boolean(next) };
+  if (result.error) return { posts: [], nextCursor: null, hasMore: false, error: result.error };
+  if (!result.data) return { posts: [], nextCursor: null, hasMore: false, error: new Error("Supabase returned no feed data") };
+  const rows = result.data as Array<{ id: string; created_at: string }>; const posts = await hydratePostData(rows.map(toLocalPost)); const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null; return { posts, nextCursor: next, hasMore: Boolean(next), error: null };
 }
 
 export async function listPublicProfilePosts(profileId: string, cursor: string | null, pageSize = 20) {
