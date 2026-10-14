@@ -43,7 +43,7 @@ describe("post and nearby authorization hardening migration", () => {
 
   it("disables the unused detail RPC that returned the complete posts row", () => {
     expect(migration).toContain("revoke execute on function public.nearby_post_detail(uuid, double precision, double precision, integer) from public, anon, authenticated");
-    expect(migration).toContain("returns the full posts row including location");
+    expect(migration).not.toContain("create or replace function public.nearby_post_detail");
   });
 
   it("keeps nearby feed functions authenticated-only and search-path hardened", () => {
