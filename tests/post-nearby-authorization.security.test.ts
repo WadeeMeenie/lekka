@@ -38,7 +38,7 @@ describe("post and nearby authorization hardening migration", () => {
   it("bounds radius and rejects out-of-range coordinates before querying location", () => {
     expect(migration.match(/latitude between -90 and 90/g) ?? []).toHaveLength(2);
     expect(migration.match(/longitude between -180 and 180/g) ?? []).toHaveLength(2);
-    expect(migration.match(/least\\(greatest\\(radius_meters, 500\\), 50000\\)/g) ?? []).toHaveLength(2);
+    expect(migration.match(/least\(greatest\(radius_meters, 500\), 50000\)/g) ?? []).toHaveLength(2);
   });
 
   it("disables the unused detail RPC that returned the complete posts row", () => {
