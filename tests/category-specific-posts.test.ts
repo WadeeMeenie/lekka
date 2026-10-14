@@ -26,6 +26,8 @@ describe("category-specific post experience", () => {
     expect(composer).toContain("employmentType: jobType");
     expect(composer).toContain("venue: eventVenue.trim()");
     expect(feed).toContain("Mark as sold");
+    expect(feed).toContain("Reserve listing");
+    expect(feed).toContain("Listing reserved.");
     expect(feed).toContain("marketplaceStatus===\"sold\"");
   });
 
