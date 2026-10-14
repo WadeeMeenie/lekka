@@ -7,7 +7,7 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 describe("reaction RPC wiring", () => {
   it("uses the uniquely named RPC that avoids overloaded PostgREST resolution", () => {
     const source = read("lib/atomic-social.ts");
-    const migration = read("supabase/migrations/20261014195500_toggle_post_reaction_unambiguous.sql");
+    const migration = read("supabase/migrations/20261014200047_toggle_post_reaction_unambiguous.sql");
 
     expect(source).toContain('supabase.rpc("toggle_post_reaction", { p_post_id: postId, p_reaction: reaction })');
     expect(source).not.toContain('supabase.rpc("toggle_reaction",');
@@ -18,7 +18,7 @@ describe("reaction RPC wiring", () => {
   });
 
   it("preserves all supported reaction values and toggle-off behavior", () => {
-    const migration = read("supabase/migrations/20261014195500_toggle_post_reaction_unambiguous.sql");
+    const migration = read("supabase/migrations/20261014200047_toggle_post_reaction_unambiguous.sql");
     expect(migration).toContain("'👍','❤️','😂','😮','😢','😡'");
     expect(migration).toContain("IF v_existing = p_reaction THEN");
     expect(migration).toContain("RETURN NULL;");
