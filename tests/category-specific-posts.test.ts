@@ -26,6 +26,13 @@ describe("category-specific post experience", () => {
     expect(feed).toContain("marketplaceStatus===\"sold\"");
   });
 
+  it("invalidates old local feed caches so deleted test posts cannot reappear", () => {
+    const localRadar = read("lib/local-radar.ts");
+    expect(localRadar).toContain("local-radar/posts/v3");
+    expect(localRadar).toContain("PREVIOUS_POSTS_KEY");
+    expect(localRadar).toContain("staleKeys.map");
+  });
+
   it("uses privacy-aware profile lookup and protects private profiles", () => {
     const migration = read("supabase/migrations/20261014205414_secure_feed_profile_avatar_access.sql");
     const repository = read("lib/supabase-repository.ts");
