@@ -17,11 +17,13 @@ describe("category-specific post experience", () => {
     expect(repository).toContain("marketplace_price_cents: input.marketplacePriceCents ?? null");
     expect(repository).toContain("export async function updateMarketplaceStatus");
     expect(composer).toContain("Marketplace listings need a title and a valid price in rand.");
+    expect(composer).toContain("Switch to your business profile before publishing a business update.");
+    expect(composer).toContain("clearCategoryFields");
     expect(composer).toContain('placeholder="Price in R (e.g. 850)"');
     expect(composer).toContain("employmentType: jobType");
     expect(composer).toContain("venue: eventVenue.trim()");
     expect(feed).toContain("Mark as sold");
-    expect(feed).toContain("marketplaceStatus === \"sold\"");
+    expect(feed).toContain("marketplaceStatus===\"sold\"");
   });
 
   it("uses privacy-aware profile lookup and protects private profiles", () => {
