@@ -18,6 +18,8 @@ export function discoveryRadiusToMeters(radius: string): number {
 }
 export const defaultSettings: LocalSettings = { area: "your area", radius: "5 km", useLocation: true, approximateVisibility: true, selectedLocation: null };
 
+const SETTINGS_KEY = "local-radar/settings/v2";
+
 // Feed content is always loaded from Supabase. Do not keep hardcoded sample posts
 // or client-side ranking heuristics here; they make demo content look like real activity.
 export type FeedPreference = "interested" | "not_interested";
