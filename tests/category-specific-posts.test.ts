@@ -18,6 +18,9 @@ describe("category-specific post experience", () => {
     expect(repository).toContain("export async function updateMarketplaceStatus");
     expect(composer).toContain("Marketplace listings need a title and a valid price in rand.");
     expect(composer).toContain("Switch to your business profile before publishing a business update.");
+    expect(composer).toContain("Business update headline");
+    expect(repository).toContain("businessLogoPath: business?.logo_path ?? null");
+    expect(feed).toContain("post.businessName ? post.businessName : post.author");
     expect(composer).toContain("clearCategoryFields");
     expect(composer).toContain('placeholder="Price in R (e.g. 850)"');
     expect(composer).toContain("employmentType: jobType");
