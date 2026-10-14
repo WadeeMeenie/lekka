@@ -9,7 +9,11 @@ begin;
 revoke all on table public.profiles from anon, authenticated;
 
 revoke select (
+  id,
+  display_name,
+  username,
   bio,
+  profile_image_path,
   interests,
   home_area,
   preferred_radius_m,
