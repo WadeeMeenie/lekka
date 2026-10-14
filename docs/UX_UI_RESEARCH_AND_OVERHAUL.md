@@ -171,3 +171,8 @@ A row is not launch-ready merely because it renders a switch. It must load the s
 7. Run visual QA and end-to-end acceptance gates. Fix regressions before moving on.
 
 **Do not perform a cosmetic-only pass.** Every design change must preserve or improve the real backend workflow and have a verification path.
+
+
+## Category-specific experiences
+
+See [Category-Specific UX/UI Specification](./CATEGORY_SPECIFIC_UX_UI_SPEC.md) for research-backed, field-level UI contracts for Marketplace, Businesses, Deals, Events, Jobs, Services, Communities, Local Alerts and general posts. It also documents the data-model gap: generic post fields are not sufficient for persisted price, sold state, event times, offer terms, job application settings or service pricing. Do not fake these fields in the client; inspect the live schema and implement typed persistence, RLS, lifecycle transitions and category-specific cards/details together.
