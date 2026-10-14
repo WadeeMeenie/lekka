@@ -25,6 +25,8 @@ export default function SocialScreen() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
+    setFollowing([]);
     const publicResult = await listCommunities();
     setCommunities((publicResult.data ?? []) as Community[]);
     if (user) {

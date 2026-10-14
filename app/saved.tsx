@@ -23,7 +23,7 @@ function formatSavedTime(value: string) {
 
 export default function SavedScreen() {
   const colors = useColors();
-  const { isAuthenticated } = useSupabaseAuth();
+  const { isAuthenticated, user } = useSupabaseAuth();
   const [posts, setPosts] = useState<SocialPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,17 +40,18 @@ export default function SavedScreen() {
   };
 
   useEffect(() => {
-    if (!isAuthenticated) { setLoading(false); return; }
-    let mounted = true;
-    setLoading(true);
+    setPosts([]);
     setError(null);
+    setLoading(true);
+    if (!isAuthenticated || !user?.id) { setLoading(false); return; }
+    let mounted = true;
     void listSavedPostsSafe().then((result) => {
       if (!mounted) return;
       setPosts(result.data);
       if (result.error) setError(result.error.message || "We couldn’t load your saved posts.");
     }).finally(() => { if (mounted) setLoading(false); });
     return () => { mounted = false; };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
 
   if (!isAuthenticated) return <ScreenContainer edges={["top", "bottom", "left", "right"]}><View style={styles.center}>{authGateAction && <AuthGate action={authGateAction} onCancel={() => setAuthGateAction(null)} />}<IconSymbol name="bookmark.fill" size={38} color={colors.primary} /><Text style={[styles.title, { color: colors.foreground }]}>Keep useful local things close</Text><Text style={[styles.body, { color: colors.muted }]}>Join Lekka to save posts and return to them later.</Text><Pressable accessibilityRole="button" onPress={() => setAuthGateAction("save posts")} style={({ pressed }) => [styles.primary, { backgroundColor: colors.primary, opacity: pressed ? 0.78 : 1 }]}><Text style={styles.primaryText}>Join Lekka</Text></Pressable></View></ScreenContainer>;
 

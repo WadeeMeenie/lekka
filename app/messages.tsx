@@ -32,10 +32,11 @@ export default function MessagesScreen() {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { if (isAuthenticated) void loadConversations(); }, [isAuthenticated, conversationId]);
+  useEffect(() => { setConversations([]); setSelected(null); setMessages([]); setText(""); setLoadError(null); if (isAuthenticated) void loadConversations(); else setLoading(false); }, [isAuthenticated, user?.id, conversationId]);
 
   useEffect(() => {
-    if (!selected) return;
+    if (!selected) { setMessages([]); return; }
+    setMessages([]);
     let active = true;
     const load = async () => {
       try {

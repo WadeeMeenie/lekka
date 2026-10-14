@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { router, useFocusEffect } from "expo-router";
 import { ActivityIndicator, FlatList, Pressable, RefreshControl, Share, StyleSheet, Text, TextInput, View, Modal } from "react-native";
 import * as Clipboard from "expo-clipboard";
@@ -27,6 +27,7 @@ const tabs: FeedTab[] = ["For You", "Nearby", "Trending", "Following"];
 export default function HomeScreen() {
   const colors = useColors();
   const { user, isAuthenticated } = useSupabaseAuth();
+  const previousUserId = useRef<string | null>(null);
   const [authGateAction, setAuthGateAction] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<FeedTab>("For You");
   const [posts, setPosts] = useState<LocalPost[]>([]);
@@ -73,6 +74,20 @@ export default function HomeScreen() {
 
   useEffect(() => {
     let active = true;
+    const currentUserId = user?.id ?? null;
+    if (previousUserId.current !== currentUserId) {
+      previousUserId.current = currentUserId;
+      setInitialLoading(true);
+      setPosts([]);
+      setNextCursor(null);
+      setFeedback({});
+      setReactions({});
+      setProfileImageUrls({});
+      setPostImageUrls({});
+      setUnreadCount(0);
+      setPendingDrafts(0);
+      setOutboxStatus("idle");
+    }
     void (async () => {
       if (user) {
         if (active) setOutboxStatus("syncing");
@@ -167,7 +182,7 @@ export default function HomeScreen() {
     try {
       const result = await toggleSavedPostAtomic(postId);
       if (result.error) setToast("Couldn't update saved posts. Please try again.");
-      else setToast("Saved posts updated.");
+      else setToast(result.saved ? "Post saved." : "Post removed from saved posts.");
     } finally { setBusy(postId, false); }
   };
 
@@ -219,7 +234,7 @@ export default function HomeScreen() {
   const retryOutbox = async () => { if (!user || outboxStatus === "syncing") return; setOutboxStatus("syncing"); try { const sync = await syncPendingPostDrafts(user.id); const remaining = sync.remaining ?? (await listPendingPostDrafts(user.id)).length; setPendingDrafts(remaining); setOutboxStatus(remaining > 0 ? "queued" : "idle"); } catch { setOutboxStatus("error"); } };
   const visiblePosts = useMemo(() => personalizeFeed(posts, activeTab, feedback).filter((post) => `${post.title ?? ""} ${post.body} ${post.author}`.toLowerCase().includes(query.toLowerCase())), [posts, activeTab, feedback, query]);
   const refresh = async () => { setRefreshing(true); try { const settings = await loadSettings(); const location = await getLastKnownOrCurrentLocation(settings.area); const liveLocation = location.status === "granted" ? location.location : undefined; if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); } else setArea(settings.area || "your area"); const nextRadius = discoveryRadiusToMeters(settings.radius); setRadiusMeters(nextRadius); const page = await fetchFeedPage(liveLocation, null, 20, nextRadius); setPosts(page.posts); setNextCursor(page.nextCursor); } catch { setToast("Couldn't refresh your feed. Please try again."); } finally { setRefreshing(false); } };
-  const loadMore = async () => { if (!nextCursor || loadingMore) return; setLoadingMore(true); try { const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor, 20, radiusMeters); setPosts((current) => { const seen = new Set(current.map((post) => post.id)); return [...current, ...page.posts.filter((post) => !seen.has(post.id))]; }); setNextCursor(page.nextCursor); } finally { setLoadingMore(false); } };
+  const loadMore = async () => { if (!nextCursor || loadingMore) return; setLoadingMore(true); try { const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor, 20, radiusMeters); setPosts((current) => { const seen = new Set(current.map((post) => post.id)); return [...current, ...page.posts.filter((post) => !seen.has(post.id))]; }); setNextCursor(page.nextCursor); } catch { setToast("Couldn’t load more posts. Please try again."); } finally { setLoadingMore(false); } };
   const presentation = getFetchPresentation({ isInitialLoading: initialLoading, isRefreshing: refreshing || backgroundRefreshing, hasData: posts.length > 0 });
 
   return <ScreenContainer containerClassName="bg-background">
