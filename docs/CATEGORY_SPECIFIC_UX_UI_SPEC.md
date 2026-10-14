@@ -117,3 +117,16 @@ Implementation order:
 - [ ] RLS/negative tests prove users cannot edit another user's listing/business/event/job or alter its status.
 - [ ] Loading, empty, offline, permission-denied and retry states exist.
 - [ ] All tests and native builds pass on the exact release commit; Android and web layouts are visually checked.
+
+
+## Live schema reconnaissance (14 October 2026)
+
+Read-only inspection of the connected Supabase project confirmed:
+- Existing canonical tables include `businesses`, `deals`, `events`, `posts`, `post_media` and community tables. Extend and use these where appropriate; do not create parallel business/deal/event tables.
+- The inspected `posts` table has generic kind/category/title/body/area/visibility/media fields and an alert status, but no marketplace price, condition or sold-state fields.
+- No `marketplace_listings` or `jobs` table was present in the inspected public schema. The current post kind enum includes marketplace and job, but the enum value alone is not a complete listing/job data model.
+- Existing business data already has opening hours, contact fields, service-area mode and verification state. UI must use these actual fields and must not invent a rating/review feature when no verified review source is connected.
+
+This confirms the next implementation must be schema-aware: add persisted marketplace lifecycle/pricing fields and a real job entity only after checking all related migrations, policies, repositories and foreign keys. Deals and events should use their existing tables and current write/read paths.
+
+**Separate security finding:** Supabase's advisor reports Row Level Security disabled on `public.spatial_ref_sys`, a critical exposure warning. This is not a category UX change and has not been modified automatically. Review the official guidance and decide the appropriate access policy before changing it: https://supabase.com/docs/guides/database/postgres/row-level-security
