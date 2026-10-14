@@ -78,7 +78,7 @@ returns void
 language plpgsql
 security definer
 set search_path = ''
-as $
+as $privacy_fn$
 declare
   v_user_id uuid := auth.uid();
 begin
@@ -100,7 +100,7 @@ begin
     raise exception 'profile not found';
   end if;
 end;
-$;
+$privacy_fn$;
 
 revoke all on function public.update_my_profile_privacy(boolean, text) from public, anon, authenticated;
 grant execute on function public.update_my_profile_privacy(boolean, text) to authenticated;
