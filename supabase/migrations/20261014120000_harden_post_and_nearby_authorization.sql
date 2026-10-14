@@ -101,7 +101,7 @@ as $$
     and extensions.st_dwithin(
       p.approximate_location,
       u.point,
-      pg_catalog.least(pg_catalog.greatest(radius_meters, 500), 50000)
+      least(greatest(radius_meters, 500), 50000)
     )
     and (
       p.author_id = (select auth.uid())
@@ -187,7 +187,7 @@ as $$
     and extensions.st_dwithin(
       p.approximate_location,
       u.point,
-      pg_catalog.least(pg_catalog.greatest(radius_meters, 500), 50000)
+      least(greatest(radius_meters, 500), 50000)
     )
     and (
       p.author_id = (select auth.uid())
@@ -219,7 +219,7 @@ as $$
       or (p.created_at = cursor_created_at and p.id < cursor_id)
     )
   order by p.created_at desc, p.id desc
-  limit pg_catalog.least(pg_catalog.greatest(page_size, 1), 50);
+  limit least(greatest(page_size, 1), 50);
 $$;
 
 revoke execute on function public.nearby_feed_posts(double precision, double precision, integer) from public, anon;
