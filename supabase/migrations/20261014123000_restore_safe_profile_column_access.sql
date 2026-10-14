@@ -23,6 +23,25 @@ revoke select (
   friends_list_visibility
 ) on table public.profiles from anon, authenticated;
 
+revoke insert (
+  id,
+  display_name,
+  username,
+  bio,
+  profile_image_path,
+  interests,
+  home_area,
+  preferred_radius_m,
+  role,
+  approximate_location,
+  location_visibility,
+  created_at,
+  updated_at,
+  account_intent,
+  is_private,
+  friends_list_visibility
+) on table public.profiles from anon, authenticated;
+
 revoke update (
   id,
   display_name,
