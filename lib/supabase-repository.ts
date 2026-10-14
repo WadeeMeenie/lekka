@@ -2,7 +2,7 @@ import { readMediaBytes } from "@/lib/read-media-bytes";
 import { AppState } from "react-native";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DeviceLocation } from "@/lib/location";
-import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadSettings, savePosts } from "@/lib/local-radar";
+import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadSettings } from "@/lib/local-radar";
 import type { SocialPost } from "@/lib/social-repository";
 
 function toLocalPost(row: any): LocalPost {
@@ -50,7 +50,7 @@ export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPo
   const result = location ? await supabase.rpc("nearby_feed_posts", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000 }) : await supabase.from("posts").select(`id, author_id, kind, category, title, body, area, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).limit(50);
   if (result.error || !result.data) return [];
   const posts = await hydratePostData(result.data.map(toLocalPost));
-  await savePosts(posts, user.id);
+  // No local feed cache: account content must always come from Supabase.
   return posts;
 }
 
