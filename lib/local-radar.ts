@@ -6,7 +6,9 @@ export type DiscoveryContentType = "all" | "post" | "alert" | "business" | "even
 export type RadarCategory = "Food" | "Event" | "Deal" | "Job" | "Marketplace" | "Alert" | "Service" | "business" | "deal" | "event" | "job" | "marketplace" | "service" | "general";
 export type PostKind = "post" | "alert";
 
-export type LocalPost = { id: string; authorId?: string | null; kind: PostKind; category?: RadarCategory; author: string; initials: string; profileImagePath?: string | null; mediaPath?: string | null; area: string; distance: string; time: string; title?: string; body: string; likes: number; comments: number; trusted: boolean; accent: string };
+export type MarketplaceCondition = "new" | "like_new" | "good" | "fair" | "for_parts";
+export type MarketplaceStatus = "available" | "reserved" | "sold";
+export type LocalPost = { id: string; authorId?: string | null; kind: PostKind; category?: RadarCategory; author: string; initials: string; profileImagePath?: string | null; mediaPath?: string | null; area: string; distance: string; time: string; title?: string; body: string; likes: number; comments: number; trusted: boolean; accent: string; details?: Record<string, unknown>; marketplacePriceCents?: number | null; marketplaceCondition?: MarketplaceCondition | null; marketplaceStatus?: MarketplaceStatus };
 export type RadarItem = { id: string; category: RadarCategory; title: string; subtitle: string; area: string; distance: string; time: string; accent: string; icon: string };
 export type LocalSettings = { area: string; radius: string; useLocation: boolean; approximateVisibility: boolean; selectedLocation: DeviceLocation | null };
 export function discoveryRadiusToMeters(radius: string): number {
