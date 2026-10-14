@@ -43,11 +43,11 @@ SELECT public.update_my_profile_privacy(true, 'friends');
 
 RESET ROLE;
 
-DO $
+DO $$
 BEGIN
   IF NOT (SELECT p.is_private FROM public.profiles p
           WHERE p.id = '11111111-1111-4111-8111-111111111111') THEN
     RAISE EXCEPTION 'Owner-scoped privacy RPC did not update the owner profile';
   END IF;
 END;
-$;
+$$;
