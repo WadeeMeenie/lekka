@@ -15,7 +15,7 @@ concurrency:
 
 # CI must never silently build an APK connected to production. Configure the
 # three LEKKA_STAGING_* repository secrets only after an isolated staging
-# project has been approved and verified. Otherwise use an unreachable host.
+# project has been approved and verified. Otherwise leave the backend unconfigured.
 env:
   EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.LEKKA_STAGING_SUPABASE_URL || '' }}
   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEKKA_STAGING_SUPABASE_PUBLISHABLE_KEY || '' }}
@@ -26,7 +26,19 @@ jobs:
   code-quality:
     name: Code / tests / integration
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,6 +61,17 @@ jobs:
             test "$EXPO_PUBLIC_APP_ENV" = "staging"
             [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
           fi
+      - name: Validate profile access migration on isolated PostgreSQL
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm --network host -e PGPASSWORD=postgres -v "$GITHUB_WORKSPACE:/repo:ro" postgres:17 bash -lc '
+            set -euo pipefail
+            until pg_isready -h 127.0.0.1 -U postgres; do sleep 1; done
+            psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f /repo/tests/sql/profile-access-fixture.sql
+            psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f /repo/supabase/migrations/20261014123000_restore_safe_profile_column_access.sql
+            psql -h 127.0.0.1 -U postgres -v ON_ERROR_STOP=1 -f /repo/tests/sql/profile-access-assertions.sql
+          '
       - name: Install dependencies
         run: npx --yes pnpm@9.12.0 install --frozen-lockfile
       - name: TypeScript
