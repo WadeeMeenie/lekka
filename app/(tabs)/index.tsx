@@ -94,7 +94,7 @@ export default function HomeScreen() {
       if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); }
       else setArea(settings.area || "your area");
       const firstPage = await fetchFeedPage(liveLocation, null, 20, discoveryRadiusToMeters(settings.radius));
-      if (active) { setPosts(firstPage.posts); setNextCursor(firstPage.nextCursor); setInitialLoading(false); }
+      if (active) { setPosts(firstPage.posts); setNextCursor(firstPage.nextCursor); setInitialLoading(false); if (firstPage.error) setToast(firstPage.error.message || "We couldn't load your feed. Please try again."); }
     })().catch(() => { if (active) { setInitialLoading(false); setToast("We couldn't refresh your local feed. Try again."); } });
     return () => { active = false; };
   }, [user]);
@@ -104,7 +104,7 @@ export default function HomeScreen() {
     const unsubscribe = subscribeToLocalChanges(() => {
       setBackgroundRefreshing(true);
       void fetchFeedPage(deviceLocation ?? undefined, null, 20, radiusMeters).then((next) => {
-        if (active) { setPosts(next.posts); setNextCursor(next.nextCursor); }
+        if (active) { setPosts(next.posts); setNextCursor(next.nextCursor); if (next.error) setToast(next.error.message || "We couldn't refresh your feed."); }
       }).finally(() => { if (active) setBackgroundRefreshing(false); });
     });
     return () => { active = false; unsubscribe(); };
@@ -216,8 +216,8 @@ export default function HomeScreen() {
 
   const retryOutbox = async () => { if (!user || outboxStatus === "syncing") return; setOutboxStatus("syncing"); try { const sync = await syncPendingPostDrafts(user.id); const remaining = sync.remaining ?? (await listPendingPostDrafts(user.id)).length; setPendingDrafts(remaining); setOutboxStatus(remaining > 0 ? "queued" : "idle"); } catch { setOutboxStatus("error"); } };
   const visiblePosts = useMemo(() => personalizeFeed(posts, activeTab, feedback).filter((post) => `${post.title ?? ""} ${post.body} ${post.author}`.toLowerCase().includes(query.toLowerCase())), [posts, activeTab, feedback, query]);
-  const refresh = async () => { setRefreshing(true); try { const settings = await loadSettings(); const location = await getLastKnownOrCurrentLocation(settings.area); const liveLocation = location.status === "granted" ? location.location : undefined; if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); } else setArea(settings.area || "your area"); const nextRadius = discoveryRadiusToMeters(settings.radius); setRadiusMeters(nextRadius); const page = await fetchFeedPage(liveLocation, null, 20, nextRadius); setPosts(page.posts); setNextCursor(page.nextCursor); } catch { setToast("Couldn't refresh your feed. Please try again."); } finally { setRefreshing(false); } };
-  const loadMore = async () => { if (!nextCursor || loadingMore) return; setLoadingMore(true); try { const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor, 20, radiusMeters); setPosts((current) => { const seen = new Set(current.map((post) => post.id)); return [...current, ...page.posts.filter((post) => !seen.has(post.id))]; }); setNextCursor(page.nextCursor); } finally { setLoadingMore(false); } };
+  const refresh = async () => { setRefreshing(true); try { const settings = await loadSettings(); const location = await getLastKnownOrCurrentLocation(settings.area); const liveLocation = location.status === "granted" ? location.location : undefined; if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); } else setArea(settings.area || "your area"); const nextRadius = discoveryRadiusToMeters(settings.radius); setRadiusMeters(nextRadius); const page = await fetchFeedPage(liveLocation, null, 20, nextRadius); setPosts(page.posts); setNextCursor(page.nextCursor); if (page.error) setToast(page.error.message || "Couldn't refresh your feed."); } catch { setToast("Couldn't refresh your feed. Please try again."); } finally { setRefreshing(false); } };
+  const loadMore = async () => { if (!nextCursor || loadingMore) return; setLoadingMore(true); try { const page = await fetchFeedPage(deviceLocation ?? undefined, nextCursor, 20, radiusMeters); setPosts((current) => { const seen = new Set(current.map((post) => post.id)); return [...current, ...page.posts.filter((post) => !seen.has(post.id))]; }); setNextCursor(page.nextCursor); if (page.error) setToast(page.error.message || "Couldn't load more posts."); } finally { setLoadingMore(false); } };
   const presentation = getFetchPresentation({ isInitialLoading: initialLoading, isRefreshing: refreshing || backgroundRefreshing, hasData: posts.length > 0 });
 
   return <ScreenContainer containerClassName="bg-background">
