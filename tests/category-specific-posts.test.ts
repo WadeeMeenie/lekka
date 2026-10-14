@@ -24,6 +24,15 @@ describe("category-specific post experience", () => {
     expect(feed).toContain("marketplaceStatus === \"sold\"");
   });
 
+  it("uses privacy-aware profile lookup and protects private profiles", () => {
+    const migration = read("supabase/migrations/20261014205414_secure_feed_profile_avatar_access.sql");
+    const repository = read("lib/supabase-repository.ts");
+    expect(migration).toContain("drop policy if exists profiles_public_read");
+    expect(migration).toContain("create policy profiles_visible_to_authorized_viewers");
+    expect(migration).toContain("create or replace function public.get_feed_profiles(p_profile_ids uuid[])");
+    expect(repository).toContain('supabase.rpc("get_feed_profiles", { p_profile_ids: authorIds })');
+  });
+
   it("returns author identifiers and avatar paths from nearby feed RPCs", () => {
     const migration = read("supabase/migrations/20261014205010_fix_nearby_feed_profile_avatars.sql");
     const repository = read("lib/supabase-repository.ts");
