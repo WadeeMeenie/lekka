@@ -35,7 +35,8 @@ export const seededRadar: RadarItem[] = [
 export function rankPosts(posts: LocalPost[], tab: FeedTab): LocalPost[] { const scored = posts.map((post) => { const distanceScore = post.distance.includes("0.7") ? 4 : post.distance.includes("1.2") ? 3 : 2; const trustScore = post.trusted ? 2 : 0; const tabScore = tab === "Nearby" ? distanceScore : tab === "Following" && post.author.includes("Neighbourhood") ? 4 : tab === "Trending" ? post.likes / 10 : post.kind === "alert" ? 3 : 1; return { post, score: distanceScore + trustScore + tabScore }; }); return scored.sort((a, b) => b.score - a.score).map(({ post }) => post); }
 export type FeedPreference = "interested" | "not_interested";
 export function personalizeFeed(posts: LocalPost[], tab: FeedTab, feedback: Record<string, FeedPreference>, currentUserPostIds: ReadonlySet<string> = new Set()): LocalPost[] { return rankPosts(posts.filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested"), tab).sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested")); }
-const POSTS_KEY = "local-radar/posts/v2";
+const POSTS_KEY = "local-radar/posts/v3";
+const PREVIOUS_POSTS_KEY = "local-radar/posts/v2";
 const LEGACY_POSTS_KEY = "local-radar/posts/v1";
 const SETTINGS_KEY = "local-radar/settings/v2";
 
@@ -47,9 +48,10 @@ export async function loadPosts(userId?: string | null): Promise<LocalPost[]> {
   const key = postsKey(userId);
   const value = await AsyncStorage.getItem(key);
   if (value) return JSON.parse(value);
-  if (!userId) return [];
-  // Never carry an unscoped feed cache across authenticated identities.
-  await AsyncStorage.removeItem(LEGACY_POSTS_KEY);
+  // Clear the old test-era feed cache so deleted posts cannot reappear after a failed refresh.
+  const staleKeys = [PREVIOUS_POSTS_KEY + "/" + (userId ?? "guest"), LEGACY_POSTS_KEY];
+  if (userId) staleKeys.push(PREVIOUS_POSTS_KEY + "/guest");
+  await Promise.all(staleKeys.map((staleKey) => AsyncStorage.removeItem(staleKey)));
   return [];
 }
 
