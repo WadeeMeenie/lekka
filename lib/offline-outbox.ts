@@ -14,6 +14,9 @@ export type PendingPostDraft = {
   visibility: "nearby" | "public";
   location?: DeviceLocation;
   businessId?: string;
+  details?: Record<string, unknown>;
+  marketplacePriceCents?: number;
+  marketplaceCondition?: "new" | "like_new" | "good" | "fair" | "for_parts";
   createdAt: number;
   mediaUri?: string;
   mediaType?: string;
