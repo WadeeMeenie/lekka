@@ -24,7 +24,7 @@ function formatDistanceLabel(value?: string | null) {
   const kilometres = meters / 1000;
   return `${kilometres >= 10 ? Math.round(kilometres) : Number(kilometres.toFixed(1))} km`;
 }
-const PROFILE_SELECT = "profiles(display_name, profile_image_path)";
+const PROFILE_SELECT = "profiles(display_name)";
 
 async function hydratePostData(posts: LocalPost[]): Promise<LocalPost[]> {
   if (!supabase || posts.length === 0) return posts;
@@ -32,7 +32,7 @@ async function hydratePostData(posts: LocalPost[]): Promise<LocalPost[]> {
   const authorIds = posts.map((post) => post.authorId).filter((id): id is string => Boolean(id));
   const [mediaResult, profileResult, listingResult] = await Promise.all([
     supabase.from("post_media").select("post_id, storage_path, media_type, sort_order").in("post_id", ids).order("sort_order", { ascending: true }),
-    authorIds.length ? supabase.from("profiles").select("id, display_name, profile_image_path").in("id", authorIds) : Promise.resolve({ data: [], error: null }),
+    authorIds.length ? supabase.rpc("get_feed_profiles", { p_profile_ids: authorIds }) : Promise.resolve({ data: [], error: null }),
     supabase.from("posts").select("id, details, marketplace_price_cents, marketplace_condition, marketplace_status").in("id", ids),
   ]);
   const firstMedia = new Map<string, string>();
