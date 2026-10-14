@@ -23,6 +23,10 @@ export type SocialPost = {
   trust_score: number;
   created_at: string;
   approximate_location: unknown;
+  details?: Record<string, unknown>;
+  marketplace_price_cents?: number | null;
+  marketplace_condition?: "new" | "like_new" | "good" | "fair" | "for_parts" | null;
+  marketplace_status?: "available" | "reserved" | "sold";
   profiles: SocialProfile | null;
   post_media: Array<{ id: string; storage_path: string; media_type: "image" | "video"; thumbnail_path: string | null; width: number | null; height: number | null; sort_order: number }>;
 };
@@ -44,7 +48,7 @@ export async function getPostDetail(postId: string) {
   if (!supabase) return unavailable<SocialPost | null>(null);
   const { data, error } = await supabase
     .from("posts")
-    .select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)")
+    .select("id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, details, marketplace_price_cents, marketplace_condition, marketplace_status, profiles(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order)")
     .eq("id", postId)
     .maybeSingle();
   if (error || !data) return { data: data as SocialPost | null, error };
