@@ -1,0 +1,1784 @@
+{
+  "comparison": "CRLF normalized to LF and outer whitespace trimmed; exact SQL-text equality only, not semantic equivalence.",
+  "localCount": 84,
+  "liveCount": 88,
+  "duplicatePrefixes": [
+    [
+      "202608230001",
+      [
+        "202608230001_atomic_social_interactions.sql",
+        "202608230001_facebook_style_reactions.sql",
+        "202608230001_social_community_messaging_controls.sql",
+        "202608230001_yoco_test_payments.sql"
+      ]
+    ],
+    [
+      "202608230002",
+      [
+        "202608230002_lockdown_yoco_rpc_grants.sql",
+        "202608230002_remove_ambiguous_pinned_profile_relation.sql",
+        "202608230002_social_messaging_community_following.sql"
+      ]
+    ],
+    [
+      "202608230003",
+      [
+        "202608230003_direct_message_request_rls.sql",
+        "202608230003_social_hardening.sql"
+      ]
+    ],
+    [
+      "202608230005",
+      [
+        "202608230005_private_profiles.sql",
+        "202608230005_profile_privacy.sql"
+      ]
+    ],
+    [
+      "202608230006",
+      [
+        "202608230006_fix_community_rls_recursion.sql",
+        "202608230006_stabilize_business_social_security_and_indexes.sql"
+      ]
+    ],
+    [
+      "202608230007",
+      [
+        "202608230007_business_verification_foundation.sql",
+        "202608230007_delete_own_posts.sql",
+        "202608230007_enforce_message_request_realtime_integrity.sql"
+      ]
+    ],
+    [
+      "202608230008",
+      [
+        "202608230008_business_verification_indexes.sql",
+        "202608230008_lock_down_public_security_definer_helpers.sql"
+      ]
+    ],
+    [
+      "202608240001",
+      [
+        "202608240001_allow_yoco_refunded_payment_status.sql",
+        "202608240001_yoco_payment_status_rpc_fix.sql"
+      ]
+    ],
+    [
+      "202608270001",
+      [
+        "202608270001_enable_post_media_realtime.sql",
+        "202608270001_fix_community_post_area.sql"
+      ]
+    ]
+  ],
+  "local": [
+    {
+      "file": "202608200001_local_radar_core.sql",
+      "version": "202608200001",
+      "name": "local_radar_core",
+      "exactContentVersions": [
+        "20260820221720"
+      ],
+      "sameNameVersions": [
+        "20260820221720"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608200002_location_first_engine.sql",
+      "version": "202608200002",
+      "name": "location_first_engine",
+      "exactContentVersions": [
+        "20260820222122"
+      ],
+      "sameNameVersions": [
+        "20260820222122"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608200003_local_entities.sql",
+      "version": "202608200003",
+      "name": "local_entities",
+      "exactContentVersions": [
+        "20260820222441"
+      ],
+      "sameNameVersions": [
+        "20260820222441"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608200004_restrict_spatial_ref_sys.sql",
+      "version": "202608200004",
+      "name": "restrict_spatial_ref_sys",
+      "exactContentVersions": [
+        "20260820224758"
+      ],
+      "sameNameVersions": [
+        "20260820224758"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608200005_spatial_ref_sys_rls_guard.sql",
+      "version": "202608200005",
+      "name": "spatial_ref_sys_rls_guard",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608210001_social_core.sql",
+      "version": "202608210001",
+      "name": "social_core",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608210002_social_core_lockdown.sql",
+      "version": "202608210002",
+      "name": "social_core_lockdown",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260821052722"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608210003_feed_cursor_pagination.sql",
+      "version": "202608210003",
+      "name": "feed_cursor_pagination",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260821054912"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608210004_moderation_blocks.sql",
+      "version": "202608210004",
+      "name": "moderation_blocks",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260821054710"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608210005_beta_feedback.sql",
+      "version": "202608210005",
+      "name": "beta_feedback",
+      "exactContentVersions": [
+        "20260821144153"
+      ],
+      "sameNameVersions": [
+        "20260821144153"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608210006_smart_accounts.sql",
+      "version": "202608210006",
+      "name": "smart_accounts",
+      "exactContentVersions": [
+        "20260821145423"
+      ],
+      "sameNameVersions": [
+        "20260821145423"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608210007_business_post_authorization.sql",
+      "version": "202608210007",
+      "name": "business_post_authorization",
+      "exactContentVersions": [
+        "20260821150308"
+      ],
+      "sameNameVersions": [
+        "20260821150308"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608210008_business_membership_roles.sql",
+      "version": "202608210008",
+      "name": "business_membership_roles",
+      "exactContentVersions": [
+        "20260821150744"
+      ],
+      "sameNameVersions": [
+        "20260821150744"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608210009_business_invitations.sql",
+      "version": "202608210009",
+      "name": "business_invitations",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260821151326"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608210010_business_invitation_policy_scope.sql",
+      "version": "202608210010",
+      "name": "business_invitation_policy_scope",
+      "exactContentVersions": [
+        "20260821151619"
+      ],
+      "sameNameVersions": [
+        "20260821151619"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608220001_profile_insert_policy.sql",
+      "version": "202608220001",
+      "name": "profile_insert_policy",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608220003_community_moderation_policies.sql",
+      "version": "202608220003",
+      "name": "community_moderation_policies",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260822193111"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608220004_community_moderation_content.sql",
+      "version": "202608220004",
+      "name": "community_moderation_content",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260822193751"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608220005_community_owner_read.sql",
+      "version": "202608220005",
+      "name": "community_owner_read",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260822193924"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608220006_community_reports_branding.sql",
+      "version": "202608220006",
+      "name": "community_reports_branding",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260822194809"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608220007_feed_preferences_buddies.sql",
+      "version": "202608220007",
+      "name": "feed_preferences_buddies",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260822201112"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230001_atomic_social_interactions.sql",
+      "version": "202608230001",
+      "name": "atomic_social_interactions",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608230001_facebook_style_reactions.sql",
+      "version": "202608230001",
+      "name": "facebook_style_reactions",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260823164337"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230001_social_community_messaging_controls.sql",
+      "version": "202608230001",
+      "name": "social_community_messaging_controls",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260823202113"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230001_yoco_test_payments.sql",
+      "version": "202608230001",
+      "name": "yoco_test_payments",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608230002_lockdown_yoco_rpc_grants.sql",
+      "version": "202608230002",
+      "name": "lockdown_yoco_rpc_grants",
+      "exactContentVersions": [
+        "20260823210122"
+      ],
+      "sameNameVersions": [
+        "20260823210122"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608230002_remove_ambiguous_pinned_profile_relation.sql",
+      "version": "202608230002",
+      "name": "remove_ambiguous_pinned_profile_relation",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260823202142"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230002_social_messaging_community_following.sql",
+      "version": "202608230002",
+      "name": "social_messaging_community_following",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260823170732"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230003_direct_message_request_rls.sql",
+      "version": "202608230003",
+      "name": "direct_message_request_rls",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260823202355"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230003_social_hardening.sql",
+      "version": "202608230003",
+      "name": "social_hardening",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260823171037"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230004_community_pin_controls.sql",
+      "version": "202608230004",
+      "name": "community_pin_controls",
+      "exactContentVersions": [
+        "20260823202544"
+      ],
+      "sameNameVersions": [
+        "20260823202544"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608230005_private_profiles.sql",
+      "version": "202608230005",
+      "name": "private_profiles",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608230005_profile_privacy.sql",
+      "version": "202608230005",
+      "name": "profile_privacy",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608230006_fix_community_rls_recursion.sql",
+      "version": "202608230006",
+      "name": "fix_community_rls_recursion",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260906064359"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230006_stabilize_business_social_security_and_indexes.sql",
+      "version": "202608230006",
+      "name": "stabilize_business_social_security_and_indexes",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608230007_business_verification_foundation.sql",
+      "version": "202608230007",
+      "name": "business_verification_foundation",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260823205303"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608230007_delete_own_posts.sql",
+      "version": "202608230007",
+      "name": "delete_own_posts",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608230007_enforce_message_request_realtime_integrity.sql",
+      "version": "202608230007",
+      "name": "enforce_message_request_realtime_integrity",
+      "exactContentVersions": [
+        "20260823203254"
+      ],
+      "sameNameVersions": [
+        "20260823203254"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608230008_business_verification_indexes.sql",
+      "version": "202608230008",
+      "name": "business_verification_indexes",
+      "exactContentVersions": [
+        "20260823205355"
+      ],
+      "sameNameVersions": [
+        "20260823205355"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608230008_lock_down_public_security_definer_helpers.sql",
+      "version": "202608230008",
+      "name": "lock_down_public_security_definer_helpers",
+      "exactContentVersions": [
+        "20260823203558"
+      ],
+      "sameNameVersions": [
+        "20260823203558"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608230021_yoco_webhook_subscriptions.sql",
+      "version": "202608230021",
+      "name": "yoco_webhook_subscriptions",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202608240001_allow_yoco_refunded_payment_status.sql",
+      "version": "202608240001",
+      "name": "allow_yoco_refunded_payment_status",
+      "exactContentVersions": [
+        "20260824113314"
+      ],
+      "sameNameVersions": [
+        "20260824113314"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608240001_yoco_payment_status_rpc_fix.sql",
+      "version": "202608240001",
+      "name": "yoco_payment_status_rpc_fix",
+      "exactContentVersions": [
+        "20260824113738"
+      ],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "202608270001_enable_post_media_realtime.sql",
+      "version": "202608270001",
+      "name": "enable_post_media_realtime",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260827155031"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "202608270001_fix_community_post_area.sql",
+      "version": "202608270001",
+      "name": "fix_community_post_area",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "202609030001_unified_discovery_engine.sql",
+      "version": "202609030001",
+      "name": "unified_discovery_engine",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260903212539"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260903220852_add_delete_own_post_function.sql",
+      "version": "20260903220852",
+      "name": "add_delete_own_post_function",
+      "exactContentVersions": [
+        "20260903220852"
+      ],
+      "sameNameVersions": [
+        "20260903220852"
+      ],
+      "sameVersion": [
+        "add_delete_own_post_function"
+      ],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260904052759_allow_authenticated_users_to_delete_own_posts.sql",
+      "version": "20260904052759",
+      "name": "allow_authenticated_users_to_delete_own_posts",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260904052759"
+      ],
+      "sameVersion": [
+        "allow_authenticated_users_to_delete_own_posts"
+      ],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905132923_community_security_hardening.sql",
+      "version": "20260905132923",
+      "name": "community_security_hardening",
+      "exactContentVersions": [
+        "20260905132923"
+      ],
+      "sameNameVersions": [
+        "20260905132923"
+      ],
+      "sameVersion": [
+        "community_security_hardening"
+      ],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260905150000_media_access_hardening.sql",
+      "version": "20260905150000",
+      "name": "media_access_hardening",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905134606"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905160000_media_lifecycle_cleanup.sql",
+      "version": "20260905160000",
+      "name": "media_lifecycle_cleanup",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "20260905171500_secure_media_cleanup_invocation.sql",
+      "version": "20260905171500",
+      "name": "secure_media_cleanup_invocation",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905150949"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905172000_fix_media_cleanup_cron_routing.sql",
+      "version": "20260905172000",
+      "name": "fix_media_cleanup_cron_routing",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "20260905173000_lock_down_client_rpc_execute_privileges.sql",
+      "version": "20260905173000",
+      "name": "lock_down_client_rpc_execute_privileges",
+      "exactContentVersions": [
+        "20260905152832"
+      ],
+      "sameNameVersions": [
+        "20260905152832"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260905180000_business_logo_media_lifecycle.sql",
+      "version": "20260905180000",
+      "name": "business_logo_media_lifecycle",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905160929"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905181000_harden_direct_message_updates.sql",
+      "version": "20260905181000",
+      "name": "harden_direct_message_updates",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905171750"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905182000_protect_profile_role.sql",
+      "version": "20260905182000",
+      "name": "protect_profile_role",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905171952",
+        "20260905172002"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905183000_harden_business_security_definers.sql",
+      "version": "20260905183000",
+      "name": "harden_business_security_definers",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905174405"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905190000_cross_account_business_community_storage_hardening.sql",
+      "version": "20260905190000",
+      "name": "cross_account_business_community_storage_hardening",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905180404"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905200000_tighten_sensitive_table_grants.sql",
+      "version": "20260905200000",
+      "name": "tighten_sensitive_table_grants",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905182953"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905210000_location_scoped_post_reads.sql",
+      "version": "20260905210000",
+      "name": "location_scoped_post_reads",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905200453"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260905211000_nearby_post_detail_rpc.sql",
+      "version": "20260905211000",
+      "name": "nearby_post_detail_rpc",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905200508"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260906001500_nearby_media_authorization.sql",
+      "version": "20260906001500",
+      "name": "nearby_media_authorization",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260905221512"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260906070000_revoke_public_postgis_extent_execute.sql",
+      "version": "20260906070000",
+      "name": "revoke_public_postgis_extent_execute",
+      "exactContentVersions": [
+        "20260906064243"
+      ],
+      "sameNameVersions": [
+        "20260906064243"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260906071000_fix_community_rls_recursion.sql",
+      "version": "20260906071000",
+      "name": "fix_community_rls_recursion",
+      "exactContentVersions": [
+        "20260906064359"
+      ],
+      "sameNameVersions": [
+        "20260906064359"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260921230000_production_hardening.sql",
+      "version": "20260921230000",
+      "name": "production_hardening",
+      "exactContentVersions": [
+        "20260921211319"
+      ],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260921232000_profile_rpc_fields.sql",
+      "version": "20260921232000",
+      "name": "profile_rpc_fields",
+      "exactContentVersions": [
+        "20260921211338"
+      ],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260921234000_platform_admin_self_scope.sql",
+      "version": "20260921234000",
+      "name": "platform_admin_self_scope",
+      "exactContentVersions": [
+        "20260921211452"
+      ],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260921235000_lock_down_radar_rpc.sql",
+      "version": "20260921235000",
+      "name": "lock_down_radar_rpc",
+      "exactContentVersions": [
+        "20260921211556"
+      ],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260921241000_platform_admin_compatibility.sql",
+      "version": "20260921241000",
+      "name": "platform_admin_compatibility",
+      "exactContentVersions": [
+        "20260921212939"
+      ],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260924073018_harden_security_definer_helper_execute.sql",
+      "version": "20260924073018",
+      "name": "harden_security_definer_helper_execute",
+      "exactContentVersions": [
+        "20260924073018"
+      ],
+      "sameNameVersions": [
+        "20260924073018"
+      ],
+      "sameVersion": [
+        "harden_security_definer_helper_execute"
+      ],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260924073115_bound_discovery_radius_and_result_limit.sql",
+      "version": "20260924073115",
+      "name": "bound_discovery_radius_and_result_limit",
+      "exactContentVersions": [
+        "20260924073115"
+      ],
+      "sameNameVersions": [
+        "20260924073115"
+      ],
+      "sameVersion": [
+        "bound_discovery_radius_and_result_limit"
+      ],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260924110000_harden_yoco_payment_transitions.sql",
+      "version": "20260924110000",
+      "name": "harden_yoco_payment_transitions",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20260924050859"
+      ],
+      "sameVersion": [],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20260924200000_revoke_excessive_client_table_privileges.sql",
+      "version": "20260924200000",
+      "name": "revoke_excessive_client_table_privileges",
+      "exactContentVersions": [
+        "20260924044806"
+      ],
+      "sameNameVersions": [
+        "20260924044806"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20260924200500_harden_public_default_client_privileges.sql",
+      "version": "20260924200500",
+      "name": "harden_public_default_client_privileges",
+      "exactContentVersions": [
+        "20260924044945"
+      ],
+      "sameNameVersions": [
+        "20260924044945"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20261011082007_restrict_postgis_metadata_client_access.sql",
+      "version": "20261011082007",
+      "name": "restrict_postgis_metadata_client_access",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20261011082007"
+      ],
+      "sameVersion": [
+        "restrict_postgis_metadata_client_access"
+      ],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20261011083000_verify_postgis_metadata_client_access.sql",
+      "version": "20261011083000",
+      "name": "verify_postgis_metadata_client_access",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "NO_EXACT_NAME_VERSION_OR_CONTENT_MATCH"
+    },
+    {
+      "file": "20261011114123_index_posts_community_pinned_by_20261011.sql",
+      "version": "20261011114123",
+      "name": "index_posts_community_pinned_by_20261011",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20261011114123"
+      ],
+      "sameVersion": [
+        "index_posts_community_pinned_by_20261011"
+      ],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20261011114344_toggle_block_atomic_20261011.sql",
+      "version": "20261011114344",
+      "name": "toggle_block_atomic_20261011",
+      "exactContentVersions": [],
+      "sameNameVersions": [
+        "20261011114344"
+      ],
+      "sameVersion": [
+        "toggle_block_atomic_20261011"
+      ],
+      "status": "NAME_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20261011114429_toggle_post_like_atomic.sql",
+      "version": "20261011114429",
+      "name": "toggle_post_like_atomic",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [
+        "toggle_post_like_atomic_20261011"
+      ],
+      "status": "VERSION_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20261011192054_verify_yoco_payment_amount_currency.sql",
+      "version": "20261011192054",
+      "name": "verify_yoco_payment_amount_currency",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [
+        "verify_yoco_payment_amount_currency_20261011"
+      ],
+      "status": "VERSION_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20261011192351_lock_down_yoco_order_creation.sql",
+      "version": "20261011192351",
+      "name": "lock_down_yoco_order_creation",
+      "exactContentVersions": [],
+      "sameNameVersions": [],
+      "sameVersion": [
+        "lock_down_yoco_order_creation_20261011"
+      ],
+      "status": "VERSION_ONLY_CONTENT_DIFFERS"
+    },
+    {
+      "file": "20261011210000_restore_policy_helpers_and_profile_avatar.sql",
+      "version": "20261011210000",
+      "name": "restore_policy_helpers_and_profile_avatar",
+      "exactContentVersions": [
+        "20261011213242"
+      ],
+      "sameNameVersions": [],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    },
+    {
+      "file": "20261011211500_save_personal_identity_rpc.sql",
+      "version": "20261011211500",
+      "name": "save_personal_identity_rpc",
+      "exactContentVersions": [
+        "20261011213541"
+      ],
+      "sameNameVersions": [
+        "20261011213541"
+      ],
+      "sameVersion": [],
+      "status": "CONTENT_MATCH"
+    }
+  ],
+  "live": [
+    {
+      "version": "20260820221720",
+      "name": "local_radar_core",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608200001_local_radar_core.sql"
+      ]
+    },
+    {
+      "version": "20260820222122",
+      "name": "location_first_engine",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608200002_location_first_engine.sql"
+      ]
+    },
+    {
+      "version": "20260820222441",
+      "name": "local_entities",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608200003_local_entities.sql"
+      ]
+    },
+    {
+      "version": "20260820224758",
+      "name": "restrict_spatial_ref_sys",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608200004_restrict_spatial_ref_sys.sql"
+      ]
+    },
+    {
+      "version": "20260821052302",
+      "name": "social_core_v1",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260821052722",
+      "name": "social_core_lockdown",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210002_social_core_lockdown.sql"
+      ]
+    },
+    {
+      "version": "20260821054710",
+      "name": "moderation_blocks",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210004_moderation_blocks.sql"
+      ]
+    },
+    {
+      "version": "20260821054912",
+      "name": "feed_cursor_pagination",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210003_feed_cursor_pagination.sql"
+      ]
+    },
+    {
+      "version": "20260821144153",
+      "name": "beta_feedback",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210005_beta_feedback.sql"
+      ]
+    },
+    {
+      "version": "20260821145423",
+      "name": "smart_accounts",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210006_smart_accounts.sql"
+      ]
+    },
+    {
+      "version": "20260821150308",
+      "name": "business_post_authorization",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210007_business_post_authorization.sql"
+      ]
+    },
+    {
+      "version": "20260821150744",
+      "name": "business_membership_roles",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210008_business_membership_roles.sql"
+      ]
+    },
+    {
+      "version": "20260821151326",
+      "name": "business_invitations",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210009_business_invitations.sql"
+      ]
+    },
+    {
+      "version": "20260821151619",
+      "name": "business_invitation_policy_scope",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608210010_business_invitation_policy_scope.sql"
+      ]
+    },
+    {
+      "version": "20260822100755",
+      "name": "add_username_history_and_events",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260822144742",
+      "name": "profile_self_insert_policy",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260822193111",
+      "name": "community_moderation_policies",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608220003_community_moderation_policies.sql"
+      ]
+    },
+    {
+      "version": "20260822193751",
+      "name": "community_moderation_content",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608220004_community_moderation_content.sql"
+      ]
+    },
+    {
+      "version": "20260822193924",
+      "name": "community_owner_read",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608220005_community_owner_read.sql"
+      ]
+    },
+    {
+      "version": "20260822194809",
+      "name": "community_reports_branding",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608220006_community_reports_branding.sql"
+      ]
+    },
+    {
+      "version": "20260822201112",
+      "name": "feed_preferences_buddies",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608220007_feed_preferences_buddies.sql"
+      ]
+    },
+    {
+      "version": "20260823164337",
+      "name": "facebook_style_reactions",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230001_facebook_style_reactions.sql"
+      ]
+    },
+    {
+      "version": "20260823170732",
+      "name": "social_messaging_community_following",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230002_social_messaging_community_following.sql"
+      ]
+    },
+    {
+      "version": "20260823171037",
+      "name": "social_hardening",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230003_social_hardening.sql"
+      ]
+    },
+    {
+      "version": "20260823202113",
+      "name": "social_community_messaging_controls",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230001_social_community_messaging_controls.sql"
+      ]
+    },
+    {
+      "version": "20260823202142",
+      "name": "remove_ambiguous_pinned_profile_relation",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230002_remove_ambiguous_pinned_profile_relation.sql"
+      ]
+    },
+    {
+      "version": "20260823202355",
+      "name": "direct_message_request_rls",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230003_direct_message_request_rls.sql"
+      ]
+    },
+    {
+      "version": "20260823202544",
+      "name": "community_pin_controls",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230004_community_pin_controls.sql"
+      ]
+    },
+    {
+      "version": "20260823203254",
+      "name": "enforce_message_request_realtime_integrity",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230007_enforce_message_request_realtime_integrity.sql"
+      ]
+    },
+    {
+      "version": "20260823203558",
+      "name": "lock_down_public_security_definer_helpers",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230008_lock_down_public_security_definer_helpers.sql"
+      ]
+    },
+    {
+      "version": "20260823205228",
+      "name": "stabilize_business_social_security_and_indexes_v3",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260823205303",
+      "name": "business_verification_foundation",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230007_business_verification_foundation.sql"
+      ]
+    },
+    {
+      "version": "20260823205355",
+      "name": "business_verification_indexes",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230008_business_verification_indexes.sql"
+      ]
+    },
+    {
+      "version": "20260823205835",
+      "name": "add_yoco_test_payment_integration",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260823205846",
+      "name": "add_yoco_webhook_idempotency",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260823210122",
+      "name": "lockdown_yoco_rpc_grants",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230002_lockdown_yoco_rpc_grants.sql"
+      ]
+    },
+    {
+      "version": "20260824113314",
+      "name": "allow_yoco_refunded_payment_status",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608240001_allow_yoco_refunded_payment_status.sql"
+      ]
+    },
+    {
+      "version": "20260824113720",
+      "name": "yoco_payment_status_refunded",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260824113738",
+      "name": "yoco_payment_status_rpc_return_order",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608240001_yoco_payment_status_rpc_fix.sql"
+      ]
+    },
+    {
+      "version": "20260827155031",
+      "name": "enable_post_media_realtime",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608270001_enable_post_media_realtime.sql"
+      ]
+    },
+    {
+      "version": "20260903212539",
+      "name": "unified_discovery_engine",
+      "statementCount": 1,
+      "localCandidates": [
+        "202609030001_unified_discovery_engine.sql"
+      ]
+    },
+    {
+      "version": "20260903220852",
+      "name": "add_delete_own_post_function",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260903220852_add_delete_own_post_function.sql"
+      ]
+    },
+    {
+      "version": "20260904052759",
+      "name": "allow_authenticated_users_to_delete_own_posts",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260904052759_allow_authenticated_users_to_delete_own_posts.sql"
+      ]
+    },
+    {
+      "version": "20260904194027",
+      "name": "cape_aloe_orders",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260905132923",
+      "name": "community_security_hardening",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905132923_community_security_hardening.sql"
+      ]
+    },
+    {
+      "version": "20260905134606",
+      "name": "media_access_hardening",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905150000_media_access_hardening.sql"
+      ]
+    },
+    {
+      "version": "20260905150949",
+      "name": "secure_media_cleanup_invocation",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905171500_secure_media_cleanup_invocation.sql"
+      ]
+    },
+    {
+      "version": "20260905151050",
+      "name": "fix_media_cleanup_cron_schema",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260905151113",
+      "name": "fix_media_cleanup_publishable_routing",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260905152832",
+      "name": "lock_down_client_rpc_execute_privileges",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905173000_lock_down_client_rpc_execute_privileges.sql"
+      ]
+    },
+    {
+      "version": "20260905160929",
+      "name": "business_logo_media_lifecycle",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905180000_business_logo_media_lifecycle.sql"
+      ]
+    },
+    {
+      "version": "20260905171750",
+      "name": "harden_direct_message_updates",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905181000_harden_direct_message_updates.sql"
+      ]
+    },
+    {
+      "version": "20260905171952",
+      "name": "protect_profile_role",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905182000_protect_profile_role.sql"
+      ]
+    },
+    {
+      "version": "20260905172002",
+      "name": "protect_profile_role",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905182000_protect_profile_role.sql"
+      ]
+    },
+    {
+      "version": "20260905174405",
+      "name": "harden_business_security_definers",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905183000_harden_business_security_definers.sql"
+      ]
+    },
+    {
+      "version": "20260905180404",
+      "name": "cross_account_business_community_storage_hardening",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905190000_cross_account_business_community_storage_hardening.sql"
+      ]
+    },
+    {
+      "version": "20260905182953",
+      "name": "tighten_sensitive_table_grants",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905200000_tighten_sensitive_table_grants.sql"
+      ]
+    },
+    {
+      "version": "20260905200453",
+      "name": "location_scoped_post_reads",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905210000_location_scoped_post_reads.sql"
+      ]
+    },
+    {
+      "version": "20260905200508",
+      "name": "nearby_post_detail_rpc",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260905211000_nearby_post_detail_rpc.sql"
+      ]
+    },
+    {
+      "version": "20260905221512",
+      "name": "nearby_media_authorization",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260906001500_nearby_media_authorization.sql"
+      ]
+    },
+    {
+      "version": "20260905221552",
+      "name": "lock_down_post_media_metadata",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260906064243",
+      "name": "revoke_public_postgis_extent_execute",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260906070000_revoke_public_postgis_extent_execute.sql"
+      ]
+    },
+    {
+      "version": "20260906064359",
+      "name": "fix_community_rls_recursion",
+      "statementCount": 1,
+      "localCandidates": [
+        "202608230006_fix_community_rls_recursion.sql",
+        "20260906071000_fix_community_rls_recursion.sql"
+      ]
+    },
+    {
+      "version": "20260906090945",
+      "name": "fix_handle_new_user_signup_trigger",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260921211319",
+      "name": "production_hardening_20260921",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260921230000_production_hardening.sql"
+      ]
+    },
+    {
+      "version": "20260921211338",
+      "name": "profile_rpc_fields_20260921",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260921232000_profile_rpc_fields.sql"
+      ]
+    },
+    {
+      "version": "20260921211452",
+      "name": "platform_admin_self_scope_20260921",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260921234000_platform_admin_self_scope.sql"
+      ]
+    },
+    {
+      "version": "20260921211538",
+      "name": "lock_down_radar_rpc_20260921",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260921211556",
+      "name": "lock_down_radar_rpc_public_20260921",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260921235000_lock_down_radar_rpc.sql"
+      ]
+    },
+    {
+      "version": "20260921212939",
+      "name": "platform_admin_compatibility_20260921",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260921241000_platform_admin_compatibility.sql"
+      ]
+    },
+    {
+      "version": "20260924044806",
+      "name": "revoke_excessive_client_table_privileges",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260924200000_revoke_excessive_client_table_privileges.sql"
+      ]
+    },
+    {
+      "version": "20260924044945",
+      "name": "harden_public_default_client_privileges",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260924200500_harden_public_default_client_privileges.sql"
+      ]
+    },
+    {
+      "version": "20260924050507",
+      "name": "lock_down_postgis_admin_functions_20260924b",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20260924050859",
+      "name": "harden_yoco_payment_transitions",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260924110000_harden_yoco_payment_transitions.sql"
+      ]
+    },
+    {
+      "version": "20260924073018",
+      "name": "harden_security_definer_helper_execute",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260924073018_harden_security_definer_helper_execute.sql"
+      ]
+    },
+    {
+      "version": "20260924073115",
+      "name": "bound_discovery_radius_and_result_limit",
+      "statementCount": 1,
+      "localCandidates": [
+        "20260924073115_bound_discovery_radius_and_result_limit.sql"
+      ]
+    },
+    {
+      "version": "20261011082007",
+      "name": "restrict_postgis_metadata_client_access",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011082007_restrict_postgis_metadata_client_access.sql"
+      ]
+    },
+    {
+      "version": "20261011114123",
+      "name": "index_posts_community_pinned_by_20261011",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011114123_index_posts_community_pinned_by_20261011.sql"
+      ]
+    },
+    {
+      "version": "20261011114344",
+      "name": "toggle_block_atomic_20261011",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011114344_toggle_block_atomic_20261011.sql"
+      ]
+    },
+    {
+      "version": "20261011114429",
+      "name": "toggle_post_like_atomic_20261011",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011114429_toggle_post_like_atomic.sql"
+      ]
+    },
+    {
+      "version": "20261011192054",
+      "name": "verify_yoco_payment_amount_currency_20261011",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011192054_verify_yoco_payment_amount_currency.sql"
+      ]
+    },
+    {
+      "version": "20261011192351",
+      "name": "lock_down_yoco_order_creation_20261011",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011192351_lock_down_yoco_order_creation.sql"
+      ]
+    },
+    {
+      "version": "20261011192757",
+      "name": "fix_yoco_rpc_coalesce_20261011",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20261011195846",
+      "name": "restrict_postgis_metadata_rpc_and_table_writes",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20261011203402",
+      "name": "revoke_public_st_estimatedextent_execute_20261011",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20261011203434",
+      "name": "revoke_all_client_st_estimatedextent_privileges_20261011",
+      "statementCount": 1,
+      "localCandidates": []
+    },
+    {
+      "version": "20261011213242",
+      "name": "restore_policy_helpers_profile_avatar_community_rpc",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011210000_restore_policy_helpers_and_profile_avatar.sql"
+      ]
+    },
+    {
+      "version": "20261011213541",
+      "name": "save_personal_identity_rpc",
+      "statementCount": 1,
+      "localCandidates": [
+        "20261011211500_save_personal_identity_rpc.sql"
+      ]
+    }
+  ],
+  "unmappedLive": [
+    {
+      "version": "20260821052302",
+      "name": "social_core_v1"
+    },
+    {
+      "version": "20260822100755",
+      "name": "add_username_history_and_events"
+    },
+    {
+      "version": "20260822144742",
+      "name": "profile_self_insert_policy"
+    },
+    {
+      "version": "20260823205228",
+      "name": "stabilize_business_social_security_and_indexes_v3"
+    },
+    {
+      "version": "20260823205835",
+      "name": "add_yoco_test_payment_integration"
+    },
+    {
+      "version": "20260823205846",
+      "name": "add_yoco_webhook_idempotency"
+    },
+    {
+      "version": "20260824113720",
+      "name": "yoco_payment_status_refunded"
+    },
+    {
+      "version": "20260904194027",
+      "name": "cape_aloe_orders"
+    },
+    {
+      "version": "20260905151050",
+      "name": "fix_media_cleanup_cron_schema"
+    },
+    {
+      "version": "20260905151113",
+      "name": "fix_media_cleanup_publishable_routing"
+    },
+    {
+      "version": "20260905221552",
+      "name": "lock_down_post_media_metadata"
+    },
+    {
+      "version": "20260906090945",
+      "name": "fix_handle_new_user_signup_trigger"
+    },
+    {
+      "version": "20260921211538",
+      "name": "lock_down_radar_rpc_20260921"
+    },
+    {
+      "version": "20260924050507",
+      "name": "lock_down_postgis_admin_functions_20260924b"
+    },
+    {
+      "version": "20261011192757",
+      "name": "fix_yoco_rpc_coalesce_20261011"
+    },
+    {
+      "version": "20261011195846",
+      "name": "restrict_postgis_metadata_rpc_and_table_writes"
+    },
+    {
+      "version": "20261011203402",
+      "name": "revoke_public_st_estimatedextent_execute_20261011"
+    },
+    {
+      "version": "20261011203434",
+      "name": "revoke_all_client_st_estimatedextent_privileges_20261011"
+    }
+  ]
+}

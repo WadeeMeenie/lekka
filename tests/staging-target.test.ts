@@ -4,6 +4,23 @@ import { assertStagingManifest, assertStagingTarget, PRODUCTION_PROJECT_REF, sta
 const ref = "abcdefghijklmnopqrst";
 const url = `https://${ref}.supabase.co`;
 describe("staging isolation", () => {
+  it("rejects invalid cleanup targets even when the manifest matches", () => {
+    expect(() => assertStagingManifest({ projectRef: "" }, { projectRef: "",
+      runId: "lekka-test-20261014-abc", accounts: [] })).toThrow();
+  });
+  it("rejects case variants of the same cleanup UUID", () => {
+    expect(() => assertStagingManifest({ projectRef: ref }, { projectRef: ref,
+      runId: "lekka-test-20261014-abc", accounts: [
+        {label: "lekka-test-owner", userId: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"},
+        {label: "lekka-test-member-a", userId: "AAAAAAAA-AAAA-4AAA-8AAA-AAAAAAAAAAAA"},
+      ] })).toThrow();
+  });
+  it("rejects a staging reference without explicit frontend staging mode", async () => {
+    vi.stubEnv("EXPO_PUBLIC_APP_ENV", "");
+    vi.stubEnv("EXPO_PUBLIC_STAGING_PROJECT_REF", ref);
+    vi.stubEnv("EXPO_PUBLIC_SUPABASE_URL", `https://${PRODUCTION_PROJECT_REF}.supabase.co`);
+    await expect(import("../lib/supabase")).rejects.toThrow(/staging mode/);
+  });
   afterEach(() => { vi.unstubAllEnvs(); vi.resetModules(); });
   it("refuses a frontend staging build configured for production", async () => {
     vi.stubEnv("EXPO_PUBLIC_APP_ENV", "staging");

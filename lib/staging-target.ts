@@ -35,6 +35,7 @@ export function assertStagingManifest(
   target: { projectRef: string },
   manifest: { projectRef: string; runId: string; accounts: { label: string; userId: string }[] },
 ) {
+  assertStagingTarget(`https://${target.projectRef}.supabase.co`, target.projectRef);
   if (target.projectRef === PRODUCTION_PROJECT_REF || manifest.projectRef !== target.projectRef
       || !/^lekka-test-[a-z0-9-]{8,80}$/.test(manifest.runId)) {
     throw new Error("Test manifest does not belong to this staging run.");
@@ -44,10 +45,10 @@ export function assertStagingManifest(
   for (const account of manifest.accounts) {
     if (!/^lekka-test-(owner|member-a|member-b|outsider|admin)$/.test(account.label)
         || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(account.userId)
-        || labels.has(account.label) || ids.has(account.userId)) {
+        || labels.has(account.label) || ids.has(account.userId.toLowerCase())) {
       throw new Error("Invalid or duplicate disposable account in test manifest.");
     }
     labels.add(account.label);
-    ids.add(account.userId);
+    ids.add(account.userId.toLowerCase());
   }
 }

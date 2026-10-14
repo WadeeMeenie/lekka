@@ -10,6 +10,9 @@ const supabaseUrl = rawSupabaseUrl.trim().replace(/^['"]|['"]$/g, "").replace(/\
 const supabaseKey = (process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim().replace(/^['"]|['"]$/g, "");
 const authStorage = Platform.OS === "web" ? undefined : AsyncStorage;
 
+if (process.env.EXPO_PUBLIC_STAGING_PROJECT_REF && process.env.EXPO_PUBLIC_APP_ENV !== "staging") {
+  throw new Error("A staging project reference requires explicit staging mode.");
+}
 if (process.env.EXPO_PUBLIC_APP_ENV === "staging") {
   assertStagingTarget(supabaseUrl, process.env.EXPO_PUBLIC_STAGING_PROJECT_REF);
 }
