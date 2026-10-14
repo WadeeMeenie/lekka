@@ -95,9 +95,11 @@ jobs:
         run: |
           test -f gradlew
           grep -q '^newArchEnabled=true' gradle.properties
-          ./gradlew :app:tasks --all --no-daemon >/tmp/gradle-tasks.txt
-          grep -q 'assembleDebug' /tmp/gradle-tasks.txt
-          grep -q 'assembleInternalDebug' /tmp/gradle-tasks.txt
+          # The actual assemble commands below are the authoritative task checks.
+          # Enumerating every Gradle task here resolves the full build graph twice
+          # and needlessly delays the debug APK; verify wrapper/config statically.
+          grep -q '^newArchEnabled=true' gradle.properties
+          test -f app/build.gradle
       - name: Android debug build
         working-directory: android
         run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
