@@ -21,14 +21,16 @@ import { listPendingPostDrafts, syncPendingPostDrafts } from "@/lib/offline-outb
 import { loadMyProfile } from "@/lib/profile";
 import { getAvatarInitials } from "@/lib/profile-avatar";
 
-const tabs: FeedTab[] = ["For You", "Nearby", "Trending", "Following"];
+// Only expose the feed currently backed by the real nearby/latest Supabase query.
+// Trending and Following are hidden until they have dedicated server-side queries.
+const tabs: FeedTab[] = ["Nearby"];
 
 
 export default function HomeScreen() {
   const colors = useColors();
   const { user, isAuthenticated } = useSupabaseAuth();
   const [authGateAction, setAuthGateAction] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<FeedTab>("For You");
+  const [activeTab, setActiveTab] = useState<FeedTab>("Nearby");
   const [posts, setPosts] = useState<LocalPost[]>([]);
   const [area, setArea] = useState("");
   const [deviceLocation, setDeviceLocation] = useState<DeviceLocation | null>(null);
