@@ -37,6 +37,14 @@ This checklist is the release gate for the current production-hardening candidat
 - [ ] Confirm privacy policy, terms, community/reporting/block flows, account deletion/data retention, support contact, and location permission explanations.
 - [ ] Build and sign the release APK/AAB with the intended production credentials; verify upgrade compatibility against the existing package ID before publishing.
 
+## Live security recheck (2026-10-14)
+
+- **BLOCKER — PostGIS metadata:** Live privilege inspection confirms `public.spatial_ref_sys` is owned by `supabase_admin`, RLS is disabled, and `anon` and `authenticated` have SELECT and INSERT privileges (the ACL also grants broader table privileges). Previous ordinary migrations did not remove those grants. Do not repeat ineffective revokes or change extension ownership; resolve via a supported Supabase owner/admin maintenance path, then verify effective privileges and PostGIS operations.
+- **Auth configuration blocker:** Leaked-password protection remains an outstanding dashboard-level configuration gate. The available project connector does not expose an auth-settings update action, so it has not been changed from here.
+- **SECURITY DEFINER review:** The audited application functions have an empty/fixed `search_path`. Most client-callable functions are restricted to authenticated users; server/webhook functions are not executable by either client role. `is_community_member` and `is_community_owner` are still executable by `anon`, but both return false without `auth.uid()`. Existing public-role RLS policies invoke these helpers, so revoking anonymous EXECUTE blindly can break public community/member/media reads. Test policy behavior before changing those grants.
+- **Server-only tables:** `cape_aloe_order_items`, `cape_aloe_orders`, `cape_aloe_yoco_events`, `media_cleanup_queue`, and `yoco_webhook_events` grant table privileges only to `service_role` among the client/service roles checked; RLS enabled with no policies is intentional for this access pattern.
+- **Validation status:** latest code commit under validation is `90d53dd5477729976e22cbcf0b41119c645303a7`. Its GitHub Actions run was still in progress at the time of this check. Do not count the build/test gate as passed until the run completes successfully.
+
 ## Known open items
 
 - Reaction/save/follow/block now use transaction-serialized RPCs; verify them with concurrent and retry tests before high-traffic launch.
