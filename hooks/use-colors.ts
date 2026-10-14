@@ -1,12 +1,14 @@
-import { Colors, type ColorScheme, type ThemeColorPalette } from "@/constants/theme";
-import { useColorScheme } from "./use-color-scheme";
+import { ThemePalettes, type ColorScheme, type ThemeColorPalette } from "@/constants/theme";
+import { useThemeContext } from "@/lib/theme-provider";
 
 /**
- * Returns the current theme's color palette.
- * Usage: const colors = useColors(); then colors.text, colors.background, etc.
+ * The ThemeProvider is the single source of truth for theme selection and mode.
+ * Every screen must resolve colors through this hook so selected brand palettes
+ * work consistently on native and web instead of silently falling back to the
+ * original system palette.
  */
 export function useColors(colorSchemeOverride?: ColorScheme): ThemeColorPalette {
-  const colorSchema = useColorScheme();
-  const scheme = (colorSchemeOverride ?? colorSchema ?? "light") as ColorScheme;
-  return Colors[scheme];
+  const { colorScheme, themeId } = useThemeContext();
+  const scheme = colorSchemeOverride ?? colorScheme;
+  return ThemePalettes[themeId][scheme] as ThemeColorPalette;
 }
