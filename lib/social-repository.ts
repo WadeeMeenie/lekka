@@ -60,32 +60,6 @@ export async function deleteComment(commentId: string) {
   return supabase.from("comments").delete().eq("id", commentId).eq("author_id", user.id);
 }
 
-export async function toggleSavedPost(postId: string) {
-  if (!supabase) return { saved: false, error: new Error("Backend is not configured") };
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError) return { saved: false, error: authError };
-  if (!user) return { saved: false, error: new Error("Please sign in") };
-
-  // The database RPC serializes toggles with a transaction-scoped advisory lock.
-  const result = await supabase.rpc("toggle_saved_post", { p_post_id: postId });
-  return { saved: result.data === true, error: result.error };
-}
-
-export async function listSavedPosts(page = 0, pageSize = 20) {
-  if (!supabase) return unavailable<SocialPost[]>([]);
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { data: [], error: new Error("Please sign in") };
-  const from = page * pageSize;
-  const to = from + pageSize - 1;
-  const { data, error } = await supabase
-    .from("saved_posts")
-    .select("post_id, posts(id, author_id, kind, category, title, body, area, visibility, trust_score, created_at, approximate_location, profiles(id, display_name, username, profile_image_path), post_media(id, storage_path, media_type, thumbnail_path, width, height, sort_order))")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .range(from, to);
-  return { data: (data ?? []).map((row: any) => row.posts).filter(Boolean) as SocialPost[], error };
-}
-
 export async function getPublicProfile(profileId: string) {
   if (!supabase) return unavailable<SocialProfile | null>(null);
   const { data, error } = await getProfileForViewer(profileId);
@@ -101,18 +75,6 @@ export async function getFollowState(profileId: string) {
     supabase.from("follows").select("following_id", { count: "exact", head: true }).eq("follower_id", profileId),
   ]);
   return { data: { following: Boolean(mine.data), followers: followers.count ?? 0, followingCount: followingCount.count ?? 0 }, error: mine.error || followers.error || followingCount.error || null };
-}
-
-export async function toggleFollow(profileId: string) {
-  if (!supabase) return { following: false, error: new Error("Backend is not configured") };
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError) return { following: false, error: authError };
-  if (!user) return { following: false, error: new Error("Please sign in") };
-  if (user.id === profileId) return { following: false, error: new Error("You cannot follow yourself") };
-
-  // The database RPC serializes follow/unfollow transitions per user and target.
-  const result = await supabase.rpc("toggle_follow", { p_profile_id: profileId });
-  return { following: result.data === true, error: result.error };
 }
 
 export type PostFeedbackPreference = "interested" | "not_interested";
