@@ -33,6 +33,19 @@ Research was performed against primary platform and platform-guideline sources o
 - Google / Android — Touch target size: https://support.google.com/accessibility/android/answer/7101858
 - W3C WAI — Navigation design: https://www.w3.org/WAI/curricula/designer-modules/navigation-design/
 
+
+Additional primary references reviewed:
+
+- Meta — Facebook Home vs Feeds: separate discovery recommendations from content from people and groups the user follows: https://about.fb.com/news/2022/07/home-and-feeds-on-facebook/
+- Meta — Facebook feed, search, navigation and streamlined creation updates: https://about.fb.com/news/2025/12/making-it-easier-to-create-discover-and-share-content-on-facebook/
+- Meta — Threads Communities and community discovery: https://about.fb.com/news/2025/10/introducing-threads-communities-find-your-people/
+- Meta — Threads custom feeds and quick access to saved/liked content: https://about.fb.com/news/2025/04/new-features-threads-web-experience/
+- Pinterest Help — Search suggestions, content-type filters, and visual discovery: https://help.pinterest.com/en/article/search-for-ideas-on-pinterest
+- YouTube Help — Separate Subscriptions, notifications, and Library/history destinations: https://support.google.com/youtube/answer/2398242?co=GENIE.Platform%3DAndroid&hl=en
+- LinkedIn Help — Profile/account settings through the profile entry point, and distinct Home, Network, Messaging, Notifications and Jobs destinations: https://www.linkedin.com/help/recruiter/answer/a528037
+
+These comparisons reinforce a key distinction: destinations should be separated only when they represent genuinely different user jobs. Home recommendations versus following feeds can be separate modes; local discovery categories belong under one Explore destination; direct messaging should not be hidden inside a Communities screen; saved content and account controls belong in predictable secondary navigation.
+
 ## 2. Current app audit (repository inspection)
 
 ### Confirmed structure
