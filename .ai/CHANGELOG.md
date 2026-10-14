@@ -10,3 +10,5 @@ Cold export fix: initialize NativeWind web CSS placeholder before Metro crawl. R
 2026-10-14 staging follow-up: Supabase connection restored; read-only metadata confirms effective PostGIS grant exposure and policy/RPC discrepancies requiring staging reproduction. Added strict target guards, frontend staging configuration check, read-only preflight, migration audit, blank env template and 21 regressions (full suite 165 pass / 2 skip). See STAGING_READINESS.md. No staging provisioned: account quote tool unavailable; user authorized organization selection for quote only. Production unchanged.
 
 Staging review follow-up: fixed three red/green guard regressions, added production-reference detection to migration audit, compared recorded SQL for all migrations and documented ordered staging-only review/replay gates. 168 tests passed / 2 skipped; no live mutation. See STAGING_REPLAY_REVIEW.md.
+
+Final handoff: added reusable Windows native-config local test runner and TESTING.md. Local test/build checks pass within documented scope; no paid service or production change. Exact dd13efc CI passed; final documentation/runner commit requires its own workflow result.
