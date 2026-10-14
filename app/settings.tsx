@@ -18,8 +18,8 @@ const groups: { title: string; items: SettingLink[] }[] = [
     title: "YOUR ACCOUNT",
     items: [
       { title: "Profile & appearance", detail: "Public profile, interests and theme", icon: "person.crop.circle.fill", route: "/profile" },
-      { title: "Account & privacy", detail: "Username history, profile privacy and visibility", icon: "lock.fill", route: "/account-settings", requiresAuth: true },
-      { title: "Personal details", detail: "Private account information", icon: "person.text.rectangle.fill", route: "/personal-details", requiresAuth: true },
+      { title: "Account & privacy", detail: "Username history, profile privacy and visibility", icon: "shield.fill", route: "/account-settings", requiresAuth: true },
+      { title: "Personal details", detail: "Private account information", icon: "person.crop.circle.fill", route: "/personal-details", requiresAuth: true },
     ],
   },
   {
