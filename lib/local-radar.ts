@@ -26,26 +26,5 @@ export function personalizeFeed(posts: LocalPost[], _tab: FeedTab, feedback: Rec
     .filter((post) => currentUserPostIds.has(post.id) || feedback[post.id] !== "not_interested")
     .sort((left, right) => Number(feedback[right.id] === "interested") - Number(feedback[left.id] === "interested"));
 }
-const POSTS_KEY = "local-radar/posts/v2";
-const LEGACY_POSTS_KEY = "local-radar/posts/v1";
-const SETTINGS_KEY = "local-radar/settings/v2";
-
-function postsKey(userId?: string | null) {
-  return userId ? POSTS_KEY + "/" + userId : POSTS_KEY + "/guest";
-}
-
-export async function loadPosts(userId?: string | null): Promise<LocalPost[]> {
-  const key = postsKey(userId);
-  const value = await AsyncStorage.getItem(key);
-  if (value) return JSON.parse(value);
-  if (!userId) return [];
-  // Never carry an unscoped feed cache across authenticated identities.
-  await AsyncStorage.removeItem(LEGACY_POSTS_KEY);
-  return [];
-}
-
-export async function savePosts(posts: LocalPost[], userId?: string | null) {
-  await AsyncStorage.setItem(postsKey(userId), JSON.stringify(posts));
-}
 export async function loadSettings(): Promise<LocalSettings> { const value = await AsyncStorage.getItem(SETTINGS_KEY); if (!value) { const legacy = await AsyncStorage.getItem("local-radar/settings/v1"); return legacy ? { ...defaultSettings, ...JSON.parse(legacy), selectedLocation: null } : defaultSettings; } return { ...defaultSettings, ...JSON.parse(value) }; }
 export async function saveSettings(settings: LocalSettings) { await AsyncStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }
