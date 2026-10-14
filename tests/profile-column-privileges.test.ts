@@ -6,7 +6,7 @@ const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8"
 
 describe("profile write boundary", () => {
   it("revokes direct client column updates and keeps profile writes on validated RPCs", () => {
-    const migration = read("supabase/migrations/20261014194500_revoke_direct_profile_column_updates.sql");
+    const migration = read("supabase/migrations/20261014194107_revoke_direct_profile_column_updates.sql");
     const profile = read("lib/profile.ts");
     const identity = read("lib/account-repository.ts");
 
