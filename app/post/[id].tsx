@@ -112,7 +112,7 @@ export default function PostDetailScreen() {
   const isOwner = Boolean(user?.id && post.author_id && user.id === post.author_id);
   const metadata = formatPostMetadata(post.area, post.created_at);
   const postDetails = post.details ?? {};
-  const categoryDetailParts: unknown[] = post.category === "job" ? [postDetails.employer, postDetails.employmentType, postDetails.salary] : post.category === "event" ? [postDetails.date, postDetails.time, postDetails.venue] : post.category === "deal" ? [postDetails.offerPrice, postDetails.expiresAt ? `Expires ${postDetails.expiresAt}` : null] : post.category === "service" ? [postDetails.pricingModel, postDetails.price] : [];
+  const categoryDetailParts: unknown[] = post.category === "job" ? [postDetails.employer, postDetails.employmentType, postDetails.salary] : post.category === "event" ? [postDetails.date, postDetails.time, postDetails.venue] : post.category === "deal" ? [postDetails.offerPrice, postDetails.expiresAt ? `Expires ${postDetails.expiresAt}` : null] : post.category === "service" ? [postDetails.pricingModel, postDetails.price] : post.category === "business" ? [postDetails.businessOffer] : [];
   const categoryDetailText = categoryDetailParts.filter((value): value is string => typeof value === "string" && value.trim().length > 0).join(" · ");
 
   return <ScreenContainer edges={["top", "bottom", "left", "right"]}><KeyboardAvoidingView style={styles.keyboardContainer} behavior={Platform.OS === "ios" ? "padding" : "height"}><ScrollView ref={scrollRef} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
