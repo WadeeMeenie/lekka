@@ -29,6 +29,8 @@ describe("category-specific post experience", () => {
     expect(feed).toContain("Reserve listing");
     expect(feed).toContain("Listing reserved.");
     expect(feed).toContain("marketplaceStatus===\"sold\"");
+    expect(feed).toContain("LOCAL ALERT");
+    expect(feed).not.toContain("LOCAL ALERT · REPORTED");
   });
 
   it("invalidates old local feed caches so deleted test posts cannot reappear", () => {
