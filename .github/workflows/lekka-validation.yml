@@ -17,8 +17,8 @@ concurrency:
 # three LEKKA_STAGING_* repository secrets only after an isolated staging
 # project has been approved and verified. Otherwise use an unreachable host.
 env:
-  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.LEKKA_STAGING_SUPABASE_URL || 'https://ci-not-connected.supabase.co' }}
-  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEKKA_STAGING_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_ci_not_connected' }}
+  EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.LEKKA_STAGING_SUPABASE_URL || '' }}
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.LEKKA_STAGING_SUPABASE_PUBLISHABLE_KEY || '' }}
   EXPO_PUBLIC_STAGING_PROJECT_REF: ${{ secrets.LEKKA_STAGING_PROJECT_REF }}
   EXPO_PUBLIC_APP_ENV: ${{ secrets.LEKKA_STAGING_PROJECT_REF != '' && 'staging' || 'ci' }}
 
@@ -38,8 +38,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$EXPO_PUBLIC_SUPABASE_URL" == "https://ci-not-connected.supabase.co" ]]; then
-            test "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" = "sb_publishable_ci_not_connected"
+          if [[ -z "$EXPO_PUBLIC_SUPABASE_URL" && -z "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]]; then
             test -z "$EXPO_PUBLIC_STAGING_PROJECT_REF"
             test "$EXPO_PUBLIC_APP_ENV" = "ci"
           else
@@ -91,8 +90,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if [[ "$EXPO_PUBLIC_SUPABASE_URL" == "https://ci-not-connected.supabase.co" ]]; then
-            test "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" = "sb_publishable_ci_not_connected"
+          if [[ -z "$EXPO_PUBLIC_SUPABASE_URL" && -z "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" ]]; then
             test -z "$EXPO_PUBLIC_STAGING_PROJECT_REF"
             test "$EXPO_PUBLIC_APP_ENV" = "ci"
           else
