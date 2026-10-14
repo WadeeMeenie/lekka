@@ -15,7 +15,7 @@ import { getMediaUploadPresentation, isRetryableMediaStage, type MediaUploadStag
 import { defaultActiveIdentity, loadActiveIdentity, type ActiveIdentity } from "@/lib/active-identity";
 
 const types = [{ label: "Post", icon: "edit" as const }, { label: "Local alert", icon: "exclamationmark.triangle.fill" as const }, { label: "Event", icon: "calendar" as const }, { label: "Listing", icon: "cart.fill" as const }];
-const audiences = ["Nearby", "My community", "My followers", "Public"];
+const audiences = ["Nearby", "Public"];
 const localCategories = ["General", "Business", "Deals", "Events", "Marketplace", "Jobs", "Services"] as const;
 const categoryToDb: Record<typeof localCategories[number], RadarCategory> = { General: "general", Business: "business", Deals: "deal", Events: "event", Marketplace: "marketplace", Jobs: "job", Services: "service" };
 
