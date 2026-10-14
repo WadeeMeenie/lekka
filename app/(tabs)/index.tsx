@@ -119,7 +119,7 @@ export default function HomeScreen() {
 
   useEffect(() => {
     let active = true;
-    void Promise.all(posts.filter((post) => post.profileImagePath || post.mediaPath).map(async (post) => {
+    void Promise.all(posts.filter((post) => post.profileImagePath || post.businessLogoPath || post.mediaPath).map(async (post) => {
       const avatarPath = post.category === "business" ? (post.businessLogoPath ?? post.profileImagePath) : post.profileImagePath; const profile = avatarPath ? await createSignedMediaUrl(avatarPath) : null;
       const media = post.mediaPath ? await createSignedMediaUrl(post.mediaPath) : null;
       return { id: post.id, profile: profile?.data?.signedUrl, media: media?.data?.signedUrl };
