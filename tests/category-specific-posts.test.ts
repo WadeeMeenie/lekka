@@ -18,6 +18,7 @@ describe("category-specific post experience", () => {
     expect(repository).toContain("marketplace_price_cents: input.marketplacePriceCents ?? null");
     expect(repository).toContain("export async function updateMarketplaceStatus");
     expect(repository).toContain("upload(path, bytes, { contentType, upsert: true })");
+    expect(repository).toContain('.eq("post_id", input.postId).eq("storage_path", input.storagePath).maybeSingle()');
     expect(outbox).toContain("let postId = draft.postId");
     expect(composer).toContain("Marketplace listings need a title and a valid price in rand.");
     expect(composer).toContain("Switch to your business profile before publishing a business update.");
