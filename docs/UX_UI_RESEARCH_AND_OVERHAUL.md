@@ -173,6 +173,14 @@ A row is not launch-ready merely because it renders a switch. It must load the s
 **Do not perform a cosmetic-only pass.** Every design change must preserve or improve the real backend workflow and have a verification path.
 
 
+## Competitive product and engineering blueprint
+
+The external research has been expanded into a practical, testable standard in [Product Quality Blueprint](./PRODUCT_QUALITY_BLUEPRINT.md). It covers Meta's Astryx/StyleX design-system lessons, Facebook's Home-versus-Feeds separation, Instagram feed engineering, Reddit community/flair/moderation, Discord roles and permissions, Bluesky layered moderation, and the relevant platform accessibility guidance.
+
+This is not a request to install every library or imitate competitor branding. In particular, Astryx and StyleX are web/React-oriented references, not drop-in replacements for the current Expo/React Native design system. Lekka should reuse the ideas—semantic tokens, accessible components, explicit states, clear navigation, real permissions and measurable user journeys—within its existing stack.
+
+Implementation is ordered by risk: **P0 correctness/security first, P1 core UX second, P2 visual polish and growth third**. Every control must be connected to persisted state and verified; UI-only mock functionality is not acceptable.
+
 ## Category-specific experiences
 
 See [Category-Specific UX/UI Specification](./CATEGORY_SPECIFIC_UX_UI_SPEC.md) for research-backed, field-level UI contracts for Marketplace, Businesses, Deals, Events, Jobs, Services, Communities, Local Alerts and general posts. It also documents the data-model gap: generic post fields are not sufficient for persisted price, sold state, event times, offer terms, job application settings or service pricing. Do not fake these fields in the client; inspect the live schema and implement typed persistence, RLS, lifecycle transitions and category-specific cards/details together.
