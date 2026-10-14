@@ -10,6 +10,7 @@
     "lint": "expo lint",
     "format": "prettier --write .",
     "test": "vitest run",
+    "staging:preflight": "node scripts/staging/preflight.mjs",
     "audit:interactions": "node scripts/audit-interactions.mjs",
     "audit:production": "node scripts/audit-production-invariants.mjs",
     "android": "expo run:android",

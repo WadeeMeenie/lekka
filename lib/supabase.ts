@@ -3,11 +3,16 @@ import { Platform } from "react-native";
 import { createClient } from "@supabase/supabase-js";
 
 import { shouldRetrySignUp } from "./auth-retry";
+import { assertStagingTarget } from "./staging-target";
 
 const rawSupabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 const supabaseUrl = rawSupabaseUrl.trim().replace(/^['"]|['"]$/g, "").replace(/\/+$/, "");
 const supabaseKey = (process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "").trim().replace(/^['"]|['"]$/g, "");
 const authStorage = Platform.OS === "web" ? undefined : AsyncStorage;
+
+if (process.env.EXPO_PUBLIC_APP_ENV === "staging") {
+  assertStagingTarget(supabaseUrl, process.env.EXPO_PUBLIC_STAGING_PROJECT_REF);
+}
 
 const isValidSupabaseUrl = (() => {
   if (!supabaseUrl) return false;

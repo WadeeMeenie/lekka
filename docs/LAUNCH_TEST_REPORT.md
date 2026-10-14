@@ -30,3 +30,7 @@ Additional final evidence: public target Supabase /auth/v1/settings returned HTT
 
 
 CI follow-up: first Linux run passed install, TypeScript, static audits, tests (145 pass / 1 skip, including public auth-settings integration) and lint, but failed cold web export because NativeWind created web.css after Metro's crawl. metro.config.cjs now initializes that placeholder before crawling. A local export with web.css removed and --clear passed all 40 routes; generated CSS remains populated by NativeWind. Follow-up Linux CI is pending. Android build is pending. No deployment.
+
+## Staging guard validation
+
+21 guard regressions PASS, full local suite 165 passed / 2 skipped. TypeScript PASS. Missing staging settings preflight correctly exits 1 before network. Migration audit FAILS by design on nine duplicated prefixes. No staging integration or negative authorization test has run. Supabase read-only catalog/advisors now available; see STAGING_READINESS.md. Earlier ef86720 CI code job passes including cold web export and Expo doctor; Android pending at last check.

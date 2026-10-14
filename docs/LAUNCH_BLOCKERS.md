@@ -12,3 +12,7 @@ No production deployment, live customer-data change, migration application, secr
 
 Candidate update: L04 source mismatch corrected; L05 acknowledged-stage retry and L06 author binding repaired with tests. Their server ambiguity / cross-account enforcement verification remains blocked. Local production web export now PASSES; exact-commit CI/native verification is still required.
 
+
+## Superseding staging update — 2026-10-14
+
+Supabase access is restored. Catalog/advisor/migration inspection ran read-only. Confirmed Critical excessive writes to spatial_ref_sys; High PostGIS SECURITY DEFINER execute exposure; additional policy/RPC authorization findings need staging reproduction. See STAGING_READINESS.md for evidence and exact boundaries. No existing project is verified staging. User selected the organization for a quote only; get_cost unavailable and provisioning/billing unapproved. Migration replay has nine duplicate prefixes and history drift. These replace the earlier connector-access blocker. No production mutation is authorized by the staging mission.
