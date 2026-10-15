@@ -24,7 +24,7 @@ describe("feed source-of-truth behavior", () => {
   it("uses the saved area when approximate device location is unavailable", () => {
     const repository = read("lib/supabase-repository.ts");
     const home = read("app/(tabs)/index.tsx");
-    expect(repository).toContain('.ilike("area", normalizedArea)');
+    expect(repository).toContain(".ilike(\"area\", \"%\" + normalizedArea + \"%\")");
     expect(repository).toContain("Choose an area or allow approximate location");
     expect(home).toContain("settings.area");
     expect(home).toContain('accessibilityLabel="Change local area in Explore"');
