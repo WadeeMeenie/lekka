@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { router } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
@@ -33,7 +33,7 @@ export default function NotificationsScreen() {
   }, [isAuthenticated, user?.id, retryKey]);
   const openNotification = async (item: any) => {
     const result = await markNotificationRead(item.id).catch(() => ({ error: new Error("Notification read update failed") }));
-    if (result.error) setError("Couldn’t mark this update as read. You can still open it and try again later.");
+    if (result.error) Alert.alert("Couldn’t mark as read", "This update could not be marked as read. You can still open it and try again later.");
     else setItems((current) => current.map((entry) => entry.id === item.id ? { ...entry, read_at: new Date().toISOString() } : entry));
     if (item.target_type === "post" && item.target_id) router.push({ pathname: "/post/[id]", params: { id: item.target_id } } as never);
     else if (item.target_type === "profile" && item.target_id) router.push({ pathname: "/public-profile/[id]", params: { id: item.target_id } } as never);
