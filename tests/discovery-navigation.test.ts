@@ -35,7 +35,7 @@ describe("canonical discovery destinations", () => {
 });
 
 describe("discovery content-type filtering", () => {
-  const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/20261015130000_fix_discovery_category_filters.sql"), "utf8");
+  const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/20261015123000_fix_discovery_category_filters.sql"), "utf8");
 
   it("filters category-backed posts by category instead of their generic post kind", () => {
     expect(migration).toContain("lower(coalesce(p.category,''))=n.content_type");
