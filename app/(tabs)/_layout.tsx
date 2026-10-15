@@ -31,10 +31,11 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen name="index" options={{ title: "Home", tabBarAccessibilityLabel: "Home tab", tabBarIcon: ({ color }) => <IconSymbol name="house.fill" size={22} color={color} /> }} />
-      <Tabs.Screen name="nearby" options={{ title: "Radar", tabBarAccessibilityLabel: "Radar tab", tabBarIcon: ({ color }) => <IconSymbol name="location.fill" size={22} color={color} /> }} />
+      <Tabs.Screen name="nearby" options={{ title: "Explore", tabBarAccessibilityLabel: "Explore tab", tabBarIcon: ({ color }) => <IconSymbol name="location.fill" size={22} color={color} /> }} />
       <Tabs.Screen name="create" options={{ title: "Create", tabBarAccessibilityLabel: "Create tab", tabBarIcon: () => <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: colors.primary, alignItems: "center", justifyContent: "center", marginTop: -8 }}><IconSymbol name="plus" size={22} color={colors.background} /></View> }} />
-      <Tabs.Screen name="social" options={{ title: "Social", tabBarAccessibilityLabel: "Social tab", tabBarIcon: ({ color }) => <IconSymbol name="person.2.fill" size={22} color={color} /> }} />
-      <Tabs.Screen name="local" options={{ title: "Local", tabBarAccessibilityLabel: "Local tab", tabBarIcon: ({ color }) => <IconSymbol name="building.2.fill" size={22} color={color} /> }} />
+      <Tabs.Screen name="social" options={{ title: "Communities", tabBarAccessibilityLabel: "Communities tab", tabBarIcon: ({ color }) => <IconSymbol name="person.2.fill" size={22} color={color} /> }} />
+      <Tabs.Screen name="inbox" options={{ title: "Inbox", tabBarAccessibilityLabel: "Inbox tab", tabBarIcon: ({ color }) => <IconSymbol name="message.fill" size={22} color={color} /> }} />
+      <Tabs.Screen name="local" options={{ href: null }} />
     </Tabs>
   );
 }
