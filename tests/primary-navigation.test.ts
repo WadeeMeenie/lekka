@@ -42,6 +42,9 @@ describe("primary navigation hierarchy", () => {
     expect(home).toContain('pathname:"/public-profile/[id]"');
     expect(home).toContain('pathname:"/local/[id]"');
     expect(home).toContain('accessibilityLabel={`Open ${post.author} profile`} onPress={onOpenAuthor}');
+    expect(home).toContain('return <View style={[styles.card,{backgroundColor:colors.surface,borderColor:colors.border}]}');
+    expect(home).toContain('accessibilityLabel="Open post details" onPress={onOpen}');
+    expect(home).not.toContain('return <Pressable onPress={onOpen} style={[styles.card');
   });
 
 });
