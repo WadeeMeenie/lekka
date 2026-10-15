@@ -19,7 +19,7 @@ const menuItems: MenuItem[] = [
   { title: "Communities", detail: "Your local groups", icon: "person.3.fill", route: "/(tabs)/social" },
   { title: "Saved", detail: "Posts you want to revisit", icon: "bookmark.fill", route: "/saved" },
   { title: "Notifications", detail: "Activity around your local network", icon: "bell.fill", route: "/notifications" },
-  { title: "Local Radar", detail: "Discover nearby places and alerts", icon: "location.fill", route: "/(tabs)/nearby" },
+  { title: "Local directory", detail: "Search businesses, deals, events and services", icon: "building.2.fill", route: "/(tabs)/local" },
   { title: "Settings", detail: "Account, privacy, appearance and preferences", icon: "gearshape.fill", route: "/settings" },
   { title: "Beta feedback", detail: "Tell Lekka what to improve", icon: "bubble.left.and.bubble.right.fill", route: "/feedback" },
 ];
