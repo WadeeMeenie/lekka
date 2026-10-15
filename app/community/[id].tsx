@@ -72,7 +72,8 @@ export default function CommunityDetailScreen() {
       if (result.error) setLoadError("Community details loaded, but its posts couldn't be loaded. Try again.");
       const loadedPosts = (result.data ?? []) as unknown as CommunityPost[];
       setPosts(loadedPosts);
-      const authorPaths = [...new Map(loadedPosts.filter((post) => post.profiles?.profile_image_path).map((post) => [post.author_id, post.profiles!.profile_image_path!])).entries()];
+      const authorPathEntries: [string, string][] = loadedPosts.flatMap((post): [string, string][] => post.profiles?.profile_image_path ? [[post.author_id, post.profiles.profile_image_path]] : []);
+      const authorPaths = [...new Map<string, string>(authorPathEntries).entries()];
       const signedAuthors = await Promise.all(authorPaths.map(async ([authorId, path]) => ({ authorId, result: await createSignedCommunityMediaUrl(path) })));
       setPostAuthorImages(Object.fromEntries(signedAuthors.filter((item) => item.result.data?.signedUrl).map((item) => [item.authorId, item.result.data!.signedUrl])));
     }
