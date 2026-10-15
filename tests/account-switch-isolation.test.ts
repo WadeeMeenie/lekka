@@ -15,7 +15,7 @@ describe("account-switch privacy", () => {
   });
 
   it("reloads and clears private messages when the account or conversation changes", () => {
-    const messages = read("app/messages.tsx");
+    const messages = read("app/(tabs)/messages.tsx");
     expect(messages).toContain("[isAuthenticated, user?.id, conversationId]");
     expect(messages).toContain("setSelected(null)");
     expect(messages).toContain("setMessages([])");
