@@ -150,7 +150,7 @@ export async function attachPostMedia(input: { postId: string; storagePath: stri
 
 export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean; error: { message: string } | null };
 
-export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20, radiusMeters = 5000): Promise<FeedPage> {
+export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20, radiusMeters = 5000, areaFilter?: string): Promise<FeedPage> {
   const emptyPage = (error: { message: string } | null): FeedPage => ({ posts: [], nextCursor: null, hasMore: false, error });
   if (!isSupabaseConfigured || !supabase) return emptyPage(new Error("Supabase is not configured"));
   try {
@@ -171,9 +171,14 @@ export async function fetchFeedPage(location: DeviceLocation | undefined, cursor
         page_size: pageSize,
       });
     } else {
-      let query = supabase.from("posts").select(`id, author_id, kind, category, title, body, trust_score, created_at, ${PROFILE_SELECT}`)
+      const normalizedArea = areaFilter?.trim();
+      if (!normalizedArea || normalizedArea.toLowerCase() === "your area") {
+        return emptyPage(new Error("Choose an area or allow approximate location to see nearby posts"));
+      }
+      let query = supabase.from("posts").select("id, author_id, kind, category, title, body, trust_score, created_at, " + PROFILE_SELECT)
+        .ilike("area", normalizedArea)
         .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
-      if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`);
+      if (cursorCreatedAt && cursorId) query = query.or("created_at.lt." + cursorCreatedAt + ",and(created_at.eq." + cursorCreatedAt + ",id.lt." + cursorId + ")");
       result = await query;
     }
     if (result.error) return emptyPage(result.error);
