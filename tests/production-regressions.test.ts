@@ -44,10 +44,12 @@ describe("reported Lekka production regressions", () => {
     expect(migration).toContain("grant execute on function public.save_personal_identity(text, text, date, text) to authenticated");
   });
 
-  it("honors a manually selected Radar area for Local discovery", () => {
+  it("routes legacy Local discovery to Explore, which honors the selected area", () => {
     const local = read("app/(tabs)/local.tsx");
-    expect(local).toContain("settings.selectedLocation");
-    expect(local).toContain("location: settings.selectedLocation");
+    const explore = read("app/(tabs)/nearby.tsx");
+    expect(local).toContain('<Redirect href="/(tabs)/nearby" />');
+    expect(explore).toContain("settings.selectedLocation");
+    expect(explore).toContain("refreshDiscovery(settings.selectedLocation");
   });
 
   it("provides retry and real navigation actions when community or post detail cannot load", () => {
