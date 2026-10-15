@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 describe("message identity rendering", () => {
-  const screen = readFileSync(resolve(process.cwd(), "app/messages.tsx"), "utf8");
+  const screen = readFileSync(resolve(process.cwd(), "app/(tabs)/messages.tsx"), "utf8");
 
   it("loads signed profile photos for conversation rows and the active thread", () => {
     expect(screen).toContain('import { Image } from "expo-image"');
