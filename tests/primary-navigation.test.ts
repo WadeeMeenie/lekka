@@ -5,6 +5,12 @@ import { resolve } from "node:path";
 const read = (path: string) => readFileSync(resolve(process.cwd(), path), "utf8");
 
 describe("primary navigation hierarchy", () => {
+  it("opens the user's profile from the Home avatar and keeps the menu separate", () => {
+    const home = read("app/(tabs)/index.tsx");
+    expect(home).toContain('accessibilityLabel="Open your profile" onPress={() => router.push("/profile" as never)}');
+    expect(home).toContain('accessibilityLabel="Open menu" onPress={() => router.push("/menu" as never)}');
+  });
+
   it("keeps the five primary jobs visible and the local directory reachable but secondary", () => {
     const tabs = read("app/(tabs)/_layout.tsx");
     const explore = read("app/(tabs)/nearby.tsx");
