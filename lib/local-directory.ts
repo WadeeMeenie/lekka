@@ -18,7 +18,7 @@ export async function getBusiness(id: string) {
 
 export async function getCommunity(id: string) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
-  return supabase.from("communities").select("id, name, description, image_path, area, category, visibility, rules, created_by, created_at").eq("id", id).maybeSingle();
+  return supabase.from("communities").select("id, name, description, image_path, logo_path, cover_path, area, category, visibility, rules, created_by, created_at").eq("id", id).maybeSingle();
 }
 
 export async function getCommunityMembershipState(communityId: string) {
