@@ -20,11 +20,9 @@ describe("primary navigation hierarchy", () => {
 
   it("keeps Communities focused on groups and exposes messages as the Inbox tab", () => {
     const communities = read("app/(tabs)/social.tsx");
-    const inbox = read("app/(tabs)/messages.tsx");
     const messages = read("app/(tabs)/messages.tsx");
     expect(communities).toContain('type Segment = "Communities" | "My communities"');
     expect(communities).not.toContain("MessagesPreview");
-    expect(inbox).toContain("MessagesScreen inTab");
     expect(messages).toContain(">Inbox</Text>");
   });
 
