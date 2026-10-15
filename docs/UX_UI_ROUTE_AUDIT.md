@@ -72,12 +72,13 @@ The target five destinations are **Home, Explore, Create, Communities, Inbox**. 
 - Profile editing has load-recovery safeguards so failed reads do not silently overwrite saved data.
 - Notifications and public profiles have explicit recovery paths.
 - Home avatar now opens the user's own profile; menu remains a separate action.
+- Feed cards no longer wrap every action in one parent pressable: post content opens details, the author avatar opens the author/business profile, and reaction/save/share/menu actions remain independent.
 
 ## Release blockers / evidence still required
 
 1. Finish TypeScript, interaction audit, architecture audit, tests, lint, Expo compatibility/doctor and Android builds on the final PR head.
-2. Apply and verify the discovery-category migration on the intended Supabase project; confirm the live RPC signature and RLS behavior.
+2. The discovery-category migration has been applied to local-radar-sa and the function definition/execute grants were verified. Runtime query calls succeeded, but live data is too sparse to validate real result navigation: the project currently has 2 posts and zero location-tagged posts, businesses, events or deals.
 3. Run authenticated two-account tests for profile saves, avatar storage, follows/blocks/reports, comments/reactions/saves, community membership/moderation, message requests and send/receive.
-4. Run physical Android smoke tests for fresh install, login, Explore detail navigation, create post/photo, profile save/restart, inbox, notifications, back stack and offline/error recovery.
+4. Use a staging environment or approved real test accounts with location-tagged content for discovery journeys; do not seed fake data into production. Run physical Android smoke tests for fresh install, login, Explore detail navigation, create post/photo, profile save/restart, inbox, notifications, back stack and offline/error recovery.
 5. Review screenshots at small Android sizes, large text, light/dark themes and responsive web; test touch targets and screen-reader labels.
 6. Do not call the app launch-ready until these gates have evidence. CI success alone does not prove live backend or device correctness.
