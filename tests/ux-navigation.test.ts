@@ -29,4 +29,15 @@ describe("primary navigation and profile UX contract", () => {
     expect(home).toContain('accessibilityLabel="Open your profile" onPress={() => router.push("/profile" as never)}');
     expect(home).toContain('accessibilityLabel="Open menu" onPress={() => router.push("/menu" as never)}');
   });
+  it("gives Explore results a real detail destination for every discovery type", () => {
+    const explore = read("app/(tabs)/nearby.tsx");
+    const detail = read("app/discovery/[type]/[id].tsx");
+    expect(explore).toContain('pathname: "/discovery/[type]/[id]"');
+    expect(explore).toContain('accessibilityRole="button"');
+    expect(detail).toContain('router.replace({ pathname: "/post/[id]"');
+    expect(detail).toContain('router.replace({ pathname: "/local/[id]"');
+    expect(detail).toContain('supabase.from("events")');
+    expect(detail).toContain('supabase.from("deals")');
+  });
+
 });
