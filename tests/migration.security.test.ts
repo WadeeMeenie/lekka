@@ -245,7 +245,7 @@ describe("production hardening", () => {
   });
 
   it("scopes offline drafts and active identity storage to the authenticated account", () => {
-    const outboxSource = read("lib/offline-outbox.ts");
+    const outboxSource = readFileSync(resolve(process.cwd(), "lib/offline-outbox.ts"), "utf8");
     expect(localRadarSource).not.toContain("local-radar/posts/v2");
     expect(outboxSource).toContain("lekka/outbox/posts/");
     expect(outboxSource).toContain("keyFor(ownerId)");
