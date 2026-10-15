@@ -176,7 +176,7 @@ export async function fetchFeedPage(location: DeviceLocation | undefined, cursor
         return emptyPage(new Error("Choose an area or allow approximate location to see nearby posts"));
       }
       let query = supabase.from("posts").select("id, author_id, kind, category, title, body, trust_score, created_at, " + PROFILE_SELECT)
-        .ilike("area", normalizedArea)
+        .ilike("area", "%" + normalizedArea + "%")
         .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
       if (cursorCreatedAt && cursorId) query = query.or("created_at.lt." + cursorCreatedAt + ",and(created_at.eq." + cursorCreatedAt + ",id.lt." + cursorId + ")");
       result = await query;
