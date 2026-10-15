@@ -36,4 +36,12 @@ describe("primary navigation hierarchy", () => {
     expect(read("app/public-profile/[id].tsx")).toContain('pathname: "/(tabs)/messages"');
     expect(read("app/buddies.tsx")).toContain('pathname: "/(tabs)/messages"');
   });
+  it("opens author profiles from feed avatars instead of reopening the post", () => {
+    const home = read("app/(tabs)/index.tsx");
+    expect(home).toContain("onOpenAuthor");
+    expect(home).toContain('pathname:"/public-profile/[id]"');
+    expect(home).toContain('pathname:"/local/[id]"');
+    expect(home).toContain('accessibilityLabel={`Open ${post.author} profile`} onPress={onOpenAuthor}');
+  });
+
 });
