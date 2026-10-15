@@ -11,6 +11,10 @@ describe("profile editor protects saved data on load failure", () => {
     expect(screen).toContain("Retry before saving");
   });
 
+  it("does not expose the local-only notification toggle as a working preference", () => {
+    expect(screen).not.toContain("Local notifications");
+  });
+
   it("blocks saving while the existing profile is loading or failed to load", () => {
     expect(screen).toContain("if (loading || loadError)");
     expect(screen).toContain("disabled={busy || loading || Boolean(loadError) || !user}");
