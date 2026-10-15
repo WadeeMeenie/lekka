@@ -111,7 +111,7 @@ export default function DiscoveryDetailScreen() {
           </View>
         ) : error ? (
           <View style={[styles.stateCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <IconSymbol name="exclamationmark.circle.fill" size={28} color={colors.error} />
+            <IconSymbol name="exclamationmark.triangle.fill" size={28} color={colors.error} />
             <Text style={[styles.title, { color: colors.foreground }]}>{heading} unavailable</Text>
             <Text style={[styles.body, { color: colors.muted }]}>{error}</Text>
             <Pressable accessibilityRole="button" onPress={() => setAttempt((value) => value + 1)} style={[styles.primaryButton, { backgroundColor: colors.primary }]}>
