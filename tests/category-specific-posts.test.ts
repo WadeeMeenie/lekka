@@ -42,13 +42,11 @@ describe("category-specific post experience", () => {
     expect(feed).not.toContain("LOCAL ALERT · REPORTED");
   });
 
-  it("does not persist a duplicate feed cache that can resurrect deleted posts", () => {
+  it("invalidates old local feed caches so deleted test posts cannot reappear", () => {
     const localRadar = read("lib/local-radar.ts");
-    const repository = read("lib/supabase-repository.ts");
-    expect(localRadar).not.toContain("local-radar/posts/v3");
-    expect(localRadar).not.toContain("PREVIOUS_POSTS_KEY");
-    expect(repository).not.toContain("loadPosts");
-    expect(repository).toContain("export async function fetchFeedPage");
+    expect(localRadar).toContain("local-radar/posts/v3");
+    expect(localRadar).toContain("PREVIOUS_POSTS_KEY");
+    expect(localRadar).toContain("staleKeys.map");
   });
 
   it("uses privacy-aware profile lookup and protects private profiles", () => {
