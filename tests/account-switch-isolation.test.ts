@@ -36,3 +36,12 @@ describe("account-switch privacy", () => {
     expect(profile).toContain("setFollowing(false)");
   });
 });
+
+describe("post publishing navigation", () => {
+  it("returns to Home only after a post is successfully published", () => {
+    const create = read("app/(tabs)/create.tsx");
+    expect(create).toContain('import { useRouter } from "expo-router";');
+    expect(create).toContain('router.replace("/(tabs)")');
+    expect(create).toContain('setUploadStage("published"); setText(""); setSelectedImage(null); clearCategoryFields(); setUploadError(null); router.replace("/(tabs)");');
+  });
+});
