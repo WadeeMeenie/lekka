@@ -7,10 +7,11 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 import { listCommunities } from "@/lib/local-directory";
+import { supabase } from "@/lib/supabase";
 
 type Segment = "Communities" | "My communities";
 type Community = { id: string; name: string; description: string; area: string; category: string; visibility: string };
-type FollowedCommunity = Community & { membership?: { joined_at: string } };
+type JoinedCommunity = Community & { membership?: { joined_at: string } };
 
 export default function SocialScreen() {
   const colors = useColors();
@@ -18,21 +19,21 @@ export default function SocialScreen() {
   const [authGateAction, setAuthGateAction] = useState<string | null>(null);
   const [segment, setSegment] = useState<Segment>("Communities");
   const [communities, setCommunities] = useState<Community[]>([]);
-  const [following, setFollowing] = useState<FollowedCommunity[]>([]);
+  const [joinedCommunities, setJoinedCommunities] = useState<JoinedCommunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setFollowing([]);
+    setJoinedCommunities([]);
     const publicResult = await listCommunities();
     setCommunities((publicResult.data ?? []) as Community[]);
     if (user) {
       const result = await supabase?.from("community_members").select("joined_at, communities(id, name, description, area, category, visibility)").eq("user_id", user.id).order("joined_at", { ascending: false });
-      setFollowing(((result?.data ?? []) as any[]).map((row) => ({ ...(row.communities ?? {}), membership: { joined_at: row.joined_at } })).filter((item) => item.id));
+      setJoinedCommunities(((result?.data ?? []) as any[]).map((row) => ({ ...(row.communities ?? {}), membership: { joined_at: row.joined_at } })).filter((item) => item.id));
       setError(publicResult.error?.message ?? result?.error?.message ?? null);
-    } else { setFollowing([]); setError(publicResult.error?.message ?? null); }
+    } else { setJoinedCommunities([]); setError(publicResult.error?.message ?? null); }
     setLoading(false);
   }, [user]);
   useEffect(() => { void load(); }, [load]);
@@ -49,8 +50,8 @@ export default function SocialScreen() {
       <View style={styles.sectionRow}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Public communities</Text><Pressable onPress={createCommunity} accessibilityRole="button" style={[styles.createButton, { backgroundColor: colors.surface, borderColor: colors.border }]}><IconSymbol name="plus" size={16} color={colors.primary} /><Text style={[styles.createText, { color: colors.primary }]}>New</Text></Pressable></View>
       {loading ? <LoadingState colors={colors} /> : error ? <ErrorState colors={colors} message={error} onRetry={() => void load()} /> : communities.length === 0 ? <EmptyState colors={colors} title="No communities yet" body="Be the first to start one in your area." action="Create community" onPress={createCommunity} /> : communities.map((community) => <CommunityRow key={community.id} community={community} colors={colors} onPress={() => openCommunity(community)} />)}
     </> : segment === "My communities" ? <>
-      <View style={styles.sectionRow}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>My communities</Text><Text style={[styles.count, { color: colors.muted }]}>{following.length}</Text></View>
-      {loading ? <LoadingState colors={colors} /> : following.length === 0 ? <EmptyState colors={colors} title="No joined communities yet" body="Join a community and it will appear here." action="Browse communities" onPress={() => setSegment("Communities")} /> : following.map((community) => <CommunityRow key={community.id} community={community} colors={colors} onPress={() => openCommunity(community)} />)}
+      <View style={styles.sectionRow}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>My communities</Text><Text style={[styles.count, { color: colors.muted }]}>{joinedCommunities.length}</Text></View>
+      {loading ? <LoadingState colors={colors} /> : joinedCommunities.length === 0 ? <EmptyState colors={colors} title="No joined communities yet" body="Join a community and it will appear here." action="Browse communities" onPress={() => setSegment("Communities")} /> : joinedCommunities.map((community) => <CommunityRow key={community.id} community={community} colors={colors} onPress={() => openCommunity(community)} />)}
     </> : null}
   </ScrollView></ScreenContainer>;
 }
