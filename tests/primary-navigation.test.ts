@@ -25,7 +25,7 @@ describe("primary navigation hierarchy", () => {
     expect(communities).toContain('type Segment = "Communities" | "My communities"');
     expect(communities).not.toContain("MessagesPreview");
     expect(inbox).toContain("MessagesScreen inTab");
-    expect(messages).toContain("inTab ? \"Inbox\" : \"Messages\"");
+    expect(messages).toContain(">Inbox</Text>");
   });
 
   it("routes message actions from profiles and Buddies into the Inbox tab", () => {
