@@ -42,8 +42,12 @@ export default function MessagesScreen() {
     void Promise.all(conversations.map(async (conversation) => {
       const path = conversation.other_profile?.profile_image_path;
       if (!path) return null;
-      const result = await createSignedMediaUrl(path);
-      return result.data?.signedUrl ? [conversation.id, result.data.signedUrl] as const : null;
+      try {
+        const result = await createSignedMediaUrl(path);
+        return result.data?.signedUrl ? [conversation.id, result.data.signedUrl] as const : null;
+      } catch {
+        return null;
+      }
     })).then((pairs) => {
       if (active) setConversationAvatarUrls(Object.fromEntries(pairs.filter(Boolean) as Array<readonly [string, string]>));
     }).catch(() => { if (active) setConversationAvatarUrls({}); });
