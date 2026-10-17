@@ -190,7 +190,7 @@ export default function ResetPasswordScreen() {
         return;
       }
       // The password is now changed; do not keep the recovery session active.
-      await supabase.auth.signOut({ scope: "local" });
+      void supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
       router.replace("/auth?resetSuccess=1");
     } catch (updateError) {
       setError(updateError instanceof Error && updateError.message
