@@ -20,12 +20,12 @@ describe("Lekka profile settings", () => {
 
   it("normalizes invalid stored values to safe privacy defaults", async () => {
     storage.set("lekka/profile-settings/v1", JSON.stringify({ notificationsEnabled: false, locationVisibility: "exact" }));
-    await expect(loadProfileSettings()).resolves.toEqual({ notificationsEnabled: false, locationVisibility: "area" });
+    await expect(loadProfileSettings()).resolves.toEqual({ locationVisibility: "area" });
   });
 
-  it("persists notification and approximate-area preferences", async () => {
-    await saveProfileSettings({ notificationsEnabled: false, locationVisibility: "hidden" });
-    await expect(loadProfileSettings()).resolves.toEqual({ notificationsEnabled: false, locationVisibility: "hidden" });
+  it("persists the approximate-area privacy preference", async () => {
+    await saveProfileSettings({ locationVisibility: "hidden" });
+    await expect(loadProfileSettings()).resolves.toEqual({ locationVisibility: "hidden" });
   });
 
   it("persists username history and blocks changes within the cooldown", async () => {

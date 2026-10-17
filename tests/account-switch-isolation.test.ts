@@ -15,7 +15,7 @@ describe("account-switch privacy", () => {
   });
 
   it("reloads and clears private messages when the account or conversation changes", () => {
-    const messages = read("app/messages.tsx");
+    const messages = read("app/(tabs)/messages.tsx");
     expect(messages).toContain("[isAuthenticated, user?.id, conversationId]");
     expect(messages).toContain("setSelected(null)");
     expect(messages).toContain("setMessages([])");
@@ -24,7 +24,7 @@ describe("account-switch privacy", () => {
   it("clears notifications and saved posts before loading another account", () => {
     const notifications = read("app/notifications.tsx");
     const saved = read("app/saved.tsx");
-    expect(notifications).toContain("[isAuthenticated, user?.id]");
+    expect(notifications).toContain("[isAuthenticated, user?.id, retryKey]");
     expect(notifications).toContain("setItems([])");
     expect(saved).toContain("[isAuthenticated, user?.id]");
     expect(saved).toContain("setPosts([])");
@@ -32,7 +32,7 @@ describe("account-switch privacy", () => {
 
   it("refreshes account-specific relationship state on public profiles", () => {
     const profile = read("app/public-profile/[id].tsx");
-    expect(profile).toContain("[id, user?.id]");
+    expect(profile).toContain("[id, user?.id, reloadKey]");
     expect(profile).toContain("setFollowing(false)");
   });
 });
