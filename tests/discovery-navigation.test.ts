@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 import { getDiscoveryDestination } from "../lib/discovery-navigation";
 
@@ -35,7 +35,12 @@ describe("canonical discovery destinations", () => {
 });
 
 describe("discovery content-type filtering", () => {
-  const migration = readFileSync(resolve(process.cwd(), "supabase/migrations/20261015123000_fix_discovery_category_filters.sql"), "utf8");
+  const migrationNames = readdirSync(resolve(process.cwd(), "supabase/migrations"))
+    .filter((name) => /^\d+_fix_discovery_category_filters\.sql$/.test(name));
+  if (migrationNames.length !== 1) {
+    throw new Error(`Expected exactly one discovery category migration, found ${migrationNames.length}`);
+  }
+  const migration = readFileSync(resolve(process.cwd(), "supabase/migrations", migrationNames[0]), "utf8");
 
   it("filters category-backed posts by category instead of their generic post kind", () => {
     expect(migration).toContain("lower(coalesce(p.category,''))=n.content_type");
