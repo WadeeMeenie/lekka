@@ -8,7 +8,7 @@ import { router, useFocusEffect } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { useColors } from "@/hooks/use-colors";
 import { getPasswordRuleResults, getPasswordStrength, isStrongPassword } from "@/lib/password-rules";
-import { getRecoveryTokens, isRecoveryLink } from "@/lib/recovery-link";
+import { getRecoveryCode, getRecoveryTokens, isRecoveryLink } from "@/lib/recovery-link";
 import { haptic } from "@/lib/haptics";
 import { createSecurePassword } from "@/lib/secure-password";
 import { INVALID_RESET_LINK_BODY, INVALID_RESET_LINK_TITLE, REQUEST_NEW_LINK_LABEL } from "@/lib/reset-link-messages";
@@ -126,36 +126,50 @@ export default function ResetPasswordScreen() {
 
   useEffect(() => {
     let mounted = true;
+    let handledUrl = "";
+    const showInvalidLink = () => {
+      if (!mounted) return;
+      setReady(false);
+      setLinkInvalid(true);
+      setError(INVALID_RESET_LINK_BODY);
+    };
     const handleUrl = async (url: string | null) => {
-      if (!url || !isRecoveryLink(url) || !supabase) {
-        if (mounted) {
-          setLinkInvalid(true);
-          setError(INVALID_RESET_LINK_BODY);
-        }
+      if (!url || handledUrl === url) return;
+      handledUrl = url;
+      if (!supabase || (!isRecoveryLink(url) && !getRecoveryCode(url))) {
+        showInvalidLink();
         return;
       }
-      const tokens = getRecoveryTokens(url);
-      if (!tokens) {
-        if (mounted) {
-          setLinkInvalid(true);
-          setError(INVALID_RESET_LINK_BODY);
+
+      try {
+        // Supabase can return either implicit-flow access/refresh tokens or a PKCE code.
+        const tokens = getRecoveryTokens(url);
+        const result = tokens
+          ? await supabase.auth.setSession({ access_token: tokens.accessToken, refresh_token: tokens.refreshToken })
+          : await supabase.auth.exchangeCodeForSession(getRecoveryCode(url)!);
+        if (!mounted) return;
+        if (result.error || !result.data.session) {
+          showInvalidLink();
+          return;
         }
-        return;
-      }
-      const { error: sessionError } = await supabase.auth.setSession({ access_token: tokens.accessToken, refresh_token: tokens.refreshToken });
-      if (mounted) {
-        setLinkInvalid(Boolean(sessionError));
-        setError(sessionError ? INVALID_RESET_LINK_BODY : null);
-        setReady(!sessionError);
+        setLinkInvalid(false);
+        setError(null);
+        setReady(true);
+      } catch {
+        showInvalidLink();
       }
     };
-    void Linking.getInitialURL().then(handleUrl);
+    void Linking.getInitialURL().then(handleUrl).catch(() => showInvalidLink());
     const subscription = Linking.addEventListener("url", ({ url }) => void handleUrl(url));
     return () => { mounted = false; subscription.remove(); };
   }, []);
 
   const save = async () => {
     setError(null);
+    if (!ready) {
+      setError("Verify your reset link before saving a new password.");
+      return;
+    }
     if (!isStrongPassword(newPassword)) {
       setError("Choose a stronger password using all of the requirements below.");
       return;
@@ -169,13 +183,22 @@ export default function ResetPasswordScreen() {
       return;
     }
     setBusy(true);
-    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-    setBusy(false);
-    if (updateError) {
-      setError("Lekka could not update your password. Request a new reset link and try again.");
-      return;
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+      if (updateError) {
+        setError(updateError.message || "Lekka could not update your password. Request a new reset link and try again.");
+        return;
+      }
+      // The password is now changed; do not keep the recovery session active.
+      void supabase.auth.signOut({ scope: "local" }).catch(() => undefined);
+      router.replace("/auth?resetSuccess=1");
+    } catch (updateError) {
+      setError(updateError instanceof Error && updateError.message
+        ? updateError.message
+        : "Lekka could not update your password. Check your connection and try again.");
+    } finally {
+      setBusy(false);
     }
-    router.replace("/auth?resetSuccess=1");
   };
 
   const strength = getPasswordStrength(newPassword);
