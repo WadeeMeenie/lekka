@@ -244,9 +244,11 @@ describe("production hardening", () => {
     expect(yocoTransitionMigration).toContain("to service_role");
   });
 
-  it("scopes offline feed and active identity storage to the authenticated account", () => {
-    expect(localRadarSource).toContain("local-radar/posts/v2");
-    expect(localRadarSource).toContain('POSTS_KEY + "/" + userId');
+  it("scopes offline drafts and active identity storage to the authenticated account", () => {
+    const outboxSource = readFileSync(resolve(process.cwd(), "lib/offline-outbox.ts"), "utf8");
+    expect(localRadarSource).not.toContain("local-radar/posts/v2");
+    expect(outboxSource).toContain("lekka/outbox/posts/");
+    expect(outboxSource).toContain("keyFor(ownerId)");
     expect(activeIdentitySource).toContain("lekka/active-identity/v2");
     expect(activeIdentitySource).toContain('ACTIVE_IDENTITY_KEY + "/" + user.id');
   });

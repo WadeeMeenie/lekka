@@ -2,7 +2,7 @@ import { File } from "expo-file-system/next";
 import { AppState } from "react-native";
 import { isSupabaseConfigured, supabase } from "@/lib/supabase";
 import { DeviceLocation } from "@/lib/location";
-import { LocalPost, LocalSettings, RadarCategory, RadarItem, discoveryRadiusToMeters, loadPosts, loadSettings, savePosts } from "@/lib/local-radar";
+import { LocalPost, RadarCategory } from "@/lib/local-radar";
 import type { SocialPost } from "@/lib/social-repository";
 
 function toLocalPost(row: any): LocalPost {
@@ -46,19 +46,6 @@ async function hydratePostData(posts: LocalPost[]): Promise<LocalPost[]> {
   const businesses = new Map<string, { name: string; logo_path: string | null; verification_state: string }>();
   for (const row of (businessResult.data ?? []) as Array<{ id: string; name: string; logo_path: string | null; verification_state: string }>) businesses.set(row.id, row);
   return posts.map((post) => { const profile = post.authorId ? profiles.get(post.authorId) : undefined; const listing = listingData.get(post.id); const businessId = listing?.business_id ?? post.businessId ?? null; const business = businessId ? businesses.get(businessId) : undefined; return { ...post, author: profile?.display_name || post.author, initials: (business?.name || profile?.display_name || post.author).slice(0, 2).toUpperCase(), profileImagePath: post.profileImagePath ?? profile?.profile_image_path ?? null, mediaPath: post.mediaPath ?? firstMedia.get(post.id) ?? null, details: listing?.details ?? post.details ?? {}, marketplacePriceCents: listing?.marketplace_price_cents ?? post.marketplacePriceCents ?? null, marketplaceCondition: listing?.marketplace_condition ?? post.marketplaceCondition ?? null, marketplaceStatus: listing?.marketplace_status ?? post.marketplaceStatus ?? "available", businessId, businessName: business?.name ?? null, businessLogoPath: business?.logo_path ?? null, businessVerified: business?.verification_state === "verified" }; });
-}
-
-export async function fetchFeedPosts(location?: DeviceLocation): Promise<LocalPost[]> {
-  if (!isSupabaseConfigured || !supabase) return loadPosts();
-  const { data: { user } } = await supabase.auth.getUser();
-  const cached = await loadPosts(user?.id);
-  if (!user) return cached;
-  const result = location ? await supabase.rpc("nearby_feed_posts", { latitude: location.latitude, longitude: location.longitude, radius_meters: 5000 }) : await supabase.from("posts").select(`id, author_id, kind, category, title, body, area, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).limit(50);
-  const { data, error } = result;
-  if (error || !data) return cached;
-  const posts = await hydratePostData(data.map(toLocalPost));
-  await savePosts(posts, user.id);
-  return posts;
 }
 
 const localFeedListeners = new Set<() => void>();
@@ -136,11 +123,7 @@ export async function createPost(input: { kind: LocalPost["kind"]; category?: Ra
   return result;
 }
 
-export async function fetchNearbyItems(location?: DeviceLocation, settings?: LocalSettings, category?: RadarCategory | "All"): Promise<RadarItem[]> {
-  const activeSettings = settings ?? await loadSettings(); if (!isSupabaseConfigured || !supabase || !location) return [];
-  const { data, error } = await supabase.rpc("nearby_radar", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusToMeters(activeSettings.radius), category_filter: category && category !== "All" ? category : null }); if (error || !data) return []; return data as RadarItem[];
-}
-const radiusToMeters = discoveryRadiusToMeters;
+
 export async function updateMarketplaceStatus(postId: string, status: "available" | "reserved" | "sold") {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
   const { data: { user } } = await supabase.auth.getUser();
@@ -165,18 +148,49 @@ export async function attachPostMedia(input: { postId: string; storagePath: stri
   return result;
 }
 
-export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean };
-export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20, radiusMeters = 5000): Promise<FeedPage> {
-  if (!isSupabaseConfigured || !supabase) return { posts: [], nextCursor: null, hasMore: false };
-  const { data: { user } } = await supabase.auth.getUser();
-  const cached = await loadPosts(user?.id);
-  if (!user) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false };
-  const cursorParts = cursor ? cursor.split("|") : []; const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null; const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null; let result: any;
-  if (location) result = await supabase.rpc("nearby_feed_posts_page", { latitude: location.latitude, longitude: location.longitude, radius_meters: radiusMeters, cursor_created_at: cursorCreatedAt, cursor_id: cursorId, page_size: pageSize });
-  else { let query = supabase.from("posts").select(`id, author_id, kind, category, title, body, trust_score, created_at, ${PROFILE_SELECT}`).order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize); if (cursorCreatedAt && cursorId) query = query.or(`created_at.lt.${cursorCreatedAt},and(created_at.eq.${cursorCreatedAt},id.lt.${cursorId})`); result = await query; }
-  if (result.error || !result.data) return { posts: cursor ? [] : cached, nextCursor: null, hasMore: false }; const rows = result.data as Array<{ id: string; created_at: string }>; const posts = await hydratePostData(rows.map(toLocalPost)); const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null; return { posts, nextCursor: next, hasMore: Boolean(next) };
-}
+export type FeedPage = { posts: LocalPost[]; nextCursor: string | null; hasMore: boolean; error: { message: string } | null };
 
+export async function fetchFeedPage(location: DeviceLocation | undefined, cursor: string | null, pageSize = 20, radiusMeters = 5000, areaFilter?: string): Promise<FeedPage> {
+  const emptyPage = (error: { message: string } | null): FeedPage => ({ posts: [], nextCursor: null, hasMore: false, error });
+  if (!isSupabaseConfigured || !supabase) return emptyPage(new Error("Supabase is not configured"));
+  try {
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError) return emptyPage(authError);
+    if (!user) return emptyPage(new Error("Please sign in to load your feed"));
+    const cursorParts = cursor ? cursor.split("|") : [];
+    const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null;
+    const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null;
+    let result: any;
+    if (location) {
+      result = await supabase.rpc("nearby_feed_posts_page", {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        radius_meters: radiusMeters,
+        cursor_created_at: cursorCreatedAt,
+        cursor_id: cursorId,
+        page_size: pageSize,
+      });
+    } else {
+      const normalizedArea = areaFilter?.trim();
+      if (!normalizedArea || normalizedArea.toLowerCase() === "your area") {
+        return emptyPage(new Error("Choose an area or allow approximate location to see nearby posts"));
+      }
+      let query = supabase.from("posts").select("id, author_id, kind, category, title, body, trust_score, created_at, " + PROFILE_SELECT)
+        .ilike("area", "%" + normalizedArea + "%")
+        .order("created_at", { ascending: false }).order("id", { ascending: false }).limit(pageSize);
+      if (cursorCreatedAt && cursorId) query = query.or("created_at.lt." + cursorCreatedAt + ",and(created_at.eq." + cursorCreatedAt + ",id.lt." + cursorId + ")");
+      result = await query;
+    }
+    if (result.error) return emptyPage(result.error);
+    if (!result.data) return emptyPage(new Error("Supabase returned no feed data"));
+    const rows = result.data as Array<{ id: string; created_at: string }>;
+    const posts = await hydratePostData(rows.map(toLocalPost));
+    const next = rows.length === pageSize ? `${rows[rows.length - 1].created_at}|${rows[rows.length - 1].id}` : null;
+    return { posts, nextCursor: next, hasMore: Boolean(next), error: null };
+  } catch (error) {
+    return emptyPage(error instanceof Error ? error : new Error("Could not load the feed"));
+  }
+}
 export async function listPublicProfilePosts(profileId: string, cursor: string | null, pageSize = 20) {
   if (!supabase) return { data: [] as SocialPost[], nextCursor: null as string | null, hasMore: false, error: new Error("Backend is not configured") };
   const cursorParts = cursor ? cursor.split("|") : []; const cursorCreatedAt = cursorParts.length > 1 ? cursorParts.slice(0, -1).join("|") : null; const cursorId = cursorParts.length > 1 ? cursorParts[cursorParts.length - 1] : null;
