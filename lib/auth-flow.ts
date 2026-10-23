@@ -22,3 +22,9 @@ export function isOnboardingFlowPath(pathname: string): boolean {
 export function isEntryPath(pathname: string): boolean {
   return pathname === "/" || pathname === "/index" || pathname.startsWith("/(tabs)");
 }
+
+
+/** First-time or unfinished users must complete onboarding after authentication. */
+export function getPostAuthRoute(onboardingCompleted: boolean): "/(tabs)" | "/onboarding" {
+  return onboardingCompleted ? "/(tabs)" : "/onboarding";
+}
