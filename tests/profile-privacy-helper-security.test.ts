@@ -28,7 +28,7 @@ describe("profile privacy helper API boundary", () => {
     expect(migration).toContain("create or replace function public.nearby_feed_posts(");
     expect(migration).toContain("create or replace function public.nearby_post_detail");
     expect(migration).toContain("not private.is_profile_private(p.author_id)");
-    expect(migration.match(/not private\\.is_profile_private\\(p\\.author_id\\)/g)?.length).toBe(3);
+    expect(migration.split("not private.is_profile_private(p.author_id)").length - 1).toBe(3);
   });
 
   it("prevents the nearby detail RPC from bypassing private-profile and block filtering", () => {
@@ -53,6 +53,10 @@ describe("profile privacy helper API boundary", () => {
     expect(verification).toContain("pg_policies");
     expect(verification).toContain("public.nearby_post_detail");
     expect(verification).toContain("raise notice 'PASS:");
-    expect(verification).not.toMatch(/\\b(insert|update|delete|drop|alter|create)\\s+(table|schema|function|policy|role)\\b/i);
+    expect(verification).toContain("Read-only post-deployment verification");
+    expect(verification.toLowerCase()).not.toContain("insert into ");
+    expect(verification.toLowerCase()).not.toContain("update public.");
+    expect(verification.toLowerCase()).not.toContain("delete from ");
+    expect(verification.toLowerCase()).not.toContain("drop function ");
   });
 });
