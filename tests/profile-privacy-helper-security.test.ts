@@ -22,7 +22,7 @@ describe("profile privacy helper API boundary", () => {
     expect(migration).toContain("create or replace function public.nearby_feed_posts_page");
     expect(migration).toContain("not private.is_profile_private(p.author_id)");
     expect(migration).toContain("create or replace function public.nearby_feed_posts(");
-    expect(migration.match(/not private\\.is_profile_private\(p\.author_id\)/g)?.length).toBe(2);
+    expect(migration.match(/not private\.is_profile_private\(p\.author_id\)/g)?.length).toBe(2);
   });
 
   it("preserves authenticated-only feed RPC grants", () => {
