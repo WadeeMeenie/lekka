@@ -13,7 +13,8 @@ import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFoot
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
-import { loadOnboardingState } from "@/lib/onboarding";
+import { requestApproximateLocation } from "@/lib/location";
+import { loadOnboardingState, saveOnboardingState } from "@/lib/onboarding";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -62,7 +63,35 @@ export default function AuthScreen() {
     }
 
     if (mode === "signIn" && next === "onboarding") {
-      router.replace("/onboarding?resume=1" as never);
+      const onboarding = await loadOnboardingState();
+      if (onboarding.completed) {
+        router.replace("/(tabs)");
+        return;
+      }
+      if (onboarding.step === "account") {
+        router.replace("/onboarding?resume=1" as never);
+        return;
+      }
+
+      // Preserve the first-run location permission prompt when returning from sign-in.
+      const location = await requestApproximateLocation(onboarding.area);
+      const accountIntent = intent ?? onboarding.accountIntent ?? "personal";
+      if (location.status === "granted") {
+        await saveOnboardingState({
+          accountIntent,
+          step: "personalize",
+          location: location.location,
+          area: location.location.area,
+        });
+      } else {
+        await saveOnboardingState({
+          accountIntent,
+          step: "location",
+          location: null,
+          area: location.area,
+        });
+      }
+      router.replace("/onboarding" as never);
       return;
     }
 
