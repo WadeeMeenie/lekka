@@ -83,6 +83,44 @@ if (fs.existsSync(migrationsDir)) {
   if (!migrationFiles.some((name) => /delete_own_posts|own_posts/i.test(name))) warnings.push("No own-post deletion migration filename was found; verify the authenticated own-post DELETE policy remains present.");
   if (!migrationFiles.some((name) => /media_lifecycle_cleanup/i.test(name))) errors.push("Media lifecycle cleanup migration is missing; deleted media must be queued for Storage deletion.");
   if (!migrationFiles.some((name) => /business_logo_media_lifecycle/i.test(name))) errors.push("Business logo media lifecycle migration is missing; replaced/deleted business logos must be queued for Storage deletion.");
+
+  // The permissive moderator UPDATE policy is safe only while its database trigger
+  // restricts moderation updates to pin state. Guard the trigger and protected fields
+  // against accidental removal in future migrations.
+  const migrationSql = migrationFiles
+    .map((name) => read(path.join(migrationsDir, name)))
+    .join("\n")
+    .toLowerCase()
+    .replace(/\s+/g, " ");
+  if (!migrationSql.includes("create trigger enforce_community_post_moderation before update on public.posts")) {
+    errors.push("Community post moderation trigger is missing; moderators must not be able to rewrite post content or ownership.");
+  }
+  if (!migrationSql.includes("create or replace function private.enforce_community_post_moderation()")) {
+    errors.push("Community post moderation guard function is missing.");
+  }
+  for (const field of [
+    "new.id is distinct from old.id",
+    "new.author_id is distinct from old.author_id",
+    "new.business_id is distinct from old.business_id",
+    "new.community_id is distinct from old.community_id",
+    "new.kind is distinct from old.kind",
+    "new.category is distinct from old.category",
+    "new.title is distinct from old.title",
+    "new.body is distinct from old.body",
+    "new.visibility is distinct from old.visibility",
+    "new.area is distinct from old.area",
+    "new.approximate_location is distinct from old.approximate_location",
+    "new.alert_status is distinct from old.alert_status",
+    "new.engagement_count is distinct from old.engagement_count",
+    "new.trust_score is distinct from old.trust_score",
+    "new.created_at is distinct from old.created_at",
+    "new.updated_at is distinct from old.updated_at",
+  ]) {
+    if (!migrationSql.includes(field)) errors.push(`Community post moderation guard no longer protects ${field.replace(/new\.|old\./g, "")}.`);
+  }
+  if (!migrationSql.includes("community moderation may only change pin state")) {
+    errors.push("Community moderation guard must reject changes outside pin state.");
+  }
 }
 requireFile(path.join(root, "supabase", "functions", "cleanup-media", "index.ts"), "Media cleanup Edge Function");
 requireFile(path.join(root, "supabase", "config.toml"), "Supabase function configuration");
