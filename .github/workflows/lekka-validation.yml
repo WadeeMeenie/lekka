@@ -59,7 +59,7 @@ jobs:
   android:
     name: Android native build
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -72,6 +72,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+          cache: gradle
+          cache-dependency-path: package.json
       - name: Validate Supabase build configuration
         shell: bash
         run: |
@@ -87,13 +89,26 @@ jobs:
       - name: Expo prebuild
         env:
           NODE_ENV: production
-        run: npx expo prebuild --no-install --non-interactive --clean
+          CI: '1'
+        run: npx expo prebuild --no-install --clean
       - name: Verify generated native project
         working-directory: android
+        shell: bash
         run: |
+          set -euo pipefail
           test -f gradlew
           grep -q '^newArchEnabled=true' gradle.properties
-          ./gradlew :app:tasks --all --no-daemon >/tmp/gradle-tasks.txt
+          for attempt in 1 2 3; do
+            if ./gradlew :app:tasks --all --no-daemon >/tmp/gradle-tasks.txt; then
+              break
+            fi
+            if [[ "$attempt" -eq 3 ]]; then
+              echo "Gradle task discovery failed after 3 attempts."
+              exit 1
+            fi
+            echo "Gradle dependency/task discovery failed (attempt $attempt); retrying after a short delay."
+            sleep "$((attempt * 15))"
+          done
           grep -q 'assembleDebug' /tmp/gradle-tasks.txt
           grep -q 'assembleInternalDebug' /tmp/gradle-tasks.txt
       - name: Android debug build
