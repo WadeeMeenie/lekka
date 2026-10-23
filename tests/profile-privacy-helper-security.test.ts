@@ -16,13 +16,23 @@ describe("profile privacy helper API boundary", () => {
     expect(migration).not.toContain("create or replace function public.is_profile_private");
   });
 
-  it("updates the posts RLS policy and both nearby feed RPCs together", () => {
+  it("updates the posts RLS policy, both nearby feed RPCs, and detail RPC together", () => {
     expect(migration).toContain("create policy posts_public_read");
     expect(migration).toContain("not private.is_profile_private(author_id)");
     expect(migration).toContain("create or replace function public.nearby_feed_posts_page");
-    expect(migration).toContain("not private.is_profile_private(p.author_id)");
     expect(migration).toContain("create or replace function public.nearby_feed_posts(");
-    expect(migration.match(/not private\.is_profile_private\(p\.author_id\)/g)?.length).toBe(2);
+    expect(migration).toContain("create or replace function public.nearby_post_detail");
+    expect(migration).toContain("not private.is_profile_private(p.author_id)");
+    expect(migration.match(/not private\\.is_profile_private\\(p\\.author_id\\)/g)?.length).toBe(3);
+  });
+
+  it("prevents the nearby detail RPC from bypassing private-profile and block filtering", () => {
+    const detail = migration.slice(migration.indexOf("create or replace function public.nearby_post_detail"));
+    expect(detail).toContain("not public.is_blocked_between((select auth.uid()), p.author_id)");
+    expect(detail).toContain("not private.is_profile_private(p.author_id)");
+    expect(detail).toContain("public.can_view_full_profile((select auth.uid()), p.author_id)");
+    expect(detail).toContain("revoke all on function public.nearby_post_detail");
+    expect(detail).toContain("to authenticated");
   });
 
   it("preserves authenticated-only feed RPC grants", () => {
