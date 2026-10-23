@@ -7,13 +7,14 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ScreenContainer } from "@/components/screen-container";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
-import { hasAuthSession, isAuthTimeout } from "@/lib/auth-flow";
+import { getPostAuthRoute, hasAuthSession, isAuthTimeout } from "@/lib/auth-flow";
 import { asyncErrorMessage } from "@/lib/async-error";
 import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFooter, getConfirmationEmailIntro, getConfirmationEmailSubject, getPasswordToggleIcon, getPasswordToggleLabel, LEKKA_CONFIRMATION_MESSAGE } from "@/lib/auth-messages";
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
 import { requestApproximateLocation } from "@/lib/location";
+import { loadOnboardingState, saveOnboardingState } from "@/lib/onboarding";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -56,12 +57,51 @@ export default function AuthScreen() {
   const isSignIn = mode === "signIn";
 
   const continueToNext = async () => {
-    await requestApproximateLocation();
-    if (mode === "signIn") {
-      router.replace("/(tabs)");
+    if (next === "business-invite" && token) {
+      router.replace(`/business-invite?token=${encodeURIComponent(token)}` as never);
       return;
     }
-    router.replace((next === "business-invite" && token ? `/business-invite?token=${encodeURIComponent(token)}` : intent === "business" ? "/business-setup" : next === "onboarding" ? "/onboarding?resume=1" : "/(tabs)") as never);
+
+    if (mode === "signIn" && next === "onboarding") {
+      const onboarding = await loadOnboardingState();
+      if (onboarding.completed) {
+        router.replace("/(tabs)");
+        return;
+      }
+      if (onboarding.step === "account") {
+        router.replace("/onboarding?resume=1" as never);
+        return;
+      }
+
+      // Preserve the first-run location permission prompt when returning from sign-in.
+      const location = await requestApproximateLocation(onboarding.area);
+      const accountIntent = intent ?? onboarding.accountIntent ?? "personal";
+      if (location.status === "granted") {
+        await saveOnboardingState({
+          accountIntent,
+          step: "personalize",
+          location: location.location,
+          area: location.location.area,
+        });
+      } else {
+        await saveOnboardingState({
+          accountIntent,
+          step: "location",
+          location: null,
+          area: location.area,
+        });
+      }
+      router.replace("/onboarding" as never);
+      return;
+    }
+
+    if (mode === "signUp" && intent === "business") {
+      router.replace("/business-setup" as never);
+      return;
+    }
+
+    const onboarding = await loadOnboardingState();
+    router.replace(getPostAuthRoute(onboarding.completed) as never);
   };
 
   const submit = async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { authFailureMessage, hasAuthSession, isAuthTimeout, isEntryPath, isOnboardingFlowPath } from "../lib/auth-flow";
+import { authFailureMessage, getPostAuthRoute, hasAuthSession, isAuthTimeout, isEntryPath, isOnboardingFlowPath } from "../lib/auth-flow";
 
 describe("auth flow regressions", () => {
   it("recognizes a completed Supabase session", () => {
@@ -13,6 +13,11 @@ describe("auth flow regressions", () => {
     expect(isAuthTimeout(new Error("The sign-in request timed out. Check your connection and try again."))).toBe(true);
     expect(isAuthTimeout(new Error("Invalid login credentials"))).toBe(false);
     expect(authFailureMessage(null)).toContain("request could not be completed");
+  });
+
+  it("routes incomplete onboarding users back into onboarding after authentication", () => {
+    expect(getPostAuthRoute(false)).toBe("/onboarding");
+    expect(getPostAuthRoute(true)).toBe("/(tabs)");
   });
 
   it("keeps onboarding sub-routes out of the entry redirect", () => {

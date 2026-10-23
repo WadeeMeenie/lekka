@@ -19,10 +19,12 @@ const DISCOVERY_SETTINGS_KEY = "local-radar/settings/v2";
 
 export async function requestApproximateLocation(fallbackArea = "your area"): Promise<LocationResult> {
   if (Platform.OS === "web") return { status: "unavailable", area: fallbackArea };
-  const servicesEnabled = await Location.hasServicesEnabledAsync();
-  if (!servicesEnabled) return { status: "unavailable", area: fallbackArea };
+  // Request OS permission before checking device location services. Otherwise,
+  // users with GPS switched off never see Android's permission prompt.
   const permission = await Location.requestForegroundPermissionsAsync();
   if (permission.status !== Location.PermissionStatus.GRANTED) return { status: "denied", area: fallbackArea };
+  const servicesEnabled = await Location.hasServicesEnabledAsync();
+  if (!servicesEnabled) return { status: "unavailable", area: fallbackArea };
   const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced, mayShowUserSettingsDialog: true });
   return { status: "granted", location: await toDeviceLocation(position, fallbackArea) };
 }
