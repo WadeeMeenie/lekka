@@ -1,6 +1,6 @@
 -- Move profile-privacy metadata lookup out of the PostgREST-exposed public schema.
--- Keep all three authorization call sites in this same migration to avoid breaking
--- post reads or either nearby-feed RPC during rollout.
+-- Keep the posts-read policy, both nearby-feed RPCs, and nearby-detail RPC in this
+-- migration so profile privacy and block checks stay consistent during rollout.
 create schema if not exists private;
 revoke all on schema private from public, anon;
 grant usage on schema private to authenticated;
