@@ -13,7 +13,8 @@ import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFoot
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
-import { requestApproximateLocation } from "@/lib/location";
+import { loadOnboardingState } from "@/lib/onboarding";
+import { getPostAuthRoute } from "@/lib/auth-flow";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -56,12 +57,23 @@ export default function AuthScreen() {
   const isSignIn = mode === "signIn";
 
   const continueToNext = async () => {
-    await requestApproximateLocation();
-    if (mode === "signIn") {
-      router.replace("/(tabs)");
+    if (next === "business-invite" && token) {
+      router.replace(`/business-invite?token=${encodeURIComponent(token)}` as never);
       return;
     }
-    router.replace((next === "business-invite" && token ? `/business-invite?token=${encodeURIComponent(token)}` : intent === "business" ? "/business-setup" : next === "onboarding" ? "/onboarding?resume=1" : "/(tabs)") as never);
+
+    if (mode === "signIn" && next === "onboarding") {
+      router.replace("/onboarding?resume=1" as never);
+      return;
+    }
+
+    if (mode === "signUp" && intent === "business") {
+      router.replace("/business-setup" as never);
+      return;
+    }
+
+    const onboarding = await loadOnboardingState();
+    router.replace(getPostAuthRoute(onboarding.completed) as never);
   };
 
   const submit = async () => {
