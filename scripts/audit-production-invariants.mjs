@@ -138,7 +138,7 @@ requireFile(path.join(workflowDir, "lekka-validation.yml"), "GitHub validation w
 const workflowFiles = fs.existsSync(workflowDir) ? fs.readdirSync(workflowDir).filter((name) => name.endsWith(".yml") || name.endsWith(".yaml")) : [];
 if (workflowFiles.length !== 1 || workflowFiles[0] !== "lekka-validation.yml") errors.push(`Expected exactly one canonical validation workflow; found ${workflowFiles.join(", ") || "none"}.`);
 const workflow = read(path.join(workflowDir, "lekka-validation.yml"));
-for (const required of ["npm run check", "npm run audit:interactions", "npm test", "npm run lint", "npx expo install --check", "npx expo-doctor", ":app:assembleDebug", ":app:assembleInternalDebug"]) {
+for (const required of ["pnpm install --frozen-lockfile", "pnpm check", "pnpm audit:interactions", "pnpm test", "pnpm lint", "pnpm exec expo install --check", "pnpm exec expo-doctor", ":app:assembleDebug", ":app:assembleInternalDebug"]) {
   if (!workflow.includes(required)) errors.push(`Validation workflow is missing required gate: ${required}`);
 }
 

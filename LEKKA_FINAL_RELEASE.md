@@ -1,5 +1,7 @@
 # Lekka Final Real-World Validation and APK Delivery
 
+> **Historical snapshot, not current release evidence.** This report refers to commit `fc83760b6b51f8f55cecb77ca5736a9cdf2b77d4` and an APK path that is not present in the current sandbox. See `docs/LAUNCH_EXECUTION_STATUS.md` for the current source revision, validation, and release blockers.
+
 ## Build status
 
 **SUCCESS.** The current native Android release pipeline completed with `assembleRelease` using the constrained arm64 configuration. The APK is a valid ZIP/APK and was copied to `/home/ubuntu/Downloads/app-release.apk` for download.

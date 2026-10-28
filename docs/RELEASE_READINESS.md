@@ -42,3 +42,12 @@ This checklist is the release gate for the current production-hardening candidat
 - Reaction/save/follow/block now use transaction-serialized RPCs; verify them with concurrent and retry tests before high-traffic launch.
 - Physical-device and multi-account tests require real test accounts/devices and cannot be truthfully marked complete by CI alone.
 - The production project still has unresolved PostGIS metadata grants. Leaked-password protection is explicitly deferred because the current plan does not include it. Do not label the app fully launch-ready until the remaining required security, CI, device, payment, and release gates are closed.
+
+
+## Current implementation gate (2026-10-28)
+
+The live Supabase project currently reports `ACTIVE_HEALTHY` on PostgreSQL 17.6.1.155, and its recorded migration list extends through `20261017231856`. This does **not** close the PostGIS grant issue: a read-only catalog query still shows broad `anon` and `authenticated` privileges on `public.spatial_ref_sys`, whose owner is `supabase_admin`; the connected SQL session cannot act as that owner. See [the current launch issue register](./LAUNCH_EXECUTION_STATUS.md) for exact evidence and the work-in-progress branch.
+
+The current implementation is on `manus/launch-hardening-20261028`, based on main commit `d574bf56822b085555534279cb010f0cb5d61156`. Current local checks: TypeScript pass; **180 tests pass, 2 skipped**; interaction and production audits pass; Expo dependency check and 18/18 Expo Doctor checks pass; lint succeeds with 15 warnings; Android native prebuild succeeds. These checks are not yet a GitHub run on that branch and do not verify the new SQL against staging.
+
+**Release gate remains NOT READY.** No APK built from this source revision has been inspected, no physical device/test accounts were available, the new additive migration has not been applied, and PostGIS owner-level grants remain unresolved. The historical APK report is not evidence for this revision.

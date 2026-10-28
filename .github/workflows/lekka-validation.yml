@@ -25,10 +25,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - name: Validate Supabase build configuration
         shell: bash
         run: |
@@ -38,23 +43,23 @@ jobs:
           [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
           [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: pnpm install --frozen-lockfile
       - name: TypeScript
-        run: npm run check
+        run: pnpm check
       - name: Static interaction and route audit
-        run: npm run audit:interactions
+        run: pnpm audit:interactions
       - name: Production architecture and release invariant audit
-        run: npm run audit:production
+        run: pnpm audit:production
       - name: Unit and integration tests
-        run: npm test
+        run: pnpm test
       - name: Lint
-        run: npm run lint
+        run: pnpm lint
       - name: Expo config
-        run: npx expo config --type public
+        run: pnpm exec expo config --type public
       - name: Expo dependency compatibility
-        run: npx expo install --check
+        run: pnpm exec expo install --check
       - name: Expo doctor
-        run: npx expo-doctor
+        run: pnpm exec expo-doctor
 
   android:
     name: Android native build
@@ -63,10 +68,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.12.0
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: pnpm
       - name: Setup Java
         uses: actions/setup-java@v4
         with:
@@ -81,13 +91,14 @@ jobs:
           [[ "$EXPO_PUBLIC_SUPABASE_URL" == https://*.supabase.co ]]
           [[ "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == sb_publishable_* || "$EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY" == eyJ* ]]
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: pnpm install --frozen-lockfile
       - name: Expo config
-        run: npx expo config --type public
+        run: pnpm exec expo config --type public
       - name: Expo prebuild
         env:
           NODE_ENV: production
-        run: npx expo prebuild --no-install --non-interactive --clean
+          CI: "1"
+        run: pnpm exec expo prebuild --no-install --clean
       - name: Verify generated native project
         working-directory: android
         run: |
