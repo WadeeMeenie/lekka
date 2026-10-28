@@ -153,6 +153,8 @@ if (!packageJson.scripts?.["audit:production"]) errors.push("package.json must e
 const androidConfigPlugin = read(path.join(root, "plugins", "with-internal-debug-android.cjs"));
 if (!androidConfigPlugin.includes('require("expo/config-plugins")')) errors.push("The custom Android config plugin must use Expo's supported expo/config-plugins export.");
 if (packageJson.dependencies?.["@expo/config-plugins"] || packageJson.devDependencies?.["@expo/config-plugins"]) errors.push("Do not install @expo/config-plugins directly; import it through expo/config-plugins.");
+if (!packageJson.devDependencies?.tailwindcss && !packageJson.dependencies?.tailwindcss) errors.push("Tailwind CSS must be directly declared because tailwind.config.js imports tailwindcss/plugin under pnpm.");
+if (!packageJson.dependencies?.["react-native-css-interop"]) errors.push("react-native-css-interop must be directly declared because NativeWind's transformed JSX imports its runtime from app source files.");
 
 if (errors.length) {
   console.error("Production invariant audit failed:");
