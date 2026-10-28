@@ -156,6 +156,8 @@ if (packageJson.dependencies?.["@expo/config-plugins"] || packageJson.devDepende
 if (!packageJson.devDependencies?.tailwindcss && !packageJson.dependencies?.tailwindcss) errors.push("Tailwind CSS must be directly declared because tailwind.config.js imports tailwindcss/plugin under pnpm.");
 if (!packageJson.dependencies?.["react-native-css-interop"]) errors.push("react-native-css-interop must be directly declared because NativeWind's transformed JSX imports its runtime from app source files.");
 if (!packageJson.devDependencies?.["@babel/plugin-transform-react-jsx"]) errors.push("@babel/plugin-transform-react-jsx must be directly declared because NativeWind CSS interop's Babel preset loads it under pnpm.");
+const babelParserVersion = packageJson.devDependencies?.["@babel/parser"] ?? packageJson.dependencies?.["@babel/parser"];
+if (!babelParserVersion || !/^7\./.test(babelParserVersion)) errors.push("@babel/parser must remain on Babel 7 for compatibility with the Expo SDK 54 / React Native Worklets Babel 7 AST contract.");
 
 if (errors.length) {
   console.error("Production invariant audit failed:");
