@@ -109,10 +109,10 @@ jobs:
           grep -q 'assembleInternalDebug' /tmp/gradle-tasks.txt
       - name: Android debug build
         working-directory: android
-        run: ./gradlew :app:assembleDebug --no-daemon --stacktrace
+        run: NODE_ENV=production ./gradlew :app:assembleDebug --no-daemon --stacktrace
       - name: Android internal debug build
         working-directory: android
-        run: ./gradlew :app:assembleInternalDebug --no-daemon --stacktrace
+        run: NODE_ENV=production ./gradlew :app:assembleInternalDebug --no-daemon --stacktrace
       - name: Upload debug APKs
         uses: actions/upload-artifact@v4
         with:

@@ -150,6 +150,9 @@ if (!/yoco/i.test(allSource)) warnings.push("No YOCO reference found in app/lib 
 const packageJson = JSON.parse(read(packagePath) || "{}");
 if (packageJson.scripts?.["audit:interactions"] !== "node scripts/audit-interactions.mjs") errors.push("audit:interactions package script has changed unexpectedly.");
 if (!packageJson.scripts?.["audit:production"]) errors.push("package.json must expose audit:production so CI cannot skip this invariant layer.");
+const androidConfigPlugin = read(path.join(root, "plugins", "with-internal-debug-android.cjs"));
+if (!androidConfigPlugin.includes('require("expo/config-plugins")')) errors.push("The custom Android config plugin must use Expo's supported expo/config-plugins export.");
+if (packageJson.dependencies?.["@expo/config-plugins"] || packageJson.devDependencies?.["@expo/config-plugins"]) errors.push("Do not install @expo/config-plugins directly; import it through expo/config-plugins.");
 
 if (errors.length) {
   console.error("Production invariant audit failed:");

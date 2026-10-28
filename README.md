@@ -34,8 +34,8 @@ The canonical application ID is `com.app.localradarsa`. Native files are generat
 ```sh
 CI=1 pnpm exec expo prebuild --no-install --clean
 cd android
-./gradlew :app:assembleDebug --no-daemon
-./gradlew :app:assembleInternalDebug --no-daemon
+NODE_ENV=production ./gradlew :app:assembleDebug --no-daemon
+NODE_ENV=production ./gradlew :app:assembleInternalDebug --no-daemon
 ```
 
 GitHub Actions runs those debug build variants and uploads the APKs as workflow artifacts. The EAS configuration currently defines an internal preview APK profile. A production-signed store release still requires the authorized signing/distribution configuration and validation of the exact source commit; do not treat an old APK or a debug artifact as a production release.
