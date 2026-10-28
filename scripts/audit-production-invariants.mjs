@@ -155,6 +155,7 @@ if (!androidConfigPlugin.includes('require("expo/config-plugins")')) errors.push
 if (packageJson.dependencies?.["@expo/config-plugins"] || packageJson.devDependencies?.["@expo/config-plugins"]) errors.push("Do not install @expo/config-plugins directly; import it through expo/config-plugins.");
 if (!packageJson.devDependencies?.tailwindcss && !packageJson.dependencies?.tailwindcss) errors.push("Tailwind CSS must be directly declared because tailwind.config.js imports tailwindcss/plugin under pnpm.");
 if (!packageJson.dependencies?.["react-native-css-interop"]) errors.push("react-native-css-interop must be directly declared because NativeWind's transformed JSX imports its runtime from app source files.");
+if (!packageJson.devDependencies?.["@babel/plugin-transform-react-jsx"]) errors.push("@babel/plugin-transform-react-jsx must be directly declared because NativeWind CSS interop's Babel preset loads it under pnpm.");
 
 if (errors.length) {
   console.error("Production invariant audit failed:");

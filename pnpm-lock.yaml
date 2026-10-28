@@ -150,6 +150,9 @@ importers:
       '@babel/parser':
         specifier: ^8.0.8
         version: 8.0.8
+      '@babel/plugin-transform-react-jsx':
+        specifier: 7.29.7
+        version: 7.29.7(@babel/core@7.29.7)
       '@expo/ngrok':
         specifier: ^4.1.3
         version: 4.1.3
