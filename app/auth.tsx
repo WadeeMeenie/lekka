@@ -14,6 +14,7 @@ import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessa
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
 import { loadOnboardingState, saveOnboardingState } from "@/lib/onboarding";
+import { requestApproximateLocation } from "@/lib/location";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -64,7 +65,26 @@ export default function AuthScreen() {
     // Onboarding is a registration-only flow. Returning users must never be
     // sent back through the welcome/location/personalization screens at sign-in.
     if (mode === "signIn") {
-      await saveOnboardingState({ completed: true, step: "account" });
+      // Returning users skip the onboarding screens, but still get the
+      // foreground-location permission prompt when the OS has not granted it.
+      // Permission denial must never block sign-in or entry to the app.
+      try {
+        const onboarding = await loadOnboardingState();
+        const location = await requestApproximateLocation(onboarding.area);
+        if (location.status === "granted") {
+          await saveOnboardingState({
+            completed: true,
+            step: "account",
+            location: location.location,
+            area: location.location.area,
+          });
+        } else {
+          await saveOnboardingState({ completed: true, step: "account" });
+        }
+      } catch (error) {
+        console.warn("[Auth] location permission request skipped", error);
+        await saveOnboardingState({ completed: true, step: "account" });
+      }
       router.replace("/(tabs)");
       return;
     }
