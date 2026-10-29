@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import * as Linking from "expo-linking";
 import { router, useLocalSearchParams } from "expo-router";
@@ -13,8 +13,8 @@ import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFoot
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
-import { requestApproximateLocation } from "@/lib/location";
 import { loadOnboardingState, saveOnboardingState } from "@/lib/onboarding";
+import { requestApproximateLocation } from "@/lib/location";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
 const AUTH_TIMEOUT_MS = 15_000;
@@ -62,36 +62,30 @@ export default function AuthScreen() {
       return;
     }
 
-    if (mode === "signIn" && next === "onboarding") {
-      const onboarding = await loadOnboardingState();
-      if (onboarding.completed) {
-        router.replace("/(tabs)");
-        return;
+    // Onboarding is a registration-only flow. Returning users must never be
+    // sent back through the welcome/location/personalization screens at sign-in.
+    if (mode === "signIn") {
+      // Returning users skip the onboarding screens, but still get the
+      // foreground-location permission prompt when the OS has not granted it.
+      // Permission denial must never block sign-in or entry to the app.
+      try {
+        const onboarding = await loadOnboardingState();
+        const location = await requestApproximateLocation(onboarding.area);
+        if (location.status === "granted") {
+          await saveOnboardingState({
+            completed: true,
+            step: "account",
+            location: location.location,
+            area: location.location.area,
+          });
+        } else {
+          await saveOnboardingState({ completed: true, step: "account" });
+        }
+      } catch (error) {
+        console.warn("[Auth] location permission request skipped", error);
+        await saveOnboardingState({ completed: true, step: "account" });
       }
-      if (onboarding.step === "account") {
-        router.replace("/onboarding?resume=1" as never);
-        return;
-      }
-
-      // Preserve the first-run location permission prompt when returning from sign-in.
-      const location = await requestApproximateLocation(onboarding.area);
-      const accountIntent = intent ?? onboarding.accountIntent ?? "personal";
-      if (location.status === "granted") {
-        await saveOnboardingState({
-          accountIntent,
-          step: "personalize",
-          location: location.location,
-          area: location.location.area,
-        });
-      } else {
-        await saveOnboardingState({
-          accountIntent,
-          step: "location",
-          location: null,
-          area: location.area,
-        });
-      }
-      router.replace("/onboarding" as never);
+      router.replace("/(tabs)");
       return;
     }
 
@@ -159,7 +153,12 @@ export default function AuthScreen() {
 
   return (
     <ScreenContainer edges={["top", "bottom", "left", "right"]}>
-      <View style={styles.content}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
         <View style={styles.logo}><IconSymbol name="location.fill" size={25} color="#10211D" /></View>
         <Text style={[styles.eyebrow, { color: colors.primary }]}>LEKKA</Text>
         <Text style={[styles.title, { color: colors.foreground }]}>{mode === "signIn" ? "Welcome back." : mode === "signUp" ? intent === "business" ? "Build your local business presence." : "Join your local network." : "Reset your password."}</Text>
@@ -178,7 +177,8 @@ export default function AuthScreen() {
         {mode === "reset" && resetSent && <Pressable accessibilityRole="button" accessibilityState={{ disabled: busy || resendCooldown > 0 }} disabled={busy || resendCooldown > 0} onPress={() => void submit()} style={({ pressed }) => [styles.resend, { borderColor: colors.border, opacity: busy || resendCooldown > 0 ? 0.55 : pressed ? 0.7 : 1 }]}><Text style={[styles.resendText, { color: colors.primary }]}>{getResendEmailLabel(resendCooldown)}</Text></Pressable>}
         <Pressable onPress={() => updateMode(mode === "reset" ? "signIn" : isSignIn ? "signUp" : "signIn")}><Text style={[styles.switchText, { color: colors.primary }]}>{mode === "reset" ? "Back to sign in" : isSignIn ? "New here? Create an account" : "Already have an account? Sign in"}</Text></Pressable>
         {isSignIn && <Pressable onPress={() => updateMode("reset")}><Text style={[styles.secondaryText, { color: colors.muted }]}>Forgot your password?</Text></Pressable>}
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }
@@ -200,7 +200,8 @@ function PasswordRequirements({ password, colors }: { password: string; colors: 
 }
 
 const styles = StyleSheet.create({
-  content: { flex: 1, justifyContent: "center", padding: 24 },
+  flex: { flex: 1 },
+  content: { flexGrow: 1, justifyContent: "center", padding: 24, paddingBottom: 36 },
   logo: { width: 52, height: 52, borderRadius: 18, backgroundColor: "#E9A23B", alignItems: "center", justifyContent: "center", marginBottom: 18 },
   eyebrow: { fontSize: 11, fontWeight: "800", letterSpacing: 1.2 },
   title: { fontSize: 31, lineHeight: 37, fontWeight: "800", marginTop: 9 },

@@ -138,7 +138,7 @@ requireFile(path.join(workflowDir, "lekka-validation.yml"), "GitHub validation w
 const workflowFiles = fs.existsSync(workflowDir) ? fs.readdirSync(workflowDir).filter((name) => name.endsWith(".yml") || name.endsWith(".yaml")) : [];
 if (workflowFiles.length !== 1 || workflowFiles[0] !== "lekka-validation.yml") errors.push(`Expected exactly one canonical validation workflow; found ${workflowFiles.join(", ") || "none"}.`);
 const workflow = read(path.join(workflowDir, "lekka-validation.yml"));
-for (const required of ["npm run check", "npm run audit:interactions", "npm test", "npm run lint", "npx expo install --check", "npx expo-doctor", ":app:assembleDebug", ":app:assembleInternalDebug"]) {
+for (const required of ["pnpm install --frozen-lockfile", "pnpm check", "pnpm audit:interactions", "pnpm test", "pnpm lint", "pnpm exec expo install --check", "pnpm exec expo-doctor", ":app:assembleDebug", ":app:assembleInternalDebug"]) {
   if (!workflow.includes(required)) errors.push(`Validation workflow is missing required gate: ${required}`);
 }
 
@@ -150,6 +150,14 @@ if (!/yoco/i.test(allSource)) warnings.push("No YOCO reference found in app/lib 
 const packageJson = JSON.parse(read(packagePath) || "{}");
 if (packageJson.scripts?.["audit:interactions"] !== "node scripts/audit-interactions.mjs") errors.push("audit:interactions package script has changed unexpectedly.");
 if (!packageJson.scripts?.["audit:production"]) errors.push("package.json must expose audit:production so CI cannot skip this invariant layer.");
+const androidConfigPlugin = read(path.join(root, "plugins", "with-internal-debug-android.cjs"));
+if (!androidConfigPlugin.includes('require("expo/config-plugins")')) errors.push("The custom Android config plugin must use Expo's supported expo/config-plugins export.");
+if (packageJson.dependencies?.["@expo/config-plugins"] || packageJson.devDependencies?.["@expo/config-plugins"]) errors.push("Do not install @expo/config-plugins directly; import it through expo/config-plugins.");
+if (!packageJson.devDependencies?.tailwindcss && !packageJson.dependencies?.tailwindcss) errors.push("Tailwind CSS must be directly declared because tailwind.config.js imports tailwindcss/plugin under pnpm.");
+if (!packageJson.dependencies?.["react-native-css-interop"]) errors.push("react-native-css-interop must be directly declared because NativeWind's transformed JSX imports its runtime from app source files.");
+if (!packageJson.devDependencies?.["@babel/plugin-transform-react-jsx"]) errors.push("@babel/plugin-transform-react-jsx must be directly declared because NativeWind CSS interop's Babel preset loads it under pnpm.");
+const babelParserVersion = packageJson.devDependencies?.["@babel/parser"] ?? packageJson.dependencies?.["@babel/parser"];
+if (!babelParserVersion || !/^7\./.test(babelParserVersion)) errors.push("@babel/parser must remain on Babel 7 for compatibility with the Expo SDK 54 / React Native Worklets Babel 7 AST contract.");
 
 if (errors.length) {
   console.error("Production invariant audit failed:");

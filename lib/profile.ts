@@ -24,18 +24,25 @@ export async function loadMyProfile() {
 
 export async function saveMyProfile(input: ProfileInput) {
   if (!supabase) return { data: null, error: new Error("Backend is not configured") };
-  const { data, error } = await supabase.rpc("update_my_profile", {
-    p_display_name: input.displayName,
-    p_username: input.username || null,
-    p_bio: input.bio,
-    p_home_area: input.homeArea,
-    p_preferred_radius_m: input.preferredRadiusM,
-    p_interests: input.interests ?? [],
-    p_location_visibility: input.locationVisibility ?? "area",
-    p_is_private: input.isPrivate ?? false,
-    p_friends_list_visibility: input.friendsListVisibility ?? "friends",
-  });
-  return { data: data?.[0] ?? null, error };
+  try {
+    const { data, error } = await supabase.rpc("update_my_profile", {
+      p_display_name: input.displayName,
+      p_username: input.username || null,
+      p_bio: input.bio,
+      p_home_area: input.homeArea,
+      p_preferred_radius_m: input.preferredRadiusM,
+      p_interests: input.interests ?? [],
+      p_location_visibility: input.locationVisibility ?? "area",
+      p_is_private: input.isPrivate ?? false,
+      p_friends_list_visibility: input.friendsListVisibility ?? "friends",
+    });
+    return { data: data?.[0] ?? null, error };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error ? error : new Error("The profile request failed unexpectedly."),
+    };
+  }
 }
 
 export async function saveMyProfileAvatar(uri: string, contentType = "image/jpeg") {

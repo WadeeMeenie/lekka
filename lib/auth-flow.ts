@@ -24,7 +24,7 @@ export function isEntryPath(pathname: string): boolean {
 }
 
 
-/** First-time or unfinished users must complete onboarding after authentication. */
-export function getPostAuthRoute(onboardingCompleted: boolean): "/(tabs)" | "/onboarding" {
-  return onboardingCompleted ? "/(tabs)" : "/onboarding";
+/** Sign-ins are returning users; only a new registration can enter onboarding. */
+export function getPostAuthRoute(onboardingCompleted: boolean, isSignIn = false): "/(tabs)" | "/onboarding" {
+  return isSignIn || onboardingCompleted ? "/(tabs)" : "/onboarding";
 }

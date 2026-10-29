@@ -44,6 +44,25 @@ describe("reported Lekka production regressions", () => {
     expect(migration).toContain("grant execute on function public.save_personal_identity(text, text, date, text) to authenticated");
   });
 
+  it("qualifies the profile update target to avoid ambiguous RETURNS TABLE output columns", () => {
+    const migration = read("supabase/migrations/20261029042949_fix_ambiguous_profile_update.sql");
+    expect(migration).toContain("update public.profiles as target_profile");
+    expect(migration).toContain("where target_profile.id = auth.uid()");
+    expect(migration).toContain("grant execute on function public.update_my_profile(text,text,text,text,integer,text[],text,boolean,text) to authenticated");
+  });
+
+  it("navigates to the created community using its concrete route", () => {
+    const createScreen = read("app/community/create.tsx");
+    expect(createScreen).toContain('router.replace(`/community/${encodeURIComponent(communityId)}` as never)');
+  });
+
+  it("preserves actionable profile-save errors and handles rejected RPC calls", () => {
+    const profileScreen = read("app/profile.tsx");
+    const repository = read("lib/profile.ts");
+    expect(profileScreen).toContain("We couldn't save your changes: ${result.error.message");
+    expect(repository).toContain("The profile request failed unexpectedly.");
+  });
+
   it("honors a manually selected Radar area for Local discovery", () => {
     const local = read("app/(tabs)/local.tsx");
     expect(local).toContain("settings.selectedLocation");

@@ -1,4 +1,4 @@
-const { withAppBuildGradle } = require("@expo/config-plugins");
+const { withAppBuildGradle } = require("expo/config-plugins");
 
 const RELEASE_SIGNING_MARKER = "// Lekka production signing intentionally unresolved.";
 const INTERNAL_VARIANT_MARKER = "// Lekka internal-test variant: debug-signed only.";

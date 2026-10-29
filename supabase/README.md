@@ -1,19 +1,27 @@
-# Local Radar SA Supabase backend
+# Lekka Supabase backend
 
-The project now contains a Supabase-compatible client, a first PostgreSQL migration, RLS policies, a private media bucket policy, and realtime publication boundaries. The Android client uses only `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`; service-role credentials must never be bundled into the app.
+Lekka uses the **existing** Supabase project `vnitwsjidlurlwlpsmtf` (`local-radar-sa`) in `eu-west-1`. The connected project metadata reported `ACTIVE_HEALTHY` and PostgreSQL `17.6.1.155` on 2026-10-28. Do not create a replacement project or replay the repository migration directory against production.
 
-## Migration status
+The application uses the public client variables `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Privileged credentials belong only in server-side Supabase secrets and must never be included in the mobile app.
 
-The migration is stored at `supabase/migrations/202608200001_local_radar_core.sql`. It creates profiles, interests-in-profile, follows, communities, memberships, businesses, posts, post media, comments, reactions, saved posts, reports, and notifications. It also adds PostGIS location columns and indexes, the `nearby_radar` RPC, an auth-user profile trigger, RLS policies, a private `local-radar-media` bucket, and realtime publication entries for posts, comments, and notifications.
+## Current migration state (read-only check, 2026-10-28)
 
-No Supabase project was returned by the connected project discovery endpoint during this milestone, so the migration has been prepared but not remotely applied. Once a project is available, apply the migration through the Supabase SQL/migration workflow, then generate TypeScript types and review the security/performance advisors. The app remains usable with its AsyncStorage cache and seeded fallback while the migration is pending.
+Supabase's recorded migration list currently ends at version `20261017231856` (`remediate_postgis_metadata_client_privileges`). The live history has multiple version/name pairs that differ from the filenames in `supabase/migrations`, including migrations previously applied directly to production and two separate recorded versions named `protect_profile_role`. The remote migration-list API reports applied rows but does not provide failed-attempt logs; it therefore does not establish whether an older dashboard status labelled a migration failure was later repaired. Reconcile remote schema, history, and repository source before production changes.
 
-## Runtime behavior
+The additive migration `20261028190000_harden_community_and_nearby_reads.sql` is **local to the implementation branch and has not been applied**. It is subject to SQL execution, authorization, and migration-history verification before release.
 
-The feed attempts a backend query first, writes fresh results to the local cache, and falls back to cached content on network or authentication failure. Local Radar attempts the `nearby_radar` RPC and falls back to the existing local discovery cards if no remote rows are returned. Authenticated users publish through the `posts` table. Anonymous or offline users retain a local draft rather than losing their written content.
+## Verified production security blocker
 
-The location helper requests foreground permission only when the user explicitly taps the location action. It rounds coordinates before any future server handoff and preserves the manual Bellville fallback when permission is denied, services are disabled, or the app is running on web.
+A read-only catalog query on 2026-10-28 found `anon` and `authenticated` with SELECT, INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, and TRIGGER privileges on `public.spatial_ref_sys`; the recorded grantor is `supabase_admin`. The table is owned by `supabase_admin`, which is a superuser. The SQL integration session ran as `postgres`, which is not a superuser and is not a member of the owner role. The project has recorded prior remediation migrations, but those live grants remain. Do not claim the historical PostGIS finding is resolved. Do not try repeated client-role revokes, enable RLS on the extension-owned relation, transfer ownership, or change the extension schema without the supported Supabase owner/admin path and a verified PostGIS compatibility plan. See [`docs/LAUNCH_EXECUTION_STATUS.md`](../docs/LAUNCH_EXECUTION_STATUS.md).
 
-## Required project-side follow-up
+The project is otherwise reported `ACTIVE_HEALTHY`; read-only migration inspection returned applied history through the version above. This is not proof that every historical migration attempt succeeded or that the production policy surface has passed cross-account tests. User-account, device, storage-expiry, and payment-provider acceptance checks remain separate release gates.
 
-Create or connect a Supabase project, apply the migration, enable email/password authentication, and configure the redirect URLs for the native deep-link scheme. Then seed public communities and businesses through an authenticated/admin-safe process. Before production release, run the Supabase security and performance advisors and verify Storage policies with a non-admin test account.
+## Local setup and verification
+
+1. Install the pinned dependencies from the repository root using `pnpm install --frozen-lockfile`.
+2. Copy `.env.example` to `.env` and set the target project URL and its publishable key.
+3. Run `pnpm check`, `pnpm test`, `pnpm audit:production`, and `pnpm lint`.
+4. Inspect each migration and compare it with the live project history before applying it. Never use a blanket reset against the existing production database.
+5. For schema changes, use a disposable/staging database where available, test fresh installation and authorization cases, then follow the approved production migration process. Keep backups and a rollback plan.
+
+The client must not use the service-role key. Keep Edge Function secrets in the Supabase project secret store and verify each function's deployed version and authorization separately from its checked-in source.
