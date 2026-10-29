@@ -13,7 +13,6 @@ import { getAuthErrorMessage, getConfirmationEmailBody, getConfirmationEmailFoot
 import { getPasswordRuleResults, getPasswordStrength, getPasswordValidationMessage, isStrongPassword } from "@/lib/password-rules";
 import { getPasswordResetValidationMessage, PASSWORD_RESET_SUCCESS_MESSAGE, PASSWORD_UPDATED_LOGIN_MESSAGE } from "@/lib/password-reset";
 import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-resend";
-import { requestApproximateLocation } from "@/lib/location";
 import { loadOnboardingState, saveOnboardingState } from "@/lib/onboarding";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
 
