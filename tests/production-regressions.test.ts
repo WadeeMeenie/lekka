@@ -45,7 +45,7 @@ describe("reported Lekka production regressions", () => {
   });
 
   it("qualifies the profile update target to avoid ambiguous RETURNS TABLE output columns", () => {
-    const migration = read("supabase/migrations/20261029000100_fix_ambiguous_profile_update.sql");
+    const migration = read("supabase/migrations/20261029042949_fix_ambiguous_profile_update.sql");
     expect(migration).toContain("update public.profiles as target_profile");
     expect(migration).toContain("where target_profile.id = auth.uid()");
     expect(migration).toContain("grant execute on function public.update_my_profile(text,text,text,text,integer,text[],text,boolean,text) to authenticated");
