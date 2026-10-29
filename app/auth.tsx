@@ -62,36 +62,11 @@ export default function AuthScreen() {
       return;
     }
 
-    if (mode === "signIn" && next === "onboarding") {
-      const onboarding = await loadOnboardingState();
-      if (onboarding.completed) {
-        router.replace("/(tabs)");
-        return;
-      }
-      if (onboarding.step === "account") {
-        router.replace("/onboarding?resume=1" as never);
-        return;
-      }
-
-      // Preserve the first-run location permission prompt when returning from sign-in.
-      const location = await requestApproximateLocation(onboarding.area);
-      const accountIntent = intent ?? onboarding.accountIntent ?? "personal";
-      if (location.status === "granted") {
-        await saveOnboardingState({
-          accountIntent,
-          step: "personalize",
-          location: location.location,
-          area: location.location.area,
-        });
-      } else {
-        await saveOnboardingState({
-          accountIntent,
-          step: "location",
-          location: null,
-          area: location.area,
-        });
-      }
-      router.replace("/onboarding" as never);
+    // Onboarding is a registration-only flow. Returning users must never be
+    // sent back through the welcome/location/personalization screens at sign-in.
+    if (mode === "signIn") {
+      await saveOnboardingState({ completed: true, step: "account" });
+      router.replace("/(tabs)");
       return;
     }
 
