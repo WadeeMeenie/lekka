@@ -15,9 +15,10 @@ describe("auth flow regressions", () => {
     expect(authFailureMessage(null)).toContain("request could not be completed");
   });
 
-  it("routes incomplete onboarding users back into onboarding after authentication", () => {
+  it("shows onboarding only for new registrations, never returning sign-ins", () => {
     expect(getPostAuthRoute(false)).toBe("/onboarding");
     expect(getPostAuthRoute(true)).toBe("/(tabs)");
+    expect(getPostAuthRoute(false, true)).toBe("/(tabs)");
   });
 
   it("keeps onboarding sub-routes out of the entry redirect", () => {
