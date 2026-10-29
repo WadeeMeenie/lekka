@@ -200,7 +200,7 @@ export default function ProfileScreen() {
       setUsernameStatus("unavailable");
       setFieldErrors((current) => ({ ...current, username: "That username was just taken. Choose another one." }));
     }
-    if (result.error) setFeedback({ tone: "error", message: duplicateUsername ? "Choose another username and try again." : user ? "We couldn't save your changes. Check your connection and try again." : "Create an account to save a profile." });
+    if (result.error) setFeedback({ tone: "error", message: duplicateUsername ? "Choose another username and try again." : user ? `We couldn't save your changes: ${result.error.message || "Please check your connection and try again."}` : "Create an account to save a profile." });
     else if (!avatarUri) setFeedback({ tone: "success", message: "Profile updated. Your Lekka profile is ready for the local world." });
   };
   const toggleInterest = (interest: string) => setInterests((current) => current.includes(interest) ? current.filter((item) => item !== interest) : [...current, interest]);
