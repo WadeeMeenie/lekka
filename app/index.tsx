@@ -46,7 +46,7 @@ export default function IndexScreen() {
 
   // Keep first-time and unfinished users in onboarding. Missing local state is
   // treated as incomplete so the location and personalization steps are not skipped.
-  return <Redirect href={getPostAuthRoute(onboardingState?.completed === true || hasExistingProfile)} />;
+  return <Redirect href={getPostAuthRoute(hasExistingProfile)} />;
 }
 
 const styles = StyleSheet.create({
