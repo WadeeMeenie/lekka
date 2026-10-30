@@ -60,7 +60,11 @@ export default function AuthScreen() {
   const continueToNext = async () => {
     if (mode === "signIn" && next !== "business-invite") {
       const profile = await loadMyProfile().catch(() => null);
-      if (profile?.data?.username) {
+      if (!profile || profile.error) {
+        router.replace("/");
+        return;
+      }
+      if (profile.data?.username) {
         router.replace("/(tabs)");
         return;
       }
@@ -104,7 +108,6 @@ export default function AuthScreen() {
       return;
     }
 
-    const onboarding = await loadOnboardingState();
     router.replace(getPostAuthRoute(false) as never);
   };
 
