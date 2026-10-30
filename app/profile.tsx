@@ -170,7 +170,7 @@ export default function ProfileScreen() {
       return;
     }
     setBusy(true);
-    const result = await saveMyProfile({ displayName, username: normalizeUsername(username), bio, homeArea: area, preferredRadiusM: 5000, interests, locationVisibility: profileSettings.locationVisibility, isPrivate, friendsListVisibility });
+    const result = await saveMyProfile({ displayName, username: normalizeUsername(username), bio, homeArea: area, preferredRadiusM: 5000, interests, locationVisibility: profileSettings.locationVisibility, isPrivate, friendsListVisibility }).catch((error: unknown) => ({ data: null, error: error instanceof Error ? error : new Error("Unable to contact the server. Please retry.") }));
     if (!result.error && user) {
       if (usernameChanged && nextUsername) {
         const nextHistory = recordUsernameChange(usernameHistory, nextUsername);
