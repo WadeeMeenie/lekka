@@ -19,7 +19,7 @@ export default function IndexScreen() {
       .then(([state, profile]) => {
         if (active) {
           setOnboardingState(state);
-          setHasExistingProfile(Boolean(profile && !profile.error && profile.data));
+          setHasExistingProfile(Boolean(profile && !profile.error && profile.data?.username));
         }
       })
       .catch(() => {
