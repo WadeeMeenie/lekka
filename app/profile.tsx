@@ -152,9 +152,11 @@ export default function ProfileScreen() {
     setFeedback(null);
     const errors = validateProfileFields(displayName, bio);
     setFieldErrors(errors);
-    const usernameAvailable = await checkUsername();
     const nextUsername = normalizeUsername(username);
     const usernameChanged = nextUsername !== initialUsername;
+    // An unchanged handle belongs to this account; avoid a redundant availability
+    // query that can fail due to network/RLS and block unrelated profile edits.
+    const usernameAvailable = usernameChanged ? await checkUsername() : validateUsername(username) === null;
     const cooldown = usernameChanged ? usernameCooldownMessage(usernameHistory) : null;
     setUsernameCooldown(cooldown);
     if (cooldown) {
