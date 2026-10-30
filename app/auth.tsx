@@ -16,6 +16,7 @@ import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-
 import { requestApproximateLocation } from "@/lib/location";
 import { loadOnboardingState, saveOnboardingState } from "@/lib/onboarding";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { loadMyProfile } from "@/lib/profile";
 
 const AUTH_TIMEOUT_MS = 15_000;
 type FeedbackTone = "error" | "success" | "info";
@@ -57,6 +58,13 @@ export default function AuthScreen() {
   const isSignIn = mode === "signIn";
 
   const continueToNext = async () => {
+    if (mode === "signIn" && next !== "business-invite") {
+      const profile = await loadMyProfile().catch(() => null);
+      if (profile?.data?.username) {
+        router.replace("/(tabs)");
+        return;
+      }
+    }
     if (next === "business-invite" && token) {
       router.replace(`/business-invite?token=${encodeURIComponent(token)}` as never);
       return;
