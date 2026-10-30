@@ -10,7 +10,7 @@ import { requestApproximateLocation } from "@/lib/location";
 import { completeOnboarding, defaultOnboardingState, LEKKA_INTERESTS, loadOnboardingState, radiusToMeters, saveOnboardingState, toggleInterest, type OnboardingState } from "@/lib/onboarding";
 import { ThemePalettes, type ThemeId } from "@/constants/theme";
 import { useThemeContext } from "@/lib/theme-provider";
-import { saveMyProfile } from "@/lib/profile";
+import { loadMyProfile, saveMyProfile } from "@/lib/profile";
 
 const themeOptions: Array<{ id: ThemeId; label: string; description: string }> = [
   { id: "original", label: "Lekka Original", description: "Clean, local, and unmistakably Lekka." },
@@ -30,12 +30,27 @@ export default function OnboardingScreen() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    void loadOnboardingState().then((saved) => {
-      if (saved.completed && params.resume !== "1") { router.replace("/(tabs)"); return; }
-      setState(params.resume === "1" ? { ...saved, step: "account" } : saved);
-      if (params.resume === "1") void saveOnboardingState({ step: "account" });
+    let active = true;
+    void (async () => {
+      const saved = await loadOnboardingState();
+      const profile = isAuthenticated && user?.id ? await loadMyProfile() : null;
+      if (!active) return;
+      if (profile?.data?.username) {
+        router.replace("/(tabs)");
+        return;
+      }
+      // Local completion belongs to the device, not necessarily this account.
+      // Never allow it to bypass profile setup for another user.
+      const next = saved.completed
+        ? { ...saved, completed: false, step: "location" as const }
+        : params.resume === "1" ? { ...saved, step: "account" as const } : saved;
+      setState(next);
+      if (saved.completed) await saveOnboardingState({ completed: false, step: "location" });
+    })().catch(() => {
+      if (active) setState(defaultOnboardingState);
     });
-  }, [params.resume]);
+    return () => { active = false; };
+  }, [params.resume, isAuthenticated, user?.id]);
 
   const goTo = async (step: OnboardingState["step"], patch: Partial<OnboardingState> = {}) => {
     const next = await saveOnboardingState({ ...patch, step });
