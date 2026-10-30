@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 
 export default function IndexScreen() {
   const { loading: authLoading, isAuthenticated } = useSupabaseAuth();
-  const [onboardingLoading, setOnboardingLoading] = useState(true);
+  const [resolvedAuthState, setResolvedAuthState] = useState<boolean | null>(null);
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
   const [hasExistingProfile, setHasExistingProfile] = useState(false);
 
@@ -19,24 +19,23 @@ export default function IndexScreen() {
       .then(([state, profile]) => {
         if (active) {
           setOnboardingState(state);
+          setResolvedAuthState(isAuthenticated);
           setHasExistingProfile(Boolean(profile && !profile.error && profile.data?.username));
         }
       })
       .catch(() => {
         // Local onboarding storage is optional for returning authenticated users.
         // Keep the app usable rather than trapping them on the welcome screen.
-        if (active) setOnboardingState(null);
+        if (active) { setOnboardingState(null); setResolvedAuthState(isAuthenticated); }
       })
-      .finally(() => {
-        if (active) setOnboardingLoading(false);
-      });
+;
 
     return () => {
       active = false;
     };
   }, [isAuthenticated]);
 
-  if (authLoading || onboardingLoading) {
+  if (authLoading || resolvedAuthState !== isAuthenticated) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator />
