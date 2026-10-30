@@ -178,7 +178,7 @@ export default function ProfileScreen() {
         const nextHistory = recordUsernameChange(usernameHistory, nextUsername);
         setUsernameHistory(nextHistory);
         setInitialUsername(nextUsername);
-        await saveUsernameHistory(user.id, nextHistory);
+        try { await saveUsernameHistory(user.id, nextHistory); } catch { /* The server already saved the profile; local history is best-effort. */ }
         void recordServerUsernameChange(user.id, initialUsername || null, nextUsername);
       }
       try {
