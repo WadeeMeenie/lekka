@@ -35,6 +35,10 @@ export default function OnboardingScreen() {
       const saved = await loadOnboardingState();
       const profile = isAuthenticated && user?.id ? await loadMyProfile() : null;
       if (!active) return;
+      if (profile?.error) {
+        router.replace("/");
+        return;
+      }
       if (profile?.data?.username) {
         router.replace("/(tabs)");
         return;
