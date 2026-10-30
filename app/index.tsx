@@ -27,8 +27,7 @@ export default function IndexScreen() {
         // Local onboarding storage is optional for returning authenticated users.
         // Keep the app usable rather than trapping them on the welcome screen.
         if (active) { setOnboardingState(null); setResolvedAuthState(isAuthenticated); }
-      })
-;
+      });
 
     return () => {
       active = false;
