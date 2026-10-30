@@ -131,7 +131,7 @@ export default function HomeScreen() {
     let active = true;
     const unsubscribe = subscribeToLocalChanges(() => {
       setBackgroundRefreshing(true);
-      void fetchFeedPage(deviceLocation ?? undefined, null, 20, radiusMeters, area).then((next) => {
+      void fetchFeedPage(deviceLocation ?? undefined, null, 20, radiusMeters, deviceLocation?.area ?? area).then((next) => {
         if (!active) return; if (next.error) { setToast("Couldn’t refresh your local feed. Try again."); return; } setFeedError(null); setPosts(next.posts); setNextCursor(next.nextCursor);
       }).catch(() => { if (active) setToast("Couldn’t refresh your local feed. Try again."); }).finally(() => { if (active) setBackgroundRefreshing(false); });
     });
