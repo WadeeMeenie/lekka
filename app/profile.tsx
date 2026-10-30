@@ -55,6 +55,8 @@ export default function ProfileScreen() {
   const [usernameHistory, setUsernameHistory] = useState<UsernameChange[]>([]);
   const [usernameCooldown, setUsernameCooldown] = useState<string | null>(null);
   const [initialUsername, setInitialUsername] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [friendsListVisibility, setFriendsListVisibility] = useState<"only_me" | "friends" | "everyone">("friends");
 
   useEffect(() => {
     let active = true;
@@ -71,6 +73,8 @@ export default function ProfileScreen() {
         setUsername(data.username ?? "");
         setInitialUsername(normalizeUsername(data.username ?? ""));
         setBio(data.bio ?? "");
+        setIsPrivate(data.is_private === true);
+        setFriendsListVisibility(data.friends_list_visibility === "only_me" || data.friends_list_visibility === "everyone" ? data.friends_list_visibility : "friends");
         setArea(data.home_area ?? "Bellville");
         setInterests(data.interests ?? []);
         if (data.profile_image_path) {
@@ -166,7 +170,7 @@ export default function ProfileScreen() {
       return;
     }
     setBusy(true);
-    const result = await saveMyProfile({ displayName, username: normalizeUsername(username), bio, homeArea: area, preferredRadiusM: 5000, interests, locationVisibility: profileSettings.locationVisibility });
+    const result = await saveMyProfile({ displayName, username: normalizeUsername(username), bio, homeArea: area, preferredRadiusM: 5000, interests, locationVisibility: profileSettings.locationVisibility, isPrivate, friendsListVisibility });
     if (!result.error && user) {
       if (usernameChanged && nextUsername) {
         const nextHistory = recordUsernameChange(usernameHistory, nextUsername);
