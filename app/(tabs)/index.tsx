@@ -73,6 +73,7 @@ export default function HomeScreen() {
     let active = true;
     void (async () => {
       const settings = await loadSettings();
+      if (!active) return;
       const page = await fetchFeedPage(deviceLocation ?? undefined, null, 20, discoveryRadiusToMeters(settings.radius), deviceLocation?.area ?? settings.area);
       if (active && !page.error) {
         setPosts(page.posts);
