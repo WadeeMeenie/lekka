@@ -61,7 +61,7 @@ export default function AuthScreen() {
     if (mode === "signIn" && next !== "business-invite") {
       const profile = await loadMyProfile().catch(() => null);
       if (!profile || profile.error) {
-        router.replace("/index" as never);
+        router.replace("/" as never);
         return;
       }
       if (profile.data?.username) {
