@@ -76,7 +76,7 @@ export default function AuthScreen() {
 
     if (mode === "signIn" && next === "onboarding") {
       const onboarding = await loadOnboardingState();
-      if (onboarding.step === "account") {
+      if (onboarding.step === "account" && !onboarding.completed) {
         router.replace("/onboarding?resume=1" as never);
         return;
       }
