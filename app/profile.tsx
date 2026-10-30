@@ -179,7 +179,14 @@ export default function ProfileScreen() {
         await saveUsernameHistory(user.id, nextHistory);
         void recordServerUsernameChange(user.id, initialUsername || null, nextUsername);
       }
-      await saveProfileSettings(profileSettings);
+      try {
+        await saveProfileSettings(profileSettings);
+      } catch (settingsError) {
+        setFeedback({ tone: "error", message: "Your profile was saved, but preferences could not be saved. Please retry." });
+        setBusy(false);
+        setConfirmUsername(false);
+        return;
+      }
       if (avatarUri) {
         setAvatarBusy(true);
         try {
@@ -204,7 +211,10 @@ export default function ProfileScreen() {
       setUsernameStatus("unavailable");
       setFieldErrors((current) => ({ ...current, username: "That username was just taken. Choose another one." }));
     }
-    if (result.error) setFeedback({ tone: "error", message: duplicateUsername ? "Choose another username and try again." : user ? "We couldn't save your changes. Check your connection and try again." : "Create an account to save a profile." });
+    if (result.error) {
+      console.warn("Lekka profile update failed", { code: "code" in result.error ? result.error.code : undefined, message: result.error.message });
+      setFeedback({ tone: "error", message: duplicateUsername ? "Choose another username and try again." : user ? `Profile save failed: ${result.error.message}` : "Create an account to save a profile." });
+    }
     else if (!avatarUri) setFeedback({ tone: "success", message: "Profile updated. Your Lekka profile is ready for the local world." });
   };
   const toggleInterest = (interest: string) => setInterests((current) => current.includes(interest) ? current.filter((item) => item !== interest) : [...current, interest]);
