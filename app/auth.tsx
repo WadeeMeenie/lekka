@@ -72,10 +72,6 @@ export default function AuthScreen() {
 
     if (mode === "signIn" && next === "onboarding") {
       const onboarding = await loadOnboardingState();
-      if (onboarding.completed) {
-        router.replace("/(tabs)");
-        return;
-      }
       if (onboarding.step === "account") {
         router.replace("/onboarding?resume=1" as never);
         return;
@@ -109,7 +105,7 @@ export default function AuthScreen() {
     }
 
     const onboarding = await loadOnboardingState();
-    router.replace(getPostAuthRoute(onboarding.completed) as never);
+    router.replace(getPostAuthRoute(false) as never);
   };
 
   const submit = async () => {
