@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react";
-import { router } from "expo-router";
+import { useCallback, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AuthGate } from "@/components/auth-gate";
 import { ScreenContainer } from "@/components/screen-container";
@@ -36,7 +36,7 @@ export default function SocialScreen() {
     } else { setJoinedCommunities([]); setError(publicResult.error?.message ?? null); }
     setLoading(false);
   }, [user]);
-  useEffect(() => { void load(); }, [load]);
+  useFocusEffect(useCallback(() => { void load(); }, [load]));
 
   const requireAuth = (action: string) => { if (!isAuthenticated) { setAuthGateAction(action); return false; } return true; };
   const createCommunity = () => { if (requireAuth("create a community")) router.push("/community/create" as never); };
