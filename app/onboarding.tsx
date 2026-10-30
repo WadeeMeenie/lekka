@@ -36,7 +36,7 @@ export default function OnboardingScreen() {
       const profile = isAuthenticated && user?.id ? await loadMyProfile() : null;
       if (!active) return;
       if (profile?.error) {
-        router.replace("/index" as never);
+        router.replace("/" as never);
         return;
       }
       if (profile?.data?.username) {
