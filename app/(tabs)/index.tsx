@@ -121,7 +121,7 @@ export default function HomeScreen() {
       setRadiusMeters(discoveryRadiusToMeters(settings.radius));
       if (liveLocation) { setDeviceLocation(liveLocation); setArea(liveLocation.area); }
       else setArea(settings.area || "your area");
-      const firstPage = await fetchFeedPage(liveLocation, null, 20, discoveryRadiusToMeters(settings.radius), settings.area);
+      const firstPage = await fetchFeedPage(liveLocation, null, 20, discoveryRadiusToMeters(settings.radius), liveLocation?.area ?? settings.area);
       if (active) { setPosts(firstPage.posts); setNextCursor(firstPage.nextCursor); setFeedError(feedErrorCopy(firstPage.error)); setInitialLoading(false); }
     })().catch(() => { if (active) { setInitialLoading(false); setFeedError("We couldn’t load your local feed. Check your connection and try again."); } });
     return () => { active = false; };
