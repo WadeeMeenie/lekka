@@ -73,7 +73,7 @@ export default function HomeScreen() {
     let active = true;
     void (async () => {
       const settings = await loadSettings();
-      const page = await fetchFeedPage(deviceLocation ?? undefined, null, 20, discoveryRadiusToMeters(settings.radius), settings.area);
+      const page = await fetchFeedPage(deviceLocation ?? undefined, null, 20, discoveryRadiusToMeters(settings.radius), deviceLocation?.area ?? settings.area);
       if (active && !page.error) {
         setPosts(page.posts);
         setNextCursor(page.nextCursor);
