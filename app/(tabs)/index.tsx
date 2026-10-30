@@ -69,6 +69,20 @@ export default function HomeScreen() {
     return () => { active = false; };
   }, [user]));
 
+  useFocusEffect(useCallback(() => {
+    let active = true;
+    void (async () => {
+      const settings = await loadSettings();
+      const page = await fetchFeedPage(deviceLocation ?? undefined, null, 20, discoveryRadiusToMeters(settings.radius), settings.area);
+      if (active && !page.error) {
+        setPosts(page.posts);
+        setNextCursor(page.nextCursor);
+        setFeedError(null);
+      }
+    })().catch(() => { /* Preserve existing feed when refresh fails. */ });
+    return () => { active = false; };
+  }, [deviceLocation]));
+
   useEffect(() => {
     let active = true;
     const currentUserId = user?.id ?? null;
