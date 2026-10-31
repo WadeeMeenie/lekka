@@ -41,7 +41,7 @@ export default function IndexScreen() {
   }
   if (resolved.status === "error") {
     return <View style={styles.error} accessibilityRole="alert">
-      <Text style={styles.title}>We couldn't load your profile</Text>
+      <Text style={styles.title}>We could not load your profile</Text>
       <Text style={styles.description}>Check your connection and try again. Your account and profile have not been changed.</Text>
       <Pressable accessibilityRole="button" accessibilityLabel="Retry loading profile" onPress={() => setAttempt((value) => value + 1)} style={styles.retry}>
         <Text style={styles.retryText}>Try again</Text>
