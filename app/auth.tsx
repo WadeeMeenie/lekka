@@ -16,6 +16,7 @@ import { getResendEmailLabel, RESET_RESEND_COOLDOWN_SECONDS } from "@/lib/reset-
 import { requestApproximateLocation } from "@/lib/location";
 import { loadOnboardingState, saveOnboardingState } from "@/lib/onboarding";
 import { useSupabaseAuth } from "@/hooks/use-supabase-auth";
+import { loadMyProfile } from "@/lib/profile";
 
 const AUTH_TIMEOUT_MS = 15_000;
 type FeedbackTone = "error" | "success" | "info";
@@ -57,6 +58,27 @@ export default function AuthScreen() {
   const isSignIn = mode === "signIn";
 
   const continueToNext = async () => {
+    if (mode === "signIn" && next !== "business-invite") {
+      const profile = await loadMyProfile().catch(() => null);
+      if (!profile || profile.error) {
+        router.replace("/" as never);
+        return;
+      }
+      if (profile.data?.username) {
+        // Returning accounts bypass onboarding; request location permission
+        // independently so the permission flow is not skipped.
+        try {
+          const permissionLocation = await requestApproximateLocation();
+          if (permissionLocation.status === "granted") {
+            await saveOnboardingState({ location: permissionLocation.location, area: permissionLocation.location.area });
+          }
+        } catch {
+          // Location is optional. A GPS or permission error must not block sign-in.
+        }
+        router.replace("/(tabs)");
+        return;
+      }
+    }
     if (next === "business-invite" && token) {
       router.replace(`/business-invite?token=${encodeURIComponent(token)}` as never);
       return;
@@ -64,11 +86,7 @@ export default function AuthScreen() {
 
     if (mode === "signIn" && next === "onboarding") {
       const onboarding = await loadOnboardingState();
-      if (onboarding.completed) {
-        router.replace("/(tabs)");
-        return;
-      }
-      if (onboarding.step === "account") {
+      if (onboarding.step === "account" && !onboarding.completed) {
         router.replace("/onboarding?resume=1" as never);
         return;
       }
@@ -100,8 +118,7 @@ export default function AuthScreen() {
       return;
     }
 
-    const onboarding = await loadOnboardingState();
-    router.replace(getPostAuthRoute(onboarding.completed) as never);
+    router.replace(getPostAuthRoute(false) as never);
   };
 
   const submit = async () => {
@@ -211,8 +228,8 @@ const styles = StyleSheet.create({
   feedbackTitle: { fontSize: 13, lineHeight: 18, fontWeight: "800" },
   feedbackMessage: { fontSize: 12, lineHeight: 18 },
   feedbackDismiss: { minWidth: 32, minHeight: 32, alignItems: "center", justifyContent: "center" },
-  input: { minHeight: 52, borderRadius: 15, borderWidth: 1, paddingHorizontal: 15, fontSize: 15, marginBottom: 10 },
-  passwordRow: { minHeight: 52, borderRadius: 15, borderWidth: 1, flexDirection: "row", alignItems: "center", marginBottom: 8 },
+  input: { minHeight: 56, borderRadius: 18, borderWidth: 1, paddingHorizontal: 15, fontSize: 15, marginBottom: 10 },
+  passwordRow: { minHeight: 56, borderRadius: 18, borderWidth: 1, flexDirection: "row", alignItems: "center", marginBottom: 8 },
   passwordInput: { flex: 1, minHeight: 52, paddingHorizontal: 15, fontSize: 15 },
   passwordToggle: { minWidth: 48, minHeight: 52, alignItems: "center", justifyContent: "center" },
   strengthMeter: { marginBottom: 10, paddingHorizontal: 4 },
@@ -224,7 +241,7 @@ const styles = StyleSheet.create({
   passwordRequirements: { marginBottom: 8, paddingHorizontal: 4 },
   requirementsTitle: { fontSize: 12, fontWeight: "800", marginBottom: 5 },
   requirement: { fontSize: 11, lineHeight: 18, fontWeight: "600" },
-  primary: { minHeight: 52, borderRadius: 16, flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center", marginTop: 6 },
+  primary: { minHeight: 56, borderRadius: 18, flexDirection: "row", gap: 8, justifyContent: "center", alignItems: "center", marginTop: 6 },
   primaryText: { color: "#10211D", fontSize: 15, fontWeight: "800" },
   resend: { minHeight: 46, borderRadius: 14, borderWidth: 1, justifyContent: "center", alignItems: "center", marginTop: 10 },
   resendText: { fontSize: 13, fontWeight: "800" },

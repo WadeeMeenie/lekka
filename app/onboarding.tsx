@@ -10,7 +10,7 @@ import { requestApproximateLocation } from "@/lib/location";
 import { completeOnboarding, defaultOnboardingState, LEKKA_INTERESTS, loadOnboardingState, radiusToMeters, saveOnboardingState, toggleInterest, type OnboardingState } from "@/lib/onboarding";
 import { ThemePalettes, type ThemeId } from "@/constants/theme";
 import { useThemeContext } from "@/lib/theme-provider";
-import { saveMyProfile } from "@/lib/profile";
+import { loadMyProfile, saveMyProfile } from "@/lib/profile";
 
 const themeOptions: Array<{ id: ThemeId; label: string; description: string }> = [
   { id: "original", label: "Lekka Original", description: "Clean, local, and unmistakably Lekka." },
@@ -30,12 +30,31 @@ export default function OnboardingScreen() {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    void loadOnboardingState().then((saved) => {
-      if (saved.completed && params.resume !== "1") { router.replace("/(tabs)"); return; }
-      setState(params.resume === "1" ? { ...saved, step: "account" } : saved);
-      if (params.resume === "1") void saveOnboardingState({ step: "account" });
+    let active = true;
+    void (async () => {
+      const saved = await loadOnboardingState();
+      const profile = isAuthenticated && user?.id ? await loadMyProfile() : null;
+      if (!active) return;
+      if (profile?.error) {
+        router.replace("/" as never);
+        return;
+      }
+      if (profile?.data?.username) {
+        router.replace("/(tabs)");
+        return;
+      }
+      // Local completion belongs to the device, not necessarily this account.
+      // Never allow it to bypass profile setup for another user.
+      const next = saved.completed
+        ? { ...saved, completed: false, step: "location" as const }
+        : params.resume === "1" ? { ...saved, step: "account" as const } : saved;
+      setState(next);
+      if (saved.completed) await saveOnboardingState({ completed: false, step: "location" });
+    })().catch(() => {
+      if (active) setState(defaultOnboardingState);
     });
-  }, [params.resume]);
+    return () => { active = false; };
+  }, [params.resume, isAuthenticated, user?.id]);
 
   const goTo = async (step: OnboardingState["step"], patch: Partial<OnboardingState> = {}) => {
     const next = await saveOnboardingState({ ...patch, step });
@@ -76,5 +95,5 @@ export default function OnboardingScreen() {
 function BrandMark({ colors }: { colors: ReturnType<typeof useColors> }) { return <View style={[styles.logo, { backgroundColor: colors.primary }]}><IconSymbol name="location.fill" size={28} color="#10211D" /></View>; }
 function Progress({ step, colors }: { step: number; colors: ReturnType<typeof useColors> }) { return <View accessibilityLabel={`Onboarding step ${step} of 3`} style={styles.progressRow}>{[1, 2, 3].map((item) => <View key={item} style={[styles.progressBar, { backgroundColor: item <= step ? colors.primary : colors.border }]} />)}</View>; }
 
-const styles = StyleSheet.create({ centerContent: { flex: 1, justifyContent: "center", padding: 24 }, scrollContent: { padding: 24, paddingBottom: 42 }, logo: { width: 64, height: 64, borderRadius: 22, alignItems: "center", justifyContent: "center", marginBottom: 18 }, eyebrow: { fontSize: 12, fontWeight: "900", letterSpacing: 1.5 }, heroTitle: { fontSize: 36, lineHeight: 42, fontWeight: "900", marginTop: 12 }, heroSubtitle: { fontSize: 16, lineHeight: 24, marginTop: 12, maxWidth: 340 }, title: { fontSize: 31, lineHeight: 38, fontWeight: "900", marginTop: 15 }, subtitle: { fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 24 }, primaryButton: { minHeight: 54, borderRadius: 17, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 22 }, primaryText: { color: "#10211D", fontSize: 15, fontWeight: "900" }, textButton: { minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 }, textButtonLabel: { fontSize: 13, fontWeight: "800" }, outlineButton: { minHeight: 52, borderRadius: 17, borderWidth: 1, borderColor: "rgba(128,128,128,0.4)", alignItems: "center", justifyContent: "center", marginTop: 10 }, outlineText: { fontSize: 15, fontWeight: "800" }, privacyCard: { flexDirection: "row", gap: 12, borderRadius: 17, borderWidth: 1, padding: 15, alignItems: "flex-start" }, privacyText: { flex: 1, fontSize: 13, lineHeight: 19 }, progressRow: { flexDirection: "row", gap: 6, marginBottom: 28 }, progressBar: { flex: 1, height: 5, borderRadius: 4 }, interestGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, interestChip: { minHeight: 44, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" }, interestText: { fontSize: 12, fontWeight: "800" }, label: { fontSize: 10, fontWeight: "900", letterSpacing: 1.1, marginTop: 25, marginBottom: 10 }, themeGrid: { gap: 10 }, themeCard: { borderWidth: 1.5, borderRadius: 17, padding: 12, minHeight: 100 }, themeSwatch: { height: 54, borderRadius: 12, padding: 12, justifyContent: "center", gap: 7 }, swatchDot: { width: 13, height: 13, borderRadius: 7 }, swatchLine: { width: "55%", height: 7, borderRadius: 4 }, themeName: { fontSize: 14, fontWeight: "900", marginTop: 10 }, themeDescription: { fontSize: 11, marginTop: 3 },
+const styles = StyleSheet.create({ centerContent: { flex: 1, justifyContent: "center", padding: 24 }, scrollContent: { padding: 24, paddingBottom: 42 }, logo: { width: 64, height: 64, borderRadius: 22, alignItems: "center", justifyContent: "center", marginBottom: 18 }, eyebrow: { fontSize: 12, fontWeight: "900", letterSpacing: 1.5 }, heroTitle: { fontSize: 40, lineHeight: 47, fontWeight: "900", marginTop: 12 }, heroSubtitle: { fontSize: 16, lineHeight: 24, marginTop: 12, maxWidth: 340 }, title: { fontSize: 31, lineHeight: 38, fontWeight: "900", marginTop: 15 }, subtitle: { fontSize: 15, lineHeight: 22, marginTop: 8, marginBottom: 24 }, primaryButton: { minHeight: 58, borderRadius: 20, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 22 }, primaryText: { color: "#10211D", fontSize: 15, fontWeight: "900" }, textButton: { minHeight: 44, alignItems: "center", justifyContent: "center", paddingHorizontal: 8 }, textButtonLabel: { fontSize: 13, fontWeight: "800" }, outlineButton: { minHeight: 52, borderRadius: 17, borderWidth: 1, borderColor: "rgba(128,128,128,0.4)", alignItems: "center", justifyContent: "center", marginTop: 10 }, outlineText: { fontSize: 15, fontWeight: "800" }, privacyCard: { flexDirection: "row", gap: 12, borderRadius: 17, borderWidth: 1, padding: 15, alignItems: "flex-start" }, privacyText: { flex: 1, fontSize: 13, lineHeight: 19 }, progressRow: { flexDirection: "row", gap: 6, marginBottom: 28 }, progressBar: { flex: 1, height: 5, borderRadius: 4 }, interestGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 }, interestChip: { minHeight: 44, borderWidth: 1, borderRadius: 14, paddingHorizontal: 12, alignItems: "center", justifyContent: "center" }, interestText: { fontSize: 12, fontWeight: "800" }, label: { fontSize: 10, fontWeight: "900", letterSpacing: 1.1, marginTop: 25, marginBottom: 10 }, themeGrid: { gap: 10 }, themeCard: { borderWidth: 1.5, borderRadius: 21, padding: 12, minHeight: 100 }, themeSwatch: { height: 54, borderRadius: 12, padding: 12, justifyContent: "center", gap: 7 }, swatchDot: { width: 13, height: 13, borderRadius: 7 }, swatchLine: { width: "55%", height: 7, borderRadius: 4 }, themeName: { fontSize: 14, fontWeight: "900", marginTop: 10 }, themeDescription: { fontSize: 11, marginTop: 3 },
 });

@@ -55,6 +55,8 @@ export default function ProfileScreen() {
   const [usernameHistory, setUsernameHistory] = useState<UsernameChange[]>([]);
   const [usernameCooldown, setUsernameCooldown] = useState<string | null>(null);
   const [initialUsername, setInitialUsername] = useState("");
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [friendsListVisibility, setFriendsListVisibility] = useState<"only_me" | "friends" | "everyone">("friends");
 
   useEffect(() => {
     let active = true;
@@ -71,6 +73,8 @@ export default function ProfileScreen() {
         setUsername(data.username ?? "");
         setInitialUsername(normalizeUsername(data.username ?? ""));
         setBio(data.bio ?? "");
+        setIsPrivate(data.is_private === true);
+        setFriendsListVisibility(data.friends_list_visibility === "only_me" || data.friends_list_visibility === "everyone" ? data.friends_list_visibility : "friends");
         setArea(data.home_area ?? "Bellville");
         setInterests(data.interests ?? []);
         if (data.profile_image_path) {
@@ -148,9 +152,11 @@ export default function ProfileScreen() {
     setFeedback(null);
     const errors = validateProfileFields(displayName, bio);
     setFieldErrors(errors);
-    const usernameAvailable = await checkUsername();
     const nextUsername = normalizeUsername(username);
     const usernameChanged = nextUsername !== initialUsername;
+    // An unchanged handle belongs to this account; avoid a redundant availability
+    // query that can fail due to network/RLS and block unrelated profile edits.
+    const usernameAvailable = usernameChanged ? await checkUsername() : validateUsername(username) === null;
     const cooldown = usernameChanged ? usernameCooldownMessage(usernameHistory) : null;
     setUsernameCooldown(cooldown);
     if (cooldown) {
@@ -166,16 +172,23 @@ export default function ProfileScreen() {
       return;
     }
     setBusy(true);
-    const result = await saveMyProfile({ displayName, username: normalizeUsername(username), bio, homeArea: area, preferredRadiusM: 5000, interests, locationVisibility: profileSettings.locationVisibility });
+    const result = await saveMyProfile({ displayName, username: normalizeUsername(username), bio, homeArea: area, preferredRadiusM: 5000, interests, locationVisibility: profileSettings.locationVisibility, isPrivate, friendsListVisibility }).catch((error: unknown) => ({ data: null, error: error instanceof Error ? error : new Error("Unable to contact the server. Please retry.") }));
     if (!result.error && user) {
       if (usernameChanged && nextUsername) {
         const nextHistory = recordUsernameChange(usernameHistory, nextUsername);
         setUsernameHistory(nextHistory);
         setInitialUsername(nextUsername);
-        await saveUsernameHistory(user.id, nextHistory);
+        try { await saveUsernameHistory(user.id, nextHistory); } catch { /* The server already saved the profile; local history is best-effort. */ }
         void recordServerUsernameChange(user.id, initialUsername || null, nextUsername);
       }
-      await saveProfileSettings(profileSettings);
+      try {
+        await saveProfileSettings(profileSettings);
+      } catch (settingsError) {
+        setFeedback({ tone: "error", message: "Your profile was saved, but preferences could not be saved. Please retry." });
+        setBusy(false);
+        setConfirmUsername(false);
+        return;
+      }
       if (avatarUri) {
         setAvatarBusy(true);
         try {
@@ -200,7 +213,10 @@ export default function ProfileScreen() {
       setUsernameStatus("unavailable");
       setFieldErrors((current) => ({ ...current, username: "That username was just taken. Choose another one." }));
     }
-    if (result.error) setFeedback({ tone: "error", message: duplicateUsername ? "Choose another username and try again." : user ? "We couldn't save your changes. Check your connection and try again." : "Create an account to save a profile." });
+    if (result.error) {
+      console.warn("Lekka profile update failed", { code: "code" in result.error ? result.error.code : undefined, message: result.error.message });
+      setFeedback({ tone: "error", message: duplicateUsername ? "Choose another username and try again." : user ? `Profile save failed: ${result.error.message}` : "Create an account to save a profile." });
+    }
     else if (!avatarUri) setFeedback({ tone: "success", message: "Profile updated. Your Lekka profile is ready for the local world." });
   };
   const toggleInterest = (interest: string) => setInterests((current) => current.includes(interest) ? current.filter((item) => item !== interest) : [...current, interest]);
@@ -214,5 +230,5 @@ export default function ProfileScreen() {
 
 function Field({ label, value, onChangeText, autoCapitalize = "sentences", colors }: { label: string; value: string; onChangeText: (value: string) => void; autoCapitalize?: "sentences" | "none"; colors: ReturnType<typeof useColors> }) { return <><Text style={[styles.label, { color: colors.muted }]}>{label}</Text><TextInput accessibilityLabel={label} value={value} onChangeText={onChangeText} autoCapitalize={autoCapitalize} placeholder={label} placeholderTextColor={colors.muted} style={[styles.input, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]} /></>; }
 
-const styles = StyleSheet.create({ screen: { flex: 1 }, content: { padding: 24, paddingBottom: 50 }, loadingCard: { minHeight: 48, borderWidth: 1, borderRadius: 15, justifyContent: "center", paddingHorizontal: 14, marginBottom: 8 }, loadErrorCard: { borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 8 }, retryLoad: { minHeight: 44, alignSelf: "flex-start", borderWidth: 1, borderRadius: 11, paddingHorizontal: 14, justifyContent: "center", marginTop: 6 }, retryLoadText: { fontSize: 12, fontWeight: "800" }, loadingText: { fontSize: 13, fontWeight: "700" }, errorText: { fontSize: 12, lineHeight: 17, marginBottom: 8 }, feedback: { minHeight: 48, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, justifyContent: "center", marginBottom: 10 }, feedbackText: { fontSize: 12, lineHeight: 17, fontWeight: "700" }, confirmCard: { borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 10, gap: 8 }, confirmTitle: { fontSize: 14, fontWeight: "900" }, confirmText: { fontSize: 12, lineHeight: 17 }, confirmActions: { flexDirection: "row", gap: 8, marginTop: 4 }, confirmButton: { flex: 1, minHeight: 44, borderWidth: 1, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 10 }, confirmButtonText: { fontSize: 12, fontWeight: "800" }, back: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 20 }, backIcon: { transform: [{ rotate: "180deg" }] }, backText: { fontSize: 14, fontWeight: "700" }, avatar: { width: 70, height: 70, borderRadius: 24, alignItems: "center", justifyContent: "center", overflow: "hidden" }, avatarImage: { width: "100%", height: "100%" }, avatarText: { fontSize: 20, fontWeight: "900", color: "#10211D" }, avatarHint: { fontSize: 11, fontWeight: "700", marginTop: 7 }, title: { fontSize: 27, lineHeight: 33, fontWeight: "800", marginTop: 16 }, subtitle: { fontSize: 13, lineHeight: 18, marginTop: 5, marginBottom: 18 }, completionCard: { borderWidth: 1, borderRadius: 17, padding: 14, marginBottom: 8 }, completionHeader: { gap: 3 }, completionTitle: { fontSize: 14, fontWeight: "900" }, completionMeta: { fontSize: 11 }, progressTrack: { height: 7, borderRadius: 4, marginTop: 12, overflow: "hidden" }, progressFill: { height: 7, borderRadius: 4 }, label: { fontSize: 10, fontWeight: "800", letterSpacing: 1.1, marginTop: 12, marginBottom: 7 }, fieldMeta: { flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: -2 }, helperText: { flex: 1, fontSize: 11, lineHeight: 15 }, counter: { fontSize: 11, fontVariant: ["tabular-nums"] }, suggestionBlock: { marginTop: 8, gap: 7 }, suggestionTitle: { fontSize: 10, fontWeight: "800", letterSpacing: 1.1 }, suggestionRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 }, suggestionChip: { minHeight: 44, justifyContent: "center", borderWidth: 1, borderRadius: 12, paddingHorizontal: 10 }, suggestionText: { fontSize: 12, fontWeight: "800" }, settingCard: { minHeight: 64, borderWidth: 1, borderRadius: 15, paddingHorizontal: 14, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }, settingCopy: { flex: 1, gap: 3 }, settingTitle: { fontSize: 13, fontWeight: "800" }, settingMeta: { fontSize: 11, lineHeight: 15 }, input: { minHeight: 50, borderWidth: 1, borderRadius: 15, paddingHorizontal: 14, fontSize: 15 }, bio: { minHeight: 95, paddingTop: 14, textAlignVertical: "top" }, chips: { flexDirection: "row", flexWrap: "wrap", gap: 7 }, chip: { minHeight: 44, justifyContent: "center", borderWidth: 1, borderRadius: 13, paddingHorizontal: 10 }, chipText: { fontSize: 11, fontWeight: "700" }, themes: { gap: 8 }, theme: { minHeight: 52, borderWidth: 1.5, borderRadius: 15, padding: 9, flexDirection: "row", alignItems: "center", gap: 10 }, themePreview: { width: 42, height: 34, borderRadius: 10, justifyContent: "center", padding: 8 }, themeDot: { width: 12, height: 12, borderRadius: 6 }, themeText: { fontSize: 13, fontWeight: "800" }, primary: { minHeight: 52, borderRadius: 16, alignItems: "center", justifyContent: "center", marginTop: 20 }, primaryText: { fontSize: 15, fontWeight: "800", color: "#10211D" }, savedLink: { minHeight: 48, borderWidth: 1, borderRadius: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10 }, savedLinkText: { fontSize: 13, fontWeight: "800" }, logout: { minHeight: 48, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }, logoutText: { fontWeight: "800", fontSize: 13 }, toast: { position: "absolute", left: 24, right: 24, bottom: 18, minHeight: 48, borderWidth: 1, borderRadius: 16, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }, toastText: { fontSize: 13, fontWeight: "800" },
+const styles = StyleSheet.create({ screen: { flex: 1 }, content: { padding: 24, paddingBottom: 50 }, loadingCard: { minHeight: 48, borderWidth: 1, borderRadius: 15, justifyContent: "center", paddingHorizontal: 14, marginBottom: 8 }, loadErrorCard: { borderWidth: 1, borderRadius: 14, padding: 12, marginBottom: 8 }, retryLoad: { minHeight: 44, alignSelf: "flex-start", borderWidth: 1, borderRadius: 11, paddingHorizontal: 14, justifyContent: "center", marginTop: 6 }, retryLoadText: { fontSize: 12, fontWeight: "800" }, loadingText: { fontSize: 13, fontWeight: "700" }, errorText: { fontSize: 12, lineHeight: 17, marginBottom: 8 }, feedback: { minHeight: 48, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 11, justifyContent: "center", marginBottom: 10 }, feedbackText: { fontSize: 12, lineHeight: 17, fontWeight: "700" }, confirmCard: { borderWidth: 1, borderRadius: 16, padding: 14, marginBottom: 10, gap: 8 }, confirmTitle: { fontSize: 14, fontWeight: "900" }, confirmText: { fontSize: 12, lineHeight: 17 }, confirmActions: { flexDirection: "row", gap: 8, marginTop: 4 }, confirmButton: { flex: 1, minHeight: 44, borderWidth: 1, borderRadius: 12, alignItems: "center", justifyContent: "center", paddingHorizontal: 10 }, confirmButtonText: { fontSize: 12, fontWeight: "800" }, back: { minHeight: 44, flexDirection: "row", alignItems: "center", gap: 5, marginBottom: 20 }, backIcon: { transform: [{ rotate: "180deg" }] }, backText: { fontSize: 14, fontWeight: "700" }, avatar: { width: 70, height: 70, borderRadius: 24, alignItems: "center", justifyContent: "center", overflow: "hidden" }, avatarImage: { width: "100%", height: "100%" }, avatarText: { fontSize: 20, fontWeight: "900", color: "#10211D" }, avatarHint: { fontSize: 11, fontWeight: "700", marginTop: 7 }, title: { fontSize: 27, lineHeight: 33, fontWeight: "800", marginTop: 16 }, subtitle: { fontSize: 13, lineHeight: 18, marginTop: 5, marginBottom: 18 }, completionCard: { borderWidth: 1, borderRadius: 17, padding: 14, marginBottom: 8 }, completionHeader: { gap: 3 }, completionTitle: { fontSize: 14, fontWeight: "900" }, completionMeta: { fontSize: 11 }, progressTrack: { height: 7, borderRadius: 4, marginTop: 12, overflow: "hidden" }, progressFill: { height: 7, borderRadius: 4 }, label: { fontSize: 10, fontWeight: "800", letterSpacing: 1.1, marginTop: 12, marginBottom: 7 }, fieldMeta: { flexDirection: "row", justifyContent: "space-between", gap: 8, marginTop: -2 }, helperText: { flex: 1, fontSize: 11, lineHeight: 15 }, counter: { fontSize: 11, fontVariant: ["tabular-nums"] }, suggestionBlock: { marginTop: 8, gap: 7 }, suggestionTitle: { fontSize: 10, fontWeight: "800", letterSpacing: 1.1 }, suggestionRow: { flexDirection: "row", flexWrap: "wrap", gap: 7 }, suggestionChip: { minHeight: 44, justifyContent: "center", borderWidth: 1, borderRadius: 12, paddingHorizontal: 10 }, suggestionText: { fontSize: 12, fontWeight: "800" }, settingCard: { minHeight: 76, borderWidth: 1, borderRadius: 20, paddingHorizontal: 14, paddingVertical: 11, flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 }, settingCopy: { flex: 1, gap: 3 }, settingTitle: { fontSize: 13, fontWeight: "800" }, settingMeta: { fontSize: 11, lineHeight: 15 }, input: { minHeight: 54, borderWidth: 1, borderRadius: 18, paddingHorizontal: 14, fontSize: 15 }, bio: { minHeight: 95, paddingTop: 14, textAlignVertical: "top" }, chips: { flexDirection: "row", flexWrap: "wrap", gap: 7 }, chip: { minHeight: 44, justifyContent: "center", borderWidth: 1, borderRadius: 13, paddingHorizontal: 10 }, chipText: { fontSize: 11, fontWeight: "700" }, themes: { gap: 8 }, theme: { minHeight: 52, borderWidth: 1.5, borderRadius: 15, padding: 9, flexDirection: "row", alignItems: "center", gap: 10 }, themePreview: { width: 42, height: 34, borderRadius: 10, justifyContent: "center", padding: 8 }, themeDot: { width: 12, height: 12, borderRadius: 6 }, themeText: { fontSize: 13, fontWeight: "800" }, primary: { minHeight: 56, borderRadius: 18, alignItems: "center", justifyContent: "center", marginTop: 20 }, primaryText: { fontSize: 15, fontWeight: "800", color: "#10211D" }, savedLink: { minHeight: 48, borderWidth: 1, borderRadius: 15, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 10 }, savedLinkText: { fontSize: 13, fontWeight: "800" }, logout: { minHeight: 48, alignItems: "center", justifyContent: "center", paddingHorizontal: 16 }, logoutText: { fontWeight: "800", fontSize: 13 }, toast: { position: "absolute", left: 24, right: 24, bottom: 18, minHeight: 48, borderWidth: 1, borderRadius: 16, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 }, toastText: { fontSize: 13, fontWeight: "800" },
 });
