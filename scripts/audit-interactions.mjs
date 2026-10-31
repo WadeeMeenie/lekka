@@ -22,6 +22,7 @@ for (const file of files) {
   rel = rel.replace(/\.(tsx|ts|jsx|js)$/, "");
   if (rel === "_layout") continue;
   rel = rel.replace(/\/index$/, "");
+  if (rel === "index") rel = "";
   routeFiles.add("/" + rel);
 }
 
