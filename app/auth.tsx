@@ -65,6 +65,16 @@ export default function AuthScreen() {
         return;
       }
       if (profile.data?.username) {
+        // Returning accounts bypass onboarding; request location permission
+        // independently so the permission flow is not skipped.
+        try {
+          const permissionLocation = await requestApproximateLocation();
+          if (permissionLocation.status === "granted") {
+            await saveOnboardingState({ location: permissionLocation.location, area: permissionLocation.location.area });
+          }
+        } catch {
+          // Location is optional. A GPS or permission error must not block sign-in.
+        }
         router.replace("/(tabs)");
         return;
       }
