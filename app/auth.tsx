@@ -92,7 +92,8 @@ export default function AuthScreen() {
       }
 
       // Preserve the first-run location permission prompt when returning from sign-in.
-      const location = await requestApproximateLocation(onboarding.area);
+      // A location provider failure must never turn successful authentication into an error.
+      const location = await requestApproximateLocation(onboarding.area).catch(() => ({ status: "unavailable" as const, area: onboarding.area }));
       const accountIntent = intent ?? onboarding.accountIntent ?? "personal";
       if (location.status === "granted") {
         await saveOnboardingState({
