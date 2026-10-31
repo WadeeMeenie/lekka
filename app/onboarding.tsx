@@ -64,7 +64,7 @@ export default function OnboardingScreen() {
   const requestLocation = async () => {
     setBusy(true);
     try {
-      const result = await requestApproximateLocation(state.area);
+      const result = await requestApproximateLocation(state.area).catch(() => ({ status: "unavailable" as const, area: state.area }));
       if (result.status === "granted") await goTo("personalize", { location: result.location, area: result.location.area });
       else await goTo("personalize", { location: null, area: result.area });
     } finally { setBusy(false); }
